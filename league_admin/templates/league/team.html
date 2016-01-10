@@ -1,0 +1,10 @@
+{% include "base.html" %}
+
+{% block content %}
+    <a href="{% url 'index' %}">Back to team list</a>
+    <h3>{{team.name|capfirst }}</h3>
+    <p>{{ team.member_count }} members on this team</p>
+    <p>In division {{ team.division }}</p>
+{% endblock %}
+
+

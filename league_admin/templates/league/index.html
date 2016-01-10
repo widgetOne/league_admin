@@ -1,0 +1,17 @@
+{% include "base.html" %}
+
+{% block content %}
+    <h3>Teams in League</h3>
+    <ul>
+        {% for team in teams %}
+            <li>
+                <a href="{% url 'team' team.id %}">
+                    Div {{ team.division }} Team {{team.number}} {{ team.name|capfirst }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}
+
+
