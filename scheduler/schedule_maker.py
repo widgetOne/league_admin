@@ -11,6 +11,19 @@ reqs
 stretch objectives:
 1. minimize:
     -[will require names to teams] downtime between activities (play or ref)
+Design:
+Objects:
+    Facility[1] - retains data on where can be played
+        days[days-per-schedule] - distinct days in the schedule
+            slots[division] - array of court-time tuples for that division
+            sheet[court][time] - array of game slots in sheet form
+    Division[1] - total set of teams in the league
+        teams[teams-per-division] - team object in league
+            contains team history (times reffed, times played another team,etc)
+    Schedule[1] - retain a specific schedule
+        days[days-per-season] - contains games for a given day
+            contains team, ref, division, court and time data for all games
+    where does games-per-team go?
 """
 
 from pprint import pprint
@@ -125,10 +138,10 @@ class Schedule(object):
         outer = [0,4]
         first_slots = [0,1]
         later_slots = [2,3]
-        tries = 55
+        tries = 10
         best_day = False
         if day_idx > 6:
-            tries = 55
+            tries = 10
         for _ in range(tries):
             day = Day()
             rec_plays_first = (day_idx % 2 == 1)
@@ -224,18 +237,6 @@ class Schedule(object):
 
     def review_schedule(self):
         from math import pow
-        fitness = 0
-        print("cross team data")
-        for div_idx, div in enumerate(self.divisions):
-            for team_idx, team in enumerate(div.teams):
-                start = "team %s in division %s " % (team_idx, div_idx)
-                pprint(start + "%s and reffed %s " % (team.times_team_played, team.refs))
-                fitness -= pow(team.refs, 2)
-                for plays in team.times_team_played:
-                    if plays < 1000:
-                        fitness -= pow(plays, 2)
-        # construct thorestical max
-        print("total schedule fitness = %s" % fitness)
         max_fitness = 0
         min_ref = self.games_per_team // 2
         max_ref = self.games_per_team // 2 + self.games_per_team % 2
@@ -248,8 +249,21 @@ class Schedule(object):
             min_teams = others - max_teams
             loss_per_team = pow(min_plays, 2) * min_teams + pow(max_plays, 2) * max_teams
             max_fitness -= loss_per_team * teams
+        fitness = -max_fitness
+        print("cross team data")
+        for div_idx, div in enumerate(self.divisions):
+            for team_idx, team in enumerate(div.teams):
+                start = "team %s in division %s " % (team_idx, div_idx)
+                pprint(start + "%s and reffed %s " % (team.times_team_played, team.refs))
+                fitness -= pow(team.refs, 2)
+                for plays in team.times_team_played:
+                    if plays < 1000:
+                        fitness -= pow(plays, 2)
+        # construct thorestical max
+        print("total schedule fitness = %s" % fitness)
         print("total schedule max_fitness = %s" % max_fitness)
         print("delta to best possible = %s" % (max_fitness - fitness))
+        return fitness
 
     def fitness(self):
         pass
@@ -267,8 +281,8 @@ class Schedule(object):
 
 def make_schedule(team_counts):
     sch = Schedule(0, team_counts)
-    sch.review_schedule()
-
+    fitness = sch.review_schedule()
+    return fitness
 
 if __name__ == '__main__':
     make_schedule([6,12,12,6])
