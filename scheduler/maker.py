@@ -28,6 +28,19 @@ Objects:
 
 from pprint import pprint
 
+def compare_days(day1, day2):
+    print()
+    for time in range(len(day1.courts[0])):
+        game1_sum = ""
+        game2_sum = ""
+        for court in range(len(day1.courts)):
+            game1 = day1.courts[court][time]
+            game2 = day2.courts[court][time]
+            game1_sum += game1.small_str()
+            game2_sum += game2.small_str()
+        print(game1_sum + "  " + game2_sum)
+
+
 def list_filter(primary, filter):
     both = [team for team in primary if team in filter]
     if (len(both) > 0):
@@ -38,23 +51,22 @@ def list_filter(primary, filter):
 class Schedule(object):
     time_string = ['6pm','7pm','8pm','9pm']
     rec_first = True
-    def __init__(self, seed, team_counts, facs):
+    def __init__(self, team_counts, facs):
         import random
         from model import Division
-        self.seed = seed
         self.team_counts = team_counts
         self.divisions = [Division(count) for count in team_counts]
         self.division_count = len(team_counts)
-
+        self.max_fitness = 0
         self.daycount = 9
         self.courts = 5
         self.times = 4
         self.games_per_team = 9
 
+        self.enhance_success = 0
         self.skillz_clinic_count()
 
         self.days = []
-        ## random.seed(self.seed)
         self.random = random
         for day_idx in range(self.daycount):
             day = self.make_day(facs[day_idx])
@@ -65,18 +77,42 @@ class Schedule(object):
         index = self.random.randrange(len(set))
         return set[index]
 
-    def enhance_days(self, day_indexs):
+    def remake_worst_day(self):
+        days_fitness = [day.fitness(self.divisions) for day in self.days]
+        worst_day_fitness = min([day.fitness(self.divisions) for day in self.days])
+        worst_days = [day_idx for day_idx, day in enumerate(self.days)
+                      if day.fitness(self.divisions) == worst_day_fitness]
+   #     pprint("the days fitness's and then the worst of them")
+   #     pprint(days_fitness)
+   #     pprint(worst_days)
+        fitness = self.try_remake_days(worst_days)
+        return fitness
+
+    def try_remake_days(self, day_indexs):
         from copy import deepcopy
-        origional_schedule = deepcopy(self)
+        origional_days = deepcopy(self.days)
+        origional_division = deepcopy(self.divisions)
+        origional_fitness = self.fitness()
         for day_idx in day_indexs:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexs:
-            new_day = self.make_day(self.days[day_idx].fac)
+            new_day = self.make_day(self.days[day_idx].facilities)
+      #      compare_days(new_day, self.make_day(self.days[day_idx].facilities))
             self.days[day_idx] = new_day
-        if origional_schedule.fitness() < self.fitness():
-            self = origional_schedule
+        new_fitness = self.fitness()
+    #    new_day.courts[1][1].team1 = 4
+    #    if new_day != self.days[day_idx]:
+    #        self.enhance_success += 1
+    #    else:
+    #        raise(Exception("fail to enhance after %s successes" % self.enhance_success))
+        if origional_fitness < self.fitness():
+            self.days = origional_days
+            self.divisions = origional_division
+            new_fitness = origional_fitness
+        return new_fitness
 
     def make_day(self, fac):
+        from random import shuffle
         from model import Day
         from model import SCVL_Facility_Day
         tries = 10
@@ -87,7 +123,8 @@ class Schedule(object):
             for div_idx, div in enumerate(self.divisions):
                 locs, times = fac.div_times_locs[div_idx]
                 games = div.team_count // 2
-                game_slots = fac.div_games[div_idx]
+                game_slots = fac.div_games[div_idx].copy()
+                shuffle(game_slots)
                 ref_slots = game_slots.copy()
                 teams_to_play = list(range(div.team_count))
                 ''' ignoring odd cases for now
@@ -131,10 +168,11 @@ class Schedule(object):
 
                 # trying to clean up some of the game combinates
             if best_day:
-                if day.fitness(self.divisions) > best_day.fitness(self.divisions):
-                    print("new best day!!!")
+                best_day_fitness = best_day.fitness(self.divisions)
+                if day.fitness(self.divisions) > best_day_fitness:
+            #        print("new best day with fitness of %s!!!" % best_day_fitness)
                     best_day = day
-                print("The fitness of this day is %s" % best_day.fitness(self.divisions))
+            #    print("The fitness of this day is %s" % best_day.fitness(self.divisions))
             else:
                 best_day = day
      #   print("problem team = %s" %
@@ -143,37 +181,37 @@ class Schedule(object):
 
     def fitness(self):
         from math import pow
-        max_fitness = 0
-        min_ref = self.games_per_team // 2
-        max_ref = self.games_per_team // 2 + self.games_per_team % 2
-        max_fitness -= (pow(min_ref, 2) + pow(max_ref, 2)) * sum(self.team_counts) / 2.0
-        for teams in self.team_counts:
-            others = teams - 1
-            min_plays = self.games_per_team // others
-            max_plays = min_plays + 1
-            max_teams = self.games_per_team - others * min_plays
-            min_teams = others - max_teams
-            loss_per_team = pow(min_plays, 2) * min_teams + pow(max_plays, 2) * max_teams
-            max_fitness -= loss_per_team * teams
-        fitness = -max_fitness
-        print("cross team data")
+        if self.max_fitness == 0:
+            min_ref = self.games_per_team // 2
+            max_ref = self.games_per_team // 2 + self.games_per_team % 2
+            self.max_fitness -= (pow(min_ref, 2) + pow(max_ref, 2)) * sum(self.team_counts) / 2.0
+            for teams in self.team_counts:
+                others = teams - 1
+                min_plays = self.games_per_team // others
+                max_plays = min_plays + 1
+                max_teams = self.games_per_team - others * min_plays
+                min_teams = others - max_teams
+                loss_per_team = pow(min_plays, 2) * min_teams + pow(max_plays, 2) * max_teams
+                self.max_fitness -= loss_per_team * teams
+        fitness = -self.max_fitness
+    #    print("cross team data")
         for div_idx, div in enumerate(self.divisions):
             for team_idx, team in enumerate(div.teams):
                 start = "team %s in division %s " % (team_idx, div_idx)
-                pprint(start + "%s and reffed %s " % (team.times_team_played, team.refs))
+     #           pprint(start + "%s and reffed %s " % (team.times_team_played, team.refs))
                 fitness -= pow(team.refs, 2)
                 for plays in team.times_team_played:
                     if plays < 1000:
                         fitness -= pow(plays, 2)
         # construct thorestical max
-        print("total schedule fitness = %s" % fitness)
+    #    print("total schedule fitness = %s" % fitness)
         return fitness
 
     def add_day_to_division_history(self, day, sign=1):
         for court_idx, court in enumerate(day.courts):
             for game in court:
-                print("team %s and team %s w ref %s in div %s on court %s"
-                          % (game.team1, game.team2, game.ref, game.div, court_idx))
+    #            print("team %s and team %s w ref %s in div %s on court %s"
+    #                      % (game.team1, game.team2, game.ref, game.div, court_idx))
                 if (game.div == -1):
                     continue
                 self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
@@ -203,10 +241,17 @@ def make_schedule(team_counts, seed=1):
         rec_plays_first = day_idx % 2 == 1
         facilities.append(SCVL_Facility_Day(5, 4,
                                             team_counts, rec_plays_first))
-    tries = 44
-    sch = Schedule(0, team_counts, facilities)
+    tries = 0
+    sch = Schedule(team_counts, facilities)
     for _ in range(tries):
-        pass
+        random.seed(_ + 34534)
+        fitness = sch.try_remake_days(range(9))
+    for _ in range(34):
+        random.seed(_ + 123)
+        target = [sch.rand(range(9))]
+        fitness = sch.try_remake_days(target)
+        fitness = sch.remake_worst_day()
+        print("fitness = %s" % fitness)
     fitness = sch.fitness()
     return fitness
 

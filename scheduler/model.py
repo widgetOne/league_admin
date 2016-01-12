@@ -1,6 +1,7 @@
 
 
 ### YOYO: turn this into an abstract class
+div_char = "ricp "
 
 def rand(item_list):
     from random import randrange
@@ -71,6 +72,13 @@ class Game(object):
         self.ref = -1
         self.div = -1
 
+    def small_str(self):
+        out = ""
+        out += div_char[self.div] + "%2i" % self.team1
+        out += 'v' + "%2i" % self.team2
+        out += 'r' + "%2i" % self.ref + "  "
+        return out
+
 class Day(object):
     def __init__(self, facilities):
         from copy import deepcopy
@@ -88,6 +96,11 @@ class Day(object):
                 old_count2 = team2.times_team_played[team1.team_idx]
                 fitness -= (old_count1 + old_count2) * 2 + 2
         return fitness
+
+    def team_shuffle(self):
+        # shuffle all non-reffing teams
+        pass # to work on later
+
 
 class Division(object):
     def __init__(self, team_count):
