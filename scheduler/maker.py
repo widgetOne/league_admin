@@ -66,10 +66,6 @@ class Schedule(object):
     def make_day(self, day_idx):
         from model import Day
         from model import SCVL_Facility_Day
-        inner = [1,2,3]
-        outer = [0,4]
-        first_slots = [0,1]
-        later_slots = [2,3]
         tries = 10
         rec_plays_first = (day_idx % 2 == 1) # on odd days
         fac = SCVL_Facility_Day(self.courts, self.times, self.team_counts, rec_plays_first)
@@ -78,33 +74,11 @@ class Schedule(object):
             tries = 10
         for _ in range(tries):
             day = Day()
-
-            if rec_plays_first:
-                rec_comp_times = first_slots
-                inter_power_times = later_slots
-            else:
-                rec_comp_times = first_slots
-                inter_power_times = later_slots
-            div_play_time_loc = [
-                                (outer, rec_comp_times),
-                                (inner, inter_power_times),
-                                (inner, rec_comp_times),
-                                (outer, inter_power_times),
-                                 ]
-            div_games = []
-            for div_idx in range(4):
-                games = self.team_counts[div_idx] // 2
-                locs, times = div_play_time_loc[div_idx]
-                game_slots = [(x,y) for x in locs for y in times]
-                for _ in range(len(game_slots) > games): # save off any extra games
-                    del game_slots[self.rand(range(games))]
-                div_games.append(game_slots)
-
             # first, complete minimum games
             for div_idx, div in enumerate(self.divisions):
-                locs, times = div_play_time_loc[div_idx]
+                locs, times = fac.div_times_locs[div_idx]
                 games = div.team_count // 2
-                game_slots = div_games[div_idx]
+                game_slots = fac.div_games[div_idx]
                 ref_slots = game_slots.copy()
                 teams_to_play = list(range(div.team_count))
                 ''' ignoring odd cases for now
@@ -137,8 +111,6 @@ class Schedule(object):
                         best_list = list_filter(teams_to_play, best_opponent)
                         team2_idx = self.rand(best_list)
                         day.courts[court][time].team2 = team2_idx
-               #         print("team %s and team %s are playing on court %s at %s"
-               #               % (team1.team_idx, team2_idx, court, time))
                         del teams_to_play[teams_to_play.index(team2_idx)]
                     if day.courts[court][time].team1 < 0:
                         team2_obj = div.teams[day.courts[court][time].team1]
@@ -146,8 +118,6 @@ class Schedule(object):
                         best_list = list_filter(teams_to_play, best_opponent)
                         team1_idx = self.rand(best_list)
                         day.courts[court][time].team1 = team1_idx
-             #           print("team %s and team %s are playing on court %s at %s"
-             #                 % (team1.team_idx, team2_idx, court, time))
                         del teams_to_play[teams_to_play.index(team1_idx)]
 
                 # trying to clean up some of the game combinates

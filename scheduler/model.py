@@ -14,6 +14,7 @@ class Facility_Day(object):
         self.refs = False
         self.court_divisions = [[-1 for _ in range(time_count)]
                        for __ in range(court_count)]
+        self.div_times_locs = []
         self.div_games = []
         self.set_division()
 
@@ -41,7 +42,7 @@ class SCVL_Facility_Day(Facility_Day):
         else:
             rec_comp_times = first_slots
             inter_power_times = later_slots
-        div_play_time_loc = [
+        self.div_times_locs = [
                             (outer, rec_comp_times),
                             (inner, inter_power_times),
                             (inner, rec_comp_times),
@@ -50,7 +51,7 @@ class SCVL_Facility_Day(Facility_Day):
         self.div_games = []
         for div_idx in range(4):
             games = self.team_counts[div_idx] // 2
-            locs, times = div_play_time_loc[div_idx]
+            locs, times = self.div_times_locs[div_idx]
             game_slots = [(x,y) for x in locs for y in times]
             for _ in range(len(game_slots) > games): # save off any extra games
                 del game_slots[rand(range(games))]
