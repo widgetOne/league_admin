@@ -1,5 +1,62 @@
 
 
+### YOYO: turn this into an abstract class
+
+def rand(item_list):
+    from random import randrange
+    index = randrange(len(item_list))
+    return item_list[index]
+
+class Facility_Day(object):
+    def __init__(self, court_count, time_count):
+        self.court_count = court_count
+        self.time_count = time_count
+        self.refs = False
+        self.court_divisions = [[-1 for _ in range(time_count)]
+                       for __ in range(court_count)]
+        self.div_games = []
+        self.set_division()
+
+    def set_division(self):
+        raise(NotImplementedError("missing contrete implimentation of abstract set_division method"))
+        # logic will be need for how these divisions are set
+
+
+class SCVL_Facility_Day(Facility_Day):
+    def __init__(self, court_count, time_count, team_counts, rec_first):
+        self.rec_first = rec_first
+        self.team_counts = team_counts
+        super(SCVL_Facility_Day, self).__init__(court_count, time_count)
+        self.refs = True
+
+    def set_division(self):
+        inner = [1,2,3]
+        outer = [0,4]
+        first_slots = [0,1]
+        later_slots = [2,3]
+
+        if self.rec_first:
+            rec_comp_times = first_slots
+            inter_power_times = later_slots
+        else:
+            rec_comp_times = first_slots
+            inter_power_times = later_slots
+        div_play_time_loc = [
+                            (outer, rec_comp_times),
+                            (inner, inter_power_times),
+                            (inner, rec_comp_times),
+                            (outer, inter_power_times),
+                             ]
+        self.div_games = []
+        for div_idx in range(4):
+            games = self.team_counts[div_idx] // 2
+            locs, times = div_play_time_loc[div_idx]
+            game_slots = [(x,y) for x in locs for y in times]
+            for _ in range(len(game_slots) > games): # save off any extra games
+                del game_slots[rand(range(games))]
+            self.div_games.append(game_slots)
+            for court, time in game_slots:
+                self.court_divisions[court][time] = div_idx
 
 class Game(object):
     def __init__(self):

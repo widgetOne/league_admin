@@ -65,17 +65,20 @@ class Schedule(object):
 
     def make_day(self, day_idx):
         from model import Day
+        from model import SCVL_Facility_Day
         inner = [1,2,3]
         outer = [0,4]
         first_slots = [0,1]
         later_slots = [2,3]
         tries = 10
+        rec_plays_first = (day_idx % 2 == 1) # on odd days
+        fac = SCVL_Facility_Day(self.courts, self.times, self.team_counts, rec_plays_first)
         best_day = False
         if day_idx > 6:
             tries = 10
         for _ in range(tries):
             day = Day()
-            rec_plays_first = (day_idx % 2 == 1)
+
             if rec_plays_first:
                 rec_comp_times = first_slots
                 inter_power_times = later_slots
@@ -83,15 +86,15 @@ class Schedule(object):
                 rec_comp_times = first_slots
                 inter_power_times = later_slots
             div_play_time_loc = [
-                                (rec_comp_times, outer),
-                                (inter_power_times, inner),
-                                (rec_comp_times, inner),
-                                (inter_power_times, outer),
+                                (outer, rec_comp_times),
+                                (inner, inter_power_times),
+                                (inner, rec_comp_times),
+                                (outer, inter_power_times),
                                  ]
             div_games = []
             for div_idx in range(4):
                 games = self.team_counts[div_idx] // 2
-                times, locs = div_play_time_loc[div_idx]
+                locs, times = div_play_time_loc[div_idx]
                 game_slots = [(x,y) for x in locs for y in times]
                 for _ in range(len(game_slots) > games): # save off any extra games
                     del game_slots[self.rand(range(games))]
@@ -99,7 +102,7 @@ class Schedule(object):
 
             # first, complete minimum games
             for div_idx, div in enumerate(self.divisions):
-                times, locs = div_play_time_loc[div_idx]
+                locs, times = div_play_time_loc[div_idx]
                 games = div.team_count // 2
                 game_slots = div_games[div_idx]
                 ref_slots = game_slots.copy()
