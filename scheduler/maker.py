@@ -68,6 +68,7 @@ class Schedule(object):
         self.times = 4
         self.games_per_team = 9
 
+        self.curr_div_fitness = [-1 for _ in range(4)]
         self.div_max_fitness = [-1 for _ in range(4)]
         self.enhance_success = 0
         self.skillz_clinic_count()
@@ -207,16 +208,21 @@ class Schedule(object):
                 self.max_fitness -= loss_per_team * div_teams
                 div_fitness -= loss_per_team * div_teams
                 self.div_max_fitness.append(div_fitness)
-        fitness = -self.max_fitness
+        fitness = 0
     #    print("cross team data")
         for div_idx, div in enumerate(self.divisions):
+            div_fit = -self.div_max_fitness[div_idx]
             for team_idx, team in enumerate(div.teams):
                 start = "team %s in division %s " % (team_idx, div_idx)
      #           pprint(start + "%s and reffed %s " % (team.times_team_played, team.refs))
-                fitness -= pow(team.refs, 2)
+                div_fit -= pow(team.refs, 2)
                 for plays in team.times_team_played:
                     if plays < 1000:
-                        fitness -= pow(plays, 2)
+                        div_fit -= pow(plays, 2)
+            fitness += div_fit
+            div.current_fitness = div_fit
+            self.curr_div_fitness = 0
+
         # construct thorestical max
     #    print("total schedule fitness = %s" % fitness)
         return fitness
@@ -271,8 +277,7 @@ def make_schedule(team_counts, seed=1):
         fitness = sch.remake_worst_day(count)
         print("fitness = %s while on mutation step %s" % (fitness, mut_idx))
         pprint(sch.div_max_fitness)
-        pprint(sum(sch.div_max_fitness))
-        pprint(sch.max_fitness)
+        pprint([sch.divisions[idx].current_fitness for idx in range(4)])
         if (fitness == 0):
             print("correct schedule found!!!!!")
             break

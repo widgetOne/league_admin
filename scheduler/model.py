@@ -110,6 +110,7 @@ class Day(object):
 class Division(object):
     def __init__(self, team_count):
         self.teams = []
+        self.current_fitness = -1
         self.team_count = team_count
         for team_idx in range(team_count):
             self.teams.append(Team(team_idx, team_count))
