@@ -125,9 +125,10 @@ class Schedule(object):
         outer = [0,4]
         first_slots = [0,1]
         later_slots = [2,3]
-        tries = 555
+        tries = 55
         best_day = False
-
+        if day_idx > 6:
+            tries = 55
         for _ in range(tries):
             day = Day()
             rec_plays_first = (day_idx % 2 == 1)
@@ -224,10 +225,11 @@ class Schedule(object):
     def review_schedule(self):
         from math import pow
         fitness = 0
+        print("cross team data")
         for div_idx, div in enumerate(self.divisions):
             for team_idx, team in enumerate(div.teams):
-                print("cross team play for team %s in division %s" % (div_idx, team_idx),)
-                pprint( "%s and reffed %s " % (team.times_team_played, team.refs))
+                start = "team %s in division %s " % (team_idx, div_idx)
+                pprint(start + "%s and reffed %s " % (team.times_team_played, team.refs))
                 fitness -= pow(team.refs, 2)
                 for plays in team.times_team_played:
                     if plays < 1000:
