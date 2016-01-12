@@ -58,6 +58,7 @@ class Schedule(object):
         self.random = random
         for day_idx in range(self.daycount):
             day = self.make_day(facs[day_idx])
+            self.add_day_to_division_history(day)
             self.days.append(day)
 
     def rand(self, set):
@@ -65,12 +66,15 @@ class Schedule(object):
         return set[index]
 
     def enhance_days(self, day_indexs):
+        from copy import deepcopy
+        origional_schedule = deepcopy(self)
         for day_idx in day_indexs:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexs:
-            self.make_day(self.days[day_idx].fac)
-            self.subtract_day_from_division_history(self.days[day_idx])
-        return set[index]
+            new_day = self.make_day(self.days[day_idx].fac)
+            self.days[day_idx] = new_day
+        if origional_schedule.fitness() < self.fitness():
+            self = origional_schedule
 
     def make_day(self, fac):
         from model import Day
@@ -133,14 +137,11 @@ class Schedule(object):
                 print("The fitness of this day is %s" % best_day.fitness(self.divisions))
             else:
                 best_day = day
-
-        self.add_day_to_division_history(best_day)
-
-        print("problem team = %s" %
-              self.divisions[3].teams[5].times_team_played[5])
+     #   print("problem team = %s" %
+     #         self.divisions[3].teams[5].times_team_played[5])
         return best_day
 
-    def review_schedule(self):
+    def fitness(self):
         from math import pow
         max_fitness = 0
         min_ref = self.games_per_team // 2
@@ -166,8 +167,6 @@ class Schedule(object):
                         fitness -= pow(plays, 2)
         # construct thorestical max
         print("total schedule fitness = %s" % fitness)
-        print("total schedule max_fitness = %s" % max_fitness)
-        print("delta to best possible = %s" % (max_fitness - fitness))
         return fitness
 
     def add_day_to_division_history(self, day, sign=1):
@@ -183,9 +182,6 @@ class Schedule(object):
 
     def subtract_day_from_division_history(self, day):
         self.add_day_to_division_history(day, sign=-1)
-
-    def fitness(self):
-        pass
 
     def skillz_clinic_count(self):
         # The number of skillz clinics is the number of open game slots
@@ -211,7 +207,7 @@ def make_schedule(team_counts, seed=1):
     sch = Schedule(0, team_counts, facilities)
     for _ in range(tries):
         pass
-    fitness = sch.review_schedule()
+    fitness = sch.fitness()
     return fitness
 
 if __name__ == '__main__':
