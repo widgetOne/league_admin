@@ -15,6 +15,7 @@ class Facility_Day(object):
         self.court_divisions = [[-1 for _ in range(time_count)]
                        for __ in range(court_count)]
         self.div_times_locs = []
+        self.day_type = -1 # tool for distinguishing types for days during mutation
         self.div_games = []
         self.set_division()
 
@@ -26,6 +27,10 @@ class Facility_Day(object):
 class SCVL_Facility_Day(Facility_Day):
     def __init__(self, court_count, time_count, team_counts, rec_first):
         self.rec_first = rec_first
+        if (rec_first):
+            self.day_type = 0
+        else:
+            self.day_type = 1
         self.team_counts = team_counts
         super(SCVL_Facility_Day, self).__init__(court_count, time_count)
         self.refs = True
@@ -67,10 +72,11 @@ class Game(object):
         self.div = -1
 
 class Day(object):
-    def __init__(self):
+    def __init__(self, facilities):
         from copy import deepcopy
         court = [Game() for _ in range(4)]
         self.courts = [deepcopy(court) for _ in range(5)]
+        self.facilities = facilities
 
     def fitness(self, divisions):
         fitness = 0

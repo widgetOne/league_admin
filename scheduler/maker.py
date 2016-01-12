@@ -57,10 +57,19 @@ class Schedule(object):
         ## random.seed(self.seed)
         self.random = random
         for day_idx in range(self.daycount):
-            self.make_day(facs[day_idx])
+            day = self.make_day(facs[day_idx])
+            self.days.append(day)
 
     def rand(self, set):
         index = self.random.randrange(len(set))
+        return set[index]
+
+    def enhance_days(self, day_indexs):
+        for day_idx in day_indexs:
+            self.subtract_day_from_division_history(self.days[day_idx])
+        for day_idx in day_indexs:
+            self.make_day(self.days[day_idx].fac)
+            self.subtract_day_from_division_history(self.days[day_idx])
         return set[index]
 
     def make_day(self, fac):
@@ -69,7 +78,7 @@ class Schedule(object):
         tries = 10
         best_day = False
         for _ in range(tries):
-            day = Day()
+            day = Day(fac)
             # first, complete minimum games
             for div_idx, div in enumerate(self.divisions):
                 locs, times = fac.div_times_locs[div_idx]
@@ -126,12 +135,10 @@ class Schedule(object):
                 best_day = day
 
         self.add_day_to_division_history(best_day)
-        self.subtract_day_from_division_history(best_day)
-        self.add_day_to_division_history(best_day)
 
         print("problem team = %s" %
               self.divisions[3].teams[5].times_team_played[5])
-        self.days.append(best_day)
+        return best_day
 
     def review_schedule(self):
         from math import pow
@@ -200,7 +207,10 @@ def make_schedule(team_counts, seed=1):
         rec_plays_first = day_idx % 2 == 1
         facilities.append(SCVL_Facility_Day(5, 4,
                                             team_counts, rec_plays_first))
+    tries = 44
     sch = Schedule(0, team_counts, facilities)
+    for _ in range(tries):
+        pass
     fitness = sch.review_schedule()
     return fitness
 
