@@ -1,5 +1,5 @@
 from unittest import TestCase
-from schedule_maker import make_schedule
+from maker import make_schedule
 
 __author__ = 'coulter'
 
