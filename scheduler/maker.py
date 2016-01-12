@@ -38,7 +38,7 @@ def list_filter(primary, filter):
 class Schedule(object):
     time_string = ['6pm','7pm','8pm','9pm']
     rec_first = True
-    def __init__(self, seed, team_counts):
+    def __init__(self, seed, team_counts, facs):
         import random
         from model import Division
         self.seed = seed
@@ -54,24 +54,20 @@ class Schedule(object):
         self.skillz_clinic_count()
 
         self.days = []
-        random.seed(self.seed)
+        ## random.seed(self.seed)
         self.random = random
         for day_idx in range(self.daycount):
-            self.make_day(day_idx)
+            self.make_day(facs[day_idx])
 
     def rand(self, set):
         index = self.random.randrange(len(set))
         return set[index]
 
-    def make_day(self, day_idx):
+    def make_day(self, fac):
         from model import Day
         from model import SCVL_Facility_Day
         tries = 10
-        rec_plays_first = (day_idx % 2 == 1) # on odd days
-        fac = SCVL_Facility_Day(self.courts, self.times, self.team_counts, rec_plays_first)
         best_day = False
-        if day_idx > 6:
-            tries = 10
         for _ in range(tries):
             day = Day()
             # first, complete minimum games
@@ -190,7 +186,15 @@ class Schedule(object):
         pass
 
 def make_schedule(team_counts):
-    sch = Schedule(0, team_counts)
+    import random
+    from model import SCVL_Facility_Day
+    facilities = []
+    random.seed(1)
+    for day_idx in range(9):
+        rec_plays_first = day_idx % 2 == 1
+        facilities.append(SCVL_Facility_Day(5, 4,
+                                            team_counts, rec_plays_first))
+    sch = Schedule(0, team_counts, facilities)
     fitness = sch.review_schedule()
     return fitness
 
