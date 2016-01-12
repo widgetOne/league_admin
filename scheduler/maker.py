@@ -88,15 +88,21 @@ class Schedule(object):
                                 (rec_comp_times, inner),
                                 (inter_power_times, outer),
                                  ]
+            div_games = []
+            for div_idx in range(4):
+                games = self.team_counts[div_idx] // 2
+                times, locs = div_play_time_loc[div_idx]
+                game_slots = [(x,y) for x in locs for y in times]
+                for _ in range(len(game_slots) > games): # save off any extra games
+                    del game_slots[self.rand(range(games))]
+                div_games.append(game_slots)
 
             # first, complete minimum games
             for div_idx, div in enumerate(self.divisions):
                 times, locs = div_play_time_loc[div_idx]
                 games = div.team_count // 2
-                game_slots = [(x,y) for x in locs for y in times]
+                game_slots = div_games[div_idx]
                 ref_slots = game_slots.copy()
-                for _ in range(len(game_slots) > games): # save off any extra games
-                    del game_slots[self.rand(range(games))]
                 teams_to_play = list(range(div.team_count))
                 ''' ignoring odd cases for now
                 if div.team_count % 2 == 1:
@@ -152,10 +158,10 @@ class Schedule(object):
         print("problem team after = %s" %
               self.divisions[3].teams[5].times_team_played[5])
 
-        for court in best_day.courts:
+        for court_idx, court in enumerate(best_day.courts):
             for game in court:
-                print("team %s and team %s w ref %s in div %s"
-                          % (game.team1, game.team2, game.ref, game.div))
+                print("team %s and team %s w ref %s in div %s on court %s"
+                          % (game.team1, game.team2, game.ref, game.div, court_idx))
                 if (game.div == -1):
                     continue
                 self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += 1
