@@ -124,18 +124,10 @@ class Schedule(object):
                 print("The fitness of this day is %s" % best_day.fitness(self.divisions))
             else:
                 best_day = day
-        print("problem team after = %s" %
-              self.divisions[3].teams[5].times_team_played[5])
 
-        for court_idx, court in enumerate(best_day.courts):
-            for game in court:
-                print("team %s and team %s w ref %s in div %s on court %s"
-                          % (game.team1, game.team2, game.ref, game.div, court_idx))
-                if (game.div == -1):
-                    continue
-                self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += 1
-                self.divisions[game.div].teams[game.team2].times_team_played[game.team1] += 1
-                self.divisions[game.div].teams[game.ref].refs += 1
+        self.add_day_to_division_history(best_day)
+        self.subtract_day_from_division_history(best_day)
+        self.add_day_to_division_history(best_day)
 
         print("problem team = %s" %
               self.divisions[3].teams[5].times_team_played[5])
@@ -171,6 +163,20 @@ class Schedule(object):
         print("delta to best possible = %s" % (max_fitness - fitness))
         return fitness
 
+    def add_day_to_division_history(self, day, sign=1):
+        for court_idx, court in enumerate(day.courts):
+            for game in court:
+                print("team %s and team %s w ref %s in div %s on court %s"
+                          % (game.team1, game.team2, game.ref, game.div, court_idx))
+                if (game.div == -1):
+                    continue
+                self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
+                self.divisions[game.div].teams[game.team2].times_team_played[game.team1] += sign
+                self.divisions[game.div].teams[game.ref].refs += sign
+
+    def subtract_day_from_division_history(self, day):
+        self.add_day_to_division_history(day, sign=-1)
+
     def fitness(self):
         pass
 
@@ -185,11 +191,11 @@ class Schedule(object):
     def create_daily_schedule(self):
         pass
 
-def make_schedule(team_counts):
+def make_schedule(team_counts, seed=1):
     import random
     from model import SCVL_Facility_Day
     facilities = []
-    random.seed(1)
+    random.seed(seed)
     for day_idx in range(9):
         rec_plays_first = day_idx % 2 == 1
         facilities.append(SCVL_Facility_Day(5, 4,
