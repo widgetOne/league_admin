@@ -118,7 +118,7 @@ class Schedule(object):
 
         return new_fitness
 
-    def make_day(self, fac):
+    def make_day(self, fac, old_day=None):
         from random import shuffle
         from model import Day
         from model import SCVL_Facility_Day
@@ -128,6 +128,8 @@ class Schedule(object):
             day = Day(fac)
             # first, complete minimum games
             for div_idx, div in enumerate(self.divisions):
+             #   if old_day != None:
+             #       if
                 locs, times = fac.div_times_locs[div_idx]
                 games = div.team_count // 2
                 game_slots = fac.div_games[div_idx].copy()
@@ -189,6 +191,7 @@ class Schedule(object):
     def fitness(self):
         from math import pow
         if self.max_fitness == 0:
+            self.div_max_fitness = []
             min_ref = self.games_per_team // 2
             max_ref = self.games_per_team // 2 + self.games_per_team % 2
             ref_fit_per_team = pow(min_ref, 2) + pow(max_ref, 2)
@@ -257,7 +260,7 @@ def make_schedule(team_counts, seed=1):
     sch = Schedule(team_counts, facilities)
     for _ in range(tries):
         fitness = sch.try_remake_days(range(9))
-    for mut_idx in range(10000): # 100 = 0.26 minutes and -20
+    for mut_idx in range(100): # 100 = 0.26 minutes and -20
         target1 = sch.rand(range(9))
         target2 = (target1 + sch.rand(range(8))) % 9
         target = [target1, target2]
@@ -267,6 +270,9 @@ def make_schedule(team_counts, seed=1):
         count = 1 + sch.rand(range(4))
         fitness = sch.remake_worst_day(count)
         print("fitness = %s while on mutation step %s" % (fitness, mut_idx))
+        pprint(sch.div_max_fitness)
+        pprint(sum(sch.div_max_fitness))
+        pprint(sch.max_fitness)
         if (fitness == 0):
             print("correct schedule found!!!!!")
             break

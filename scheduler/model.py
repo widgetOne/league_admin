@@ -87,14 +87,19 @@ class Day(object):
         self.facilities = facilities
 
     def fitness(self, divisions):
+        fitness = sum(self.div_fitness(divisions, div) for div in range(4))
+        return fitness
+
+    def div_fitness(self, divisions, div):
         fitness = 0
         for court in self.courts:
             for game in court:
-                team1 = divisions[game.div].teams[game.team1]
-                team2 = divisions[game.div].teams[game.team2]
-                old_count1 = team1.times_team_played[team2.team_idx]
-                old_count2 = team2.times_team_played[team1.team_idx]
-                fitness -= (old_count1 + old_count2) * 2 + 2
+                if div == game.div:
+                    team1 = divisions[game.div].teams[game.team1]
+                    team2 = divisions[game.div].teams[game.team2]
+                    old_count1 = team1.times_team_played[team2.team_idx]
+                    old_count2 = team2.times_team_played[team1.team_idx]
+                    fitness -= (old_count1 + old_count2) * 2 + 2
         return fitness
 
     def team_shuffle(self):

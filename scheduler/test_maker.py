@@ -6,7 +6,7 @@ __author__ = 'coulter'
 class TestPassword(TestCase):
 
     def test_high_level(self):
-        expected_fitness = -4
+        expected_fitness = -20
         fitness = make_schedule([6,12,12,6])
         self.assertEqual(fitness, expected_fitness)
       #  self.assertEqual(make_schedule([6,12,12,6]), expected_fitness)
