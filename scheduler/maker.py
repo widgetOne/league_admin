@@ -87,12 +87,13 @@ class Schedule(object):
             print("\n".join(out), file=csv_file)
 
     def gen_audit(self, loc):
+        from copy import deepcopy
         rolling_sum_play = []
         rolling_sum_ref = []
         for div_idx in range(4):
             div_arr = [0] * self.team_counts[div_idx]
-            rolling_sum_play.append(div_arr)
-            rolling_sum_ref.append(div_arr)
+            rolling_sum_play.append(deepcopy(div_arr))
+            rolling_sum_ref.append(deepcopy(div_arr))
         out = []
         for day in self.days:
             out += day.audit_view(rolling_sum_play, rolling_sum_ref)
@@ -315,8 +316,9 @@ def make_schedule(team_counts, tries=500, seed=1):
     fitness = sch.fitness()
     end = epochNow()
     print("total run time was %s second" % (float(end - start)))
-    sch.gen_csv("/Users/coulter/test.csv")
-    sch.gen_audit("/Users/coulter/test_audit_2016_spr.csv")
+    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
+    sch.gen_csv(path + "test.csv")
+    sch.gen_audit(path + "test_audit_2016_spr.csv")
     return fitness
 
 if __name__ == '__main__':

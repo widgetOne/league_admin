@@ -106,7 +106,7 @@ class Game(object):
         out = ""
         out += div_csv_str[self.div] + "%s" % (self.team1 + 1)
         out += 'v' + "%s" % (self.team2 + 1)
-        out += ',' + div_csv_str[self.div] + "%s" % self.ref + ", "
+        out += ',' + div_csv_str[self.div] + "%s" % (self.ref + 1) + ", "
         return out
 
 
@@ -169,8 +169,8 @@ class Day(object):
             play_str = ""
             ref_str = ""
             for div_idx in range(4):
-                play_str += ",,," + ",".join([(str(num)) for num in rolling_sum_play[div_idx]])
-                play_str += ",,," + ",".join([(str(num)) for num in rolling_sum_ref[div_idx]])
+                play_str += ",,PLAY DATA," + ",".join([(str(num)) for num in rolling_sum_play[div_idx]])
+                ref_str += ",,REF DATA," + ",".join([(str(num)) for num in rolling_sum_ref[div_idx]])
             out += [row + play_str + ref_str]
         out += ["," * 2 * 5]
         return out
