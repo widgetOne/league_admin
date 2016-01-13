@@ -288,16 +288,10 @@ class Schedule(object):
     def create_daily_schedule(self):
         pass
 
-def make_schedule(team_counts, tries=500, seed=1):
+def make_schedule(team_counts, facilities, tries=500, seed=1):
     start = epochNow()
     import random
-    from model import SCVL_Facility_Day
-    facilities = []
     random.seed(seed)
-    for day_idx in range(9):
-        rec_plays_first = day_idx % 2 == 1
-        facilities.append(SCVL_Facility_Day(5, 4,
-                                            team_counts, rec_plays_first))
     sch = Schedule(team_counts, facilities)
     for mut_idx in range(tries):
         target1 = sch.rand(range(9))
@@ -321,8 +315,18 @@ def make_schedule(team_counts, tries=500, seed=1):
     sch.gen_audit(path + "test_audit_2016_spr.csv")
     return fitness
 
+def make_regular_season(team_counts, tries=500):
+    from model import SCVL_Facility_Day
+    facilities = []
+    for day_idx in range(9):
+        rec_plays_first = day_idx % 2 == 1
+        facilities.append(SCVL_Facility_Day(5, 4,
+                                            team_counts, rec_plays_first))
+    fitness = make_schedule(team_counts, facilities, tries=tries)
+    return fitness
+
 if __name__ == '__main__':
-    make_schedule([6,14,14,6], tries=500)
+    make_regular_season([6,14,14,6], tries=5)
 
 
 
