@@ -68,7 +68,6 @@ class Schedule(object):
         self.times = 4
         self.games_per_team = 9
 
-        self.curr_div_fitness = [-1 for _ in range(4)]
         self.div_max_fitness = [-1 for _ in range(4)]
         self.enhance_success = 0
         self.skillz_clinic_count()
@@ -91,7 +90,7 @@ class Schedule(object):
    #     worst_days = days_fitness[0:count][0]
    #     pprint("the days fitness's and then the worst of them")
    #     pprint(days_fitness)
-        pprint(worst_days)
+   #     pprint(worst_days)
         fitness = self.try_remake_days(worst_days)
         return fitness
 
@@ -103,25 +102,25 @@ class Schedule(object):
         for day_idx in day_indexs:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexs:
-            new_day = self.make_day(self.days[day_idx].facilities)
+            new_day = self.make_day(self.days[day_idx].facilities,
+                                    self.days[day_idx])
             self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
         new_fitness = self.fitness()
-        print("old fitness was %s and new fitness is %s: "
-              % (origional_fitness, new_fitness), end="")
+    #    print("old fitness was %s and new fitness is %s: "
+    #          % (origional_fitness, new_fitness), end="")
         if origional_fitness > new_fitness:
-            print("using OLD schedule")
+    #        print("using OLD schedule")
             self.days = origional_days
             self.divisions = origional_division
             new_fitness = origional_fitness
-        else:
-            print("using NEW schedule!!!")
 
         return new_fitness
 
     def make_day(self, fac, old_day=None):
         from random import shuffle
         from model import Day
+        from copy import deepcopy
         from model import SCVL_Facility_Day
         tries = 4
         best_day = False
@@ -129,8 +128,14 @@ class Schedule(object):
             day = Day(fac)
             # first, complete minimum games
             for div_idx, div in enumerate(self.divisions):
-             #   if old_day != None:
-             #       if
+                if div.current_fitness == 0:
+                    if old_day != None:
+                        # copy forward the games from the old day in this div
+                        for court_idx, court in enumerate(old_day.courts):
+                            for time_idx, game in enumerate(court):
+                                if old_day.courts[court_idx][time_idx].div == div_idx:
+                                    day.courts[court_idx][time_idx] = deepcopy(game)
+                        continue
                 locs, times = fac.div_times_locs[div_idx]
                 games = div.team_count // 2
                 game_slots = fac.div_games[div_idx].copy()
@@ -178,12 +183,18 @@ class Schedule(object):
 
                 # trying to clean up some of the game combinates
             if best_day:
+                if (min([self.divisions[idx].current_fitness
+                         for idx in range(4)])) == 0:
+                    compare_days(best_day, day)
                 best_day_fitness = best_day.fitness(self.divisions)
                 if day.fitness(self.divisions) > best_day_fitness:
             #        print("new best day with fitness of %s!!!" % best_day_fitness)
                     best_day = day
             #    print("The fitness of this day is %s" % best_day.fitness(self.divisions))
             else:
+                if (min([self.divisions[idx].current_fitness
+                         for idx in range(4)])) == 0:
+                    compare_days(best_day, day)
                 best_day = day
      #   print("problem team = %s" %
      #         self.divisions[3].teams[5].times_team_played[5])
@@ -221,7 +232,6 @@ class Schedule(object):
                         div_fit -= pow(plays, 2)
             fitness += div_fit
             div.current_fitness = div_fit
-            self.curr_div_fitness = 0
 
         # construct thorestical max
     #    print("total schedule fitness = %s" % fitness)
@@ -266,7 +276,7 @@ def make_schedule(team_counts, seed=1):
     sch = Schedule(team_counts, facilities)
     for _ in range(tries):
         fitness = sch.try_remake_days(range(9))
-    for mut_idx in range(100): # 100 = 0.26 minutes and -20
+    for mut_idx in range(300):
         target1 = sch.rand(range(9))
         target2 = (target1 + sch.rand(range(8))) % 9
         target = [target1, target2]
@@ -276,14 +286,14 @@ def make_schedule(team_counts, seed=1):
         count = 1 + sch.rand(range(4))
         fitness = sch.remake_worst_day(count)
         print("fitness = %s while on mutation step %s" % (fitness, mut_idx))
-        pprint(sch.div_max_fitness)
+    ##    pprint(sch.div_max_fitness)
         pprint([sch.divisions[idx].current_fitness for idx in range(4)])
         if (fitness == 0):
             print("correct schedule found!!!!!")
             break
     fitness = sch.fitness()
     end = epochNow()
-    print("total run time was %s minutes" % (float(end - start) / 60))
+    print("total run time was %s second" % (float(end - start)))
     return fitness
 
 if __name__ == '__main__':
