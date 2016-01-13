@@ -79,6 +79,10 @@ class Schedule(object):
             self.add_day_to_division_history(day)
             self.days.append(day)
 
+    def gen_csv(self, loc):
+        for day in self.days():
+            pass
+
     def rand(self, set):
         index = self.random.randrange(len(set))
         return set[index]
@@ -159,7 +163,8 @@ class Schedule(object):
                     if (court, play_time) in game_slots:
                         day.courts[court][play_time].team1 = current_team_num
                     else:
-                        court = locs[(locs.index(court) + 1) % len(locs)]
+                        while (court, play_time) not in game_slots:
+                            court = (court + 1) % 5
                         day.courts[court][play_time].team2 = current_team_num
                     del teams_to_play[teams_to_play.index(current_team_num)]
 
@@ -183,18 +188,15 @@ class Schedule(object):
 
                 # trying to clean up some of the game combinates
             if best_day:
-                if (min([self.divisions[idx].current_fitness
-                         for idx in range(4)])) == 0:
-                    compare_days(best_day, day)
+          #      if (min([self.divisions[idx].current_fitness
+          #               for idx in range(4)])) == 0:
+          #          compare_days(best_day, day)
                 best_day_fitness = best_day.fitness(self.divisions)
                 if day.fitness(self.divisions) > best_day_fitness:
             #        print("new best day with fitness of %s!!!" % best_day_fitness)
                     best_day = day
             #    print("The fitness of this day is %s" % best_day.fitness(self.divisions))
             else:
-                if (min([self.divisions[idx].current_fitness
-                         for idx in range(4)])) == 0:
-                    compare_days(best_day, day)
                 best_day = day
      #   print("problem team = %s" %
      #         self.divisions[3].teams[5].times_team_played[5])
@@ -262,7 +264,7 @@ class Schedule(object):
     def create_daily_schedule(self):
         pass
 
-def make_schedule(team_counts, seed=1):
+def make_schedule(team_counts, tries=500, seed=1):
     start = epochNow()
     import random
     from model import SCVL_Facility_Day
@@ -272,11 +274,8 @@ def make_schedule(team_counts, seed=1):
         rec_plays_first = day_idx % 2 == 1
         facilities.append(SCVL_Facility_Day(5, 4,
                                             team_counts, rec_plays_first))
-    tries = 0
     sch = Schedule(team_counts, facilities)
-    for _ in range(tries):
-        fitness = sch.try_remake_days(range(9))
-    for mut_idx in range(300):
+    for mut_idx in range(tries):
         target1 = sch.rand(range(9))
         target2 = (target1 + sch.rand(range(8))) % 9
         target = [target1, target2]
@@ -285,7 +284,7 @@ def make_schedule(team_counts, seed=1):
         sch.try_remake_days(target)
         count = 1 + sch.rand(range(4))
         fitness = sch.remake_worst_day(count)
-        print("fitness = %s while on mutation step %s" % (fitness, mut_idx))
+        print("fitness = %s while on mutation step %s: " % (fitness, mut_idx), end="")
     ##    pprint(sch.div_max_fitness)
         pprint([sch.divisions[idx].current_fitness for idx in range(4)])
         if (fitness == 0):

@@ -1,7 +1,6 @@
 
 
 ### YOYO: turn this into an abstract class
-div_char = "ricp "
 
 def rand(item_list):
     from random import randrange
@@ -54,16 +53,36 @@ class SCVL_Facility_Day(Facility_Day):
                             (inner, rec_comp_times),
                             (outer, inter_power_times),
                              ]
+        self.alternate_div_loc = [inner, outer, outer, inner]
         self.div_games = []
+        self.div_times_games = [[] for _ in range(4)]
+        spare_slots = [[] for _ in range(4)]
+        spare_div = [2,3,0,1]
+        # first pass
         for div_idx in range(4):
             games = self.team_counts[div_idx] // 2
             locs, times = self.div_times_locs[div_idx]
             game_slots = [(x,y) for x in locs for y in times]
             for _ in range(len(game_slots) > games): # save off any extra games
-                del game_slots[rand(range(games))]
+                rm_loc = rand(range(games))
+                spare_slots[spare_div[div_idx]].append(game_slots[rm_loc])
+                del game_slots[rm_loc]
             self.div_games.append(game_slots)
             for court, time in game_slots:
                 self.court_divisions[court][time] = div_idx
+                self.div_times_games[div_idx].append((court, time))
+        # filling in gaps
+        for div_idx in range(4):
+            locs, times = self.div_times_locs[div_idx]
+            for idx in range(self.team_counts[div_idx] // 2 -
+                                             len(locs) * len(times) ):
+                if len(spare_slots[div_idx]) < 1:
+                    raise(Exception())
+                court, time = spare_slots[div_idx][0]
+                self.court_divisions[court][time] = div_idx
+                self.div_times_games[div_idx].append((court, time))
+                self.div_games[div_idx].append(spare_slots[div_idx][0])
+                del spare_slots[div_idx][0]
 
 class Game(object):
     def __init__(self):
@@ -73,11 +92,23 @@ class Game(object):
         self.div = -1
 
     def small_str(self):
+        div_char = "ricp "
         out = ""
         out += div_char[self.div] + "%2i" % self.team1
         out += 'v' + "%2i" % self.team2
         out += 'r' + "%2i" % self.ref + "  "
         return out
+
+    def csv_str(self):
+        if self.div == -1:
+            return "SKILLS CLINIC,,"
+        div_csv_str = "RICP "
+        out = ""
+        out += div_csv_str[self.div] + "%s" % self.team1
+        out += 'v' + "%s" % self.team2
+        out += ',' + div_csv_str[self.div] + "%s" % self.ref + "  "
+        return out
+
 
 class Day(object):
     def __init__(self, facilities):
@@ -106,6 +137,13 @@ class Day(object):
         # shuffle all non-reffing teams
         pass # to work on later
 
+    def csv_str(self):
+        out = []
+        header = "," + ",".join('CT '+ str(idx) + ',Ref' for idx in range(5))
+        out += [header]
+        for time in len(self.courts[0]):
+            for court in len(self.courts):
+                game_str = self.courts[court][time].csv_str()
 
 class Division(object):
     def __init__(self, team_count):
