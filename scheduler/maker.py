@@ -246,28 +246,20 @@ class Schedule(object):
                 div_fitness -= loss_per_team * div_teams
                 self.div_max_fitness.append(div_fitness)
         fitness = 0
-    #    print("cross team data")
         for div_idx, div in enumerate(self.divisions):
             div_fit = -self.div_max_fitness[div_idx]
             for team_idx, team in enumerate(div.teams):
-                start = "team %s in division %s " % (team_idx, div_idx)
-     #           pprint(start + "%s and reffed %s " % (team.times_team_played, team.refs))
                 div_fit -= pow(team.refs, 2)
                 for plays in team.times_team_played:
                     if plays < 1000:
                         div_fit -= pow(plays, 2)
             fitness += div_fit
             div.current_fitness = div_fit
-
-        # construct thorestical max
-    #    print("total schedule fitness = %s" % fitness)
         return fitness
 
     def add_day_to_division_history(self, day, sign=1):
         for court_idx, court in enumerate(day.courts):
             for game in court:
-    #            print("team %s and team %s w ref %s in div %s on court %s"
-    #                      % (game.team1, game.team2, game.ref, game.div, court_idx))
                 if (game.div == -1):
                     continue
                 self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
@@ -288,10 +280,8 @@ class Schedule(object):
     def create_daily_schedule(self):
         pass
 
-def make_schedule(team_counts, facilities, tries=500, seed=1):
+def make_schedule(team_counts, facilities, tries=500):
     start = epochNow()
-    import random
-    random.seed(seed)
     sch = Schedule(team_counts, facilities)
     for mut_idx in range(tries):
         target1 = sch.rand(range(9))
@@ -315,9 +305,11 @@ def make_schedule(team_counts, facilities, tries=500, seed=1):
     sch.gen_audit(path + "test_audit_2016_spr.csv")
     return fitness
 
-def make_regular_season(team_counts, tries=500):
+def make_regular_season(team_counts, tries=500, seed=1):
     from model import SCVL_Facility_Day
     facilities = []
+    import random
+    random.seed(seed)
     for day_idx in range(9):
         rec_plays_first = day_idx % 2 == 1
         facilities.append(SCVL_Facility_Day(5, 4,
@@ -335,7 +327,7 @@ def make_round_robin(team_counts, tries=500):
     return fitness
 
 if __name__ == '__main__':
-    make_round_robin([6,14,14,6], tries=5)
+    make_regular_season([6,14,14,6], tries=500, seed=5)
 
 
 

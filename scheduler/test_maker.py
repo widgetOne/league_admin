@@ -29,6 +29,6 @@ class TestPassword(TestCase):
     '''
 
     def test_csv_reporting(self):
-        fitness = make_schedule([6,12,12,6], tries=5)
+        fitness = make_schedule([6,12,12,6], tries=2)
 
         self.assertEqual(1, 1)
