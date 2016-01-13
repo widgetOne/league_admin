@@ -325,8 +325,17 @@ def make_regular_season(team_counts, tries=500):
     fitness = make_schedule(team_counts, facilities, tries=tries)
     return fitness
 
+def make_round_robin(team_counts, tries=500):
+    from model import SCVL_Facility_Day
+    facilities = []
+    rec_plays_first = False
+    facilities.append(SCVL_Round_Robin(5, 4,
+                                       team_counts, rec_plays_first))
+    fitness = make_schedule(team_counts, facilities, tries=tries)
+    return fitness
+
 if __name__ == '__main__':
-    make_regular_season([6,14,14,6], tries=5)
+    make_round_robin([6,14,14,6], tries=5)
 
 
 
