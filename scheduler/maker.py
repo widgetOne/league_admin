@@ -80,8 +80,31 @@ class Schedule(object):
             self.days.append(day)
 
     def gen_csv(self, loc):
-        for day in self.days():
-            pass
+        out = []
+        for day in self.days:
+            out += day.csv_str()
+        with open(loc, "w") as csv_file:
+            print("\n".join(out), file=csv_file)
+
+    def gen_audit(self, loc):
+        rolling_sum_play = []
+        rolling_sum_ref = []
+        for div_idx in range(4):
+            div_arr = [0] * self.team_counts[div_idx]
+            rolling_sum_play.append(div_arr)
+            rolling_sum_ref.append(div_arr)
+        out = []
+        for day in self.days:
+            out += day.audit_view(rolling_sum_play, rolling_sum_ref)
+        out += []
+        out += ["Number of times a team has played another team: rec, In, Cmp, Pw"]
+        for div_idx in range(4):
+            for team_idx in range(self.team_counts[div_idx]):
+                team = self.divisions[div_idx].teams[team_idx]
+                row = ",".join([str(num) for num in team.times_team_played])
+                out += [row]
+        with open(loc, "w") as csv_file:
+            print("\n".join(out), file=csv_file)
 
     def rand(self, set):
         index = self.random.randrange(len(set))
@@ -285,7 +308,6 @@ def make_schedule(team_counts, tries=500, seed=1):
         count = 1 + sch.rand(range(4))
         fitness = sch.remake_worst_day(count)
         print("fitness = %s while on mutation step %s: " % (fitness, mut_idx), end="")
-    ##    pprint(sch.div_max_fitness)
         pprint([sch.divisions[idx].current_fitness for idx in range(4)])
         if (fitness == 0):
             print("correct schedule found!!!!!")
@@ -293,10 +315,12 @@ def make_schedule(team_counts, tries=500, seed=1):
     fitness = sch.fitness()
     end = epochNow()
     print("total run time was %s second" % (float(end - start)))
+    sch.gen_csv("/Users/coulter/test.csv")
+    sch.gen_audit("/Users/coulter/test_audit_2016_spr.csv")
     return fitness
 
 if __name__ == '__main__':
-    make_schedule([6,12,12,6])
+    make_schedule([6,14,14,6], tries=500)
 
 
 

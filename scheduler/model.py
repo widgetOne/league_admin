@@ -104,9 +104,9 @@ class Game(object):
             return "SKILLS CLINIC,,"
         div_csv_str = "RICP "
         out = ""
-        out += div_csv_str[self.div] + "%s" % self.team1
-        out += 'v' + "%s" % self.team2
-        out += ',' + div_csv_str[self.div] + "%s" % self.ref + "  "
+        out += div_csv_str[self.div] + "%s" % (self.team1 + 1)
+        out += 'v' + "%s" % (self.team2 + 1)
+        out += ',' + div_csv_str[self.div] + "%s" % self.ref + ", "
         return out
 
 
@@ -141,9 +141,39 @@ class Day(object):
         out = []
         header = "," + ",".join('CT '+ str(idx) + ',Ref' for idx in range(5))
         out += [header]
-        for time in len(self.courts[0]):
-            for court in len(self.courts):
+        time_count = len(self.courts[0])
+        for time in range(len(self.courts[0])):
+            row = ""
+            for court in range(len(self.courts)):
                 game_str = self.courts[court][time].csv_str()
+                row += game_str
+            out += [row]
+        out += ["," * 2 * 5]
+        return out
+
+    def audit_view(self, rolling_sum_play, rolling_sum_ref):
+        out = []
+        header = "," + ",".join('CT '+ str(idx + 1) + ',Ref' for idx in range(5))
+        header += " ||| Rec Inter Comp Power Playing sums followed by Reffing Sumz"
+        out += [header]
+        time_count = len(self.courts[0])
+        for time in range(len(self.courts[0])):
+            row = ""
+            for court in range(len(self.courts)):
+                game = self.courts[court][time]
+                game_str = game.csv_str()
+                rolling_sum_ref[game.div][game.ref] += 1
+                rolling_sum_play[game.div][game.team1] += 1
+                rolling_sum_play[game.div][game.team2] += 1
+                row += game_str
+            play_str = ""
+            ref_str = ""
+            for div_idx in range(4):
+                play_str += ",,," + ",".join([(str(num)) for num in rolling_sum_play[div_idx]])
+                play_str += ",,," + ",".join([(str(num)) for num in rolling_sum_ref[div_idx]])
+            out += [row + play_str + ref_str]
+        out += ["," * 2 * 5]
+        return out
 
 class Division(object):
     def __init__(self, team_count):
