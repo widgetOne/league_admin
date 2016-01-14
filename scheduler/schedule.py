@@ -91,9 +91,7 @@ class Schedule(object):
         return new_fitness
 
     def make_day(self, fac, old_day=None):
-        from random import shuffle, choice
         from model import Day
-        from copy import deepcopy
         tries = 4
         best_day = False
         for _ in range(tries):
@@ -102,53 +100,9 @@ class Schedule(object):
             for div_idx, div in enumerate(self.divisions):
                 if div.current_fitness == 0:
                     if old_day != None:
-                        # copy forward the games from the old day in this div
-                        for court_idx, court in enumerate(old_day.courts):
-                            for time_idx, game in enumerate(court):
-                                if old_day.courts[court_idx][time_idx].div == div_idx:
-                                    day.courts[court_idx][time_idx] = deepcopy(game)
+                        day.import_div_games(div_idx, old_day)
                         continue
-                locs, times = fac.div_times_locs[div_idx]
-                games = div.team_count // 2
-                game_slots = fac.div_games[div_idx].copy()
-                shuffle(game_slots)
-                ref_slots = game_slots.copy()
-                teams_to_play = list(range(div.team_count))
-
-                # add refs
-                for game_idx in range(games):
-                    short_ref_teams = list_filter(teams_to_play, div.teams_w_least_ref())
-                    current_team_num = choice(short_ref_teams)
-                    court, ref_time = game_slots[game_idx]
-                    day.courts[court][ref_time].ref = current_team_num
-                    day.courts[court][ref_time].div = div_idx
-                    play_time = times[(times.index(ref_time) + 1) % len(times)]
-                    if (court, play_time) in game_slots:
-                        day.courts[court][play_time].team1 = current_team_num
-                    else:
-                        while (court, play_time) not in game_slots:
-                            court = (court + 1) % 5
-                        day.courts[court][play_time].team2 = current_team_num
-                    del teams_to_play[teams_to_play.index(current_team_num)]
-
-                # fill in players
-                for game_idx in range(games):
-                    court, time = game_slots[game_idx]
-                    if day.courts[court][time].team2 < 0:
-                        team1 = div.teams[day.courts[court][time].team1]
-                        best_opponent = team1.teams_least_played()
-                        best_list = list_filter(teams_to_play, best_opponent)
-                        team2_idx = choice(best_list)
-                        day.courts[court][time].team2 = team2_idx
-                        del teams_to_play[teams_to_play.index(team2_idx)]
-                    if day.courts[court][time].team1 < 0:
-                        team2_obj = div.teams[day.courts[court][time].team1]
-                        best_opponent = team2_obj.teams_least_played()
-                        best_list = list_filter(teams_to_play, best_opponent)
-                        team1_idx = choice(best_list)
-                        day.courts[court][time].team1 = team1_idx
-                        del teams_to_play[teams_to_play.index(team1_idx)]
-
+                day.schedule_div_ref_then_play(fac, div_idx, div)
             if best_day:
                 best_day_fitness = best_day.fitness(self.divisions)
                 if day.fitness(self.divisions) > best_day_fitness:
