@@ -74,18 +74,21 @@ def make_schedule(team_counts, facilities, tries=500):
 
 def make_regular_season(team_counts, tries=500, seed=1):
     from facility import SCVL_Facility_Day
-    facilities = []
+    from facility import League
+    days = []
     import random
     random.seed(seed)
+    league = League
     for day_idx in range(9):
         rec_plays_first = day_idx % 2 == 1
-        facilities.append(SCVL_Facility_Day(5, 4,
+        days.append(SCVL_Facility_Day(5, 4,
                                             team_counts, rec_plays_first))
-    fitness = make_schedule(team_counts, facilities, tries=tries)
+    league.days = days
+    fitness = make_schedule(team_counts, days, tries=tries)
     return fitness
 
 def make_round_robin(team_counts, tries=500):
-    from model import SCVL_Facility_Day
+    from model import SCVL_Round_Robin
     facilities = []
     rec_plays_first = False
     facilities.append(SCVL_Round_Robin(5, 4,
@@ -94,7 +97,7 @@ def make_round_robin(team_counts, tries=500):
     return fitness
 
 if __name__ == '__main__':
-    make_regular_season([6,14,14,6], tries=3, seed=5)
+    make_regular_season([6,14,14,6], tries=500, seed=5)
 
 
 

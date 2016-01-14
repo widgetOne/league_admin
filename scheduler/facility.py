@@ -1,4 +1,13 @@
 
+class League(object):
+    '''This is basically all the set characteristics of the problem'''
+    def __init__(self, ndivs, ndays, ncourts, nteams):
+        self.ndivs = ndivs
+        self.ndays = ndays
+        self.ncourts = ncourts
+        self.nteams = nteams
+        self.days = None
+
 class Facility_Day(object):
     def __init__(self, court_count, time_count):
         self.court_count = court_count
