@@ -1,12 +1,20 @@
 
 class League(object):
     '''This is basically all the set characteristics of the problem'''
-    def __init__(self, ndivs, ndays, ncourts, nteams):
+    def __init__(self, ndivs, ndays, ncourts, ntimes, team_counts, day_type):
         self.ndivs = ndivs
         self.ndays = ndays
         self.ncourts = ncourts
-        self.nteams = nteams
-        self.days = None
+        self.ntimes = ntimes
+        self.team_counts = team_counts
+        self.day_type = day_type
+        self.days = []
+
+        self.games_per_div = [0 for _ in range(4)]
+        for day_idx in range(ndays):
+            rec_first = day_idx % 2 == 1
+          #  days.append(day_type, ncourts, ntimes, team_counts, rec_first, self.games_per_div)
+            self.days.append(day_type(ncourts, ntimes, team_counts, rec_first))
 
 class Facility_Day(object):
     def __init__(self, court_count, time_count):

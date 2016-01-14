@@ -81,10 +81,9 @@ def make_regular_season(team_counts, tries=500, seed=1):
     league = League
     for day_idx in range(9):
         rec_plays_first = day_idx % 2 == 1
-        days.append(SCVL_Facility_Day(5, 4,
-                                            team_counts, rec_plays_first))
-    league.days = days
-    fitness = make_schedule(team_counts, days, tries=tries)
+        league = League(ndivs=4, ndays=9, ncourts=5, ntimes=4,
+                        team_counts=team_counts, day_type=SCVL_Facility_Day)
+    fitness = make_schedule(team_counts, league.days, tries=tries)
     return fitness
 
 def make_round_robin(team_counts, tries=500):
@@ -97,7 +96,7 @@ def make_round_robin(team_counts, tries=500):
     return fitness
 
 if __name__ == '__main__':
-    make_regular_season([6,14,14,6], tries=500, seed=5)
+    make_regular_season([6,13,14,7], tries=5, seed=5)
 
 
 
