@@ -30,6 +30,6 @@ class TestPassword(TestCase):
 
     def test_csv_reporting(self):
         from maker import make_round_robin
-        make_round_robin([6,13,14,7], tries=200, seed=5)
+        make_round_robin([6,13,14,7], tries=20, seed=5)
 
         self.assertEqual(1, 1)

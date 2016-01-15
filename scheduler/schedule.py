@@ -19,7 +19,7 @@ class Schedule(object):
         self.daycount = 1 # qwer yoyo
         self.courts = 5
         self.times = 4
-        self.games_per_team = 4
+        self.games_per_team = 3
 
         self.div_max_fitness = [-1 for _ in range(4)]
         self.enhance_success = 0
@@ -57,6 +57,21 @@ class Schedule(object):
                 team = self.divisions[div_idx].teams[team_idx]
                 row = ",".join([str(num) for num in team.times_team_played])
                 out += [row]
+        out += ["team play w time"]
+        div_team_times = []
+        for div_idx in range(4):
+            div_team_times.append([[0]*16 for _ in range(self.team_counts[div_idx])])
+        for court in self.days[0].courts:
+            for time, game in enumerate(court):
+                if game.div >= 0:
+                    div_team_times[game.div][game.team1][time] += 1
+                    div_team_times[game.div][game.team2][time] += 1
+        for div_idx in range(4):
+            out += ["team schedules for division %s" % (div_idx + 1)]
+            for team in self.divisions[div_idx].teams:
+            ###    history = ','.join(team.times_team_played) qwer
+                hist = ','.join([str(num) for num in div_team_times[div_idx][team.team_idx]])
+                out += ['team %s games w time = %s' % (int(team.team_idx), hist)]
         with open(loc, "w") as csv_file:
             print("\n".join(out), file=csv_file)
 
@@ -144,6 +159,8 @@ class Schedule(object):
                 for plays in team.times_team_played:
                     if plays < 1000:
                         div_fit -= pow(plays, 2)
+                    else:
+                        div_fit -= 100 * (plays - 1000) # penalty for team v self
             fitness += div_fit
             div.current_fitness = div_fit
         return fitness

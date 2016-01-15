@@ -17,7 +17,19 @@ class Game(object):
 
     def csv_str(self):
         if self.div == -1:
-            return "SKILLS CLINIC,,"
+#            return "SKILLS CLINIC,,"
+            return "WARM-UP,"
+        div_csv_str = ['REC', 'INT', 'COM', 'POW', '']
+        out = ""
+        out += div_csv_str[self.div] + " %s" % (self.team1 + 1)
+        out += 'v' + "%s" % (self.team2 + 1)
+        out += ','
+        return out
+
+    def csv_str_w_ref(self):
+        if self.div == -1:
+#            return "SKILLS CLINIC,,"
+            return "WARM-UP,,"
         div_csv_str = "RICP "
         out = ""
         out += div_csv_str[self.div] + "%s" % (self.team1 + 1)
@@ -37,16 +49,24 @@ class Day(object):
         fitness = sum(self.div_fitness(divisions, div) for div in range(4))
         return fitness
 
-    def div_fitness(self, divisions, div):
+    def div_fitness(self, divisions, div_idx):
         fitness = 0
+        played_at_time = [0] * len(divisions[div_idx].teams)
         for court in self.courts:
             for game in court:
-                if div == game.div:
+                if div_idx == game.div:
                     team1 = divisions[game.div].teams[game.team1]
                     team2 = divisions[game.div].teams[game.team2]
                     old_count1 = team1.times_team_played[team2.team_idx]
                     old_count2 = team2.times_team_played[team1.team_idx]
                     fitness -= (old_count1 + old_count2) * 2 + 2
+                    played_at_time[team1.team_idx] += 1
+                    played_at_time[team2.team_idx] += 1
+                    if team1 == team2:
+                        fitness -= 100
+        for count in played_at_time:
+            if count > 0:
+                fitness -= 10
         return fitness
 
     def team_shuffle(self):
@@ -69,8 +89,9 @@ class Day(object):
 
     def audit_view(self, rolling_sum_play, rolling_sum_ref):
         out = []
-        header = "," + ",".join('CT '+ str(idx + 1) + ',Ref' for idx in range(5))
-        header += " ||| Rec Inter Comp Power Playing sums followed by Reffing Sumz"
+    #    header = "," + ",".join('CT '+ str(idx + 1) + ',Ref' for idx in range(5))
+        header = "," + ",".join('CT '+ str(idx + 1) for idx in range(5))
+        header += " ||| Rec Inter Comp Power Playing sums followed by Reffing Sums"
         out += [header]
         time_count = len(self.courts[0])
         for time in range(len(self.courts[0])):
@@ -153,7 +174,12 @@ class Day(object):
         games = len(game_slots)
         shuffle(game_slots)
         teams_to_play = list(range(div.team_count))
-        teams_to_play = teams_to_play * 4
+        teams_to_play = teams_to_play * 3
+        if div_idx == 1:
+            teams_to_play += [1]
+        elif div_idx == 3:
+            teams_to_play += [choice(range(div.team_count))]
+
         if len(teams_to_play) // 2 != games:
             print("Error: in division %s there are %s teams and %s games" %
                   (div_idx, div.team_count, games))
@@ -169,7 +195,10 @@ class Day(object):
             # team 2
             best_opponent = team1_obj.teams_least_played()
             best_list = list_filter(teams_to_play, best_opponent)
-            team2_idx = choice(best_list)
+            for attempts in range(10):
+                team2_idx = choice(teams_to_play)
+                if team2_idx != team1_idx:
+                    break
             self.courts[court][time].team2 = team2_idx
             del teams_to_play[teams_to_play.index(team2_idx)]
             self.courts[court][time].div = div_idx

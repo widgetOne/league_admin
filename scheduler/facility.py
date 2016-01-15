@@ -140,23 +140,32 @@ class SCVL_Round_Robin(Facility_Day):
         self.div_games = [[] for _ in range(4)]
 
         times = []
-        inter = [1,1,1,1,1]
-        pow_int = [3,1,1,1,3]
-        rec_comp = [0,2,2,2,0]
-        comp = [2,2,2,2,2]
         gap = [-1,-1,-1,-1,-1]
+        comp = [2,2,2,2,2]
+        comp_r = [0,2,2,2,2]
+        rec_comp = [0,2,2,2,0]
+        pow_int = [3,1,1,1,3]
+        inter_p = [3,1,1,1,1]
+        int_gap = [1,-1,-1,-1,-1]
         times += [gap for _ in range(1)]
-        times += [inter for _ in range(1)]
-        times += [pow_int for _ in range(7)]
-        times += [gap for _ in range(1)]
-        times += [rec_comp for _ in range(6)]
-        times += [comp for _ in range(2)]
+        times += [comp for _ in range(1)]
+        times += [comp_r for _ in range(1)]
+        times += [rec_comp for _ in range(4)]
+        times += [gap for _ in range(2)]
+        times += [pow_int for _ in range(5)]
+        times += [inter_p for _ in range(1)]
+        times += [int_gap for _ in range(1)]
         ntime = len(times)
+        temp_div_games = [0] * 4
         self.court_divisions = times
         for time, courts in enumerate(times):
-            for court, div in enumerate(courts):
+            for court, div_idx in enumerate(courts):
                 if times[time][court] >= 0:
+                    temp_div_games[div_idx] += 1
                     slot = deepcopy((court, time))
-                    self.div_times_games[div].append(slot)
-                    self.div_games[div].append(slot)
+                    self.div_times_games[div_idx].append(slot)
+                    self.div_games[div_idx].append(slot)
                 ##    self.team_counts[times[time][court]] += 1
+        from pprint import pprint
+        print("games for each division")
+        pprint(temp_div_games)

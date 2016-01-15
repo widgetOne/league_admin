@@ -92,7 +92,7 @@ def make_round_robin(team_counts, tries=500, seed=1):
     import random
     random.seed(seed)
     rec_plays_first = False
-    league = League(ndivs=4, ndays=9, ncourts=5, ntimes=4,
+    league = League(ndivs=4, ndays=1, ncourts=5, ntimes=4,
                     team_counts=team_counts, day_type=SCVL_Round_Robin)
 
  #   league.days.append(SCVL_Round_Robin(5, 4,
