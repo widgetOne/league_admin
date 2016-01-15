@@ -16,10 +16,10 @@ class Schedule(object):
         self.divisions = [Division(count) for count in team_counts]
         self.division_count = len(team_counts)
         self.max_fitness = 0
-        self.daycount = 9
+        self.daycount = 1 # qwer yoyo
         self.courts = 5
         self.times = 4
-        self.games_per_team = 9
+        self.games_per_team = 4
 
         self.div_max_fitness = [-1 for _ in range(4)]
         self.enhance_success = 0
@@ -102,7 +102,9 @@ class Schedule(object):
                     if old_day != None:
                         day.import_div_games(div_idx, old_day)
                         continue
-                day.schedule_div_ref_then_play(fac, div_idx, div)
+     ###           day.schedule_div_ref_then_play(fac, div_idx, div)
+                day.schedule_div_play_then_ref(fac, div_idx, div)
+
             if best_day:
                 best_day_fitness = best_day.fitness(self.divisions)
                 if day.fitness(self.divisions) > best_day_fitness:
@@ -115,12 +117,15 @@ class Schedule(object):
         from math import pow
         if self.max_fitness == 0:
             self.div_max_fitness = []
-            min_ref = self.games_per_team // 2
-            max_ref = self.games_per_team // 2 + self.games_per_team % 2
-            ref_fit_per_team = pow(min_ref, 2) + pow(max_ref, 2)
-            self.max_fitness -= ref_fit_per_team * sum(self.team_counts) / 2.0
+            if (self.days[0].facilities.refs == True):
+                min_ref = self.games_per_team // 2
+                max_ref = self.games_per_team // 2 + self.games_per_team % 2
+                ref_fit_per_team = pow(min_ref, 2) + pow(max_ref, 2)
+                self.max_fitness -= ref_fit_per_team * sum(self.team_counts) / 2.0
             for div_idx, div_teams in enumerate(self.team_counts):
-                div_fitness = -ref_fit_per_team * div_teams / 2
+                div_fitness = 0
+                if (self.days[0].facilities.refs == True):
+                    div_fitness += -ref_fit_per_team * div_teams / 2
                 others = div_teams - 1
                 min_plays = self.games_per_team // others
                 max_plays = min_plays + 1
@@ -134,7 +139,8 @@ class Schedule(object):
         for div_idx, div in enumerate(self.divisions):
             div_fit = -self.div_max_fitness[div_idx]
             for team_idx, team in enumerate(div.teams):
-                div_fit -= pow(team.refs, 2)
+                if (self.days[0].facilities.refs == True):
+                    div_fit -= pow(team.refs, 2)
                 for plays in team.times_team_played:
                     if plays < 1000:
                         div_fit -= pow(plays, 2)

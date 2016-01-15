@@ -51,13 +51,14 @@ def make_schedule(team_counts, facilities, tries=500):
     start = epochNow()
     sch = Schedule(team_counts, facilities)
     for mut_idx in range(tries):
-        target1 = randrange(9)
-        target2 = (target1 + randrange(8)) % 9
-        target = [target1, target2]
-        sch.try_remake_days(target)
-        target = [randrange(9)]
-        sch.try_remake_days(target)
-        count = 1 + randrange(4)
+   #     target1 = randrange(sch.daycount)
+   #     target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
+   #     target = [target1, target2]
+   #     sch.try_remake_days(target)
+   #     target = [randrange(9)]
+   #     sch.try_remake_days(target)
+   #     count = 1 + randrange(4)
+        count = 1
         fitness = sch.remake_worst_day(count)
         print("fitness = %s while on mutation step %s: " % (fitness, mut_idx), end="")
         pprint([sch.divisions[idx].current_fitness for idx in range(4)])
@@ -86,17 +87,22 @@ def make_regular_season(team_counts, tries=500, seed=1):
     fitness = make_schedule(team_counts, league.days, tries=tries)
     return fitness
 
-def make_round_robin(team_counts, tries=500):
-    from model import SCVL_Round_Robin
-    facilities = []
+def make_round_robin(team_counts, tries=500, seed=1):
+    from facility import SCVL_Round_Robin, League
+    import random
+    random.seed(seed)
     rec_plays_first = False
-    facilities.append(SCVL_Round_Robin(5, 4,
-                                       team_counts, rec_plays_first))
-    fitness = make_schedule(team_counts, facilities, tries=tries)
+    league = League(ndivs=4, ndays=9, ncourts=5, ntimes=4,
+                    team_counts=team_counts, day_type=SCVL_Round_Robin)
+
+ #   league.days.append(SCVL_Round_Robin(5, 4,
+ #                                      team_counts, rec_plays_first, 9))
+    fitness = make_schedule(team_counts, league.days, tries=tries)
     return fitness
 
 if __name__ == '__main__':
-    make_regular_season([6,13,14,7], tries=5, seed=5)
-
+ #   make_round_robin([6,14,14,6], tries=5, seed=5)
+    make_round_robin([6,13,14,7], tries=9, seed=5)
+#
 
 

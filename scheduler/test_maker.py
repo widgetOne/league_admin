@@ -29,6 +29,7 @@ class TestPassword(TestCase):
     '''
 
     def test_csv_reporting(self):
-        fitness = make_schedule([6,12,12,6], tries=2)
+        from maker import make_round_robin
+        make_round_robin([6,13,14,7], tries=200, seed=5)
 
         self.assertEqual(1, 1)
