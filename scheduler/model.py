@@ -29,7 +29,7 @@ class Game(object):
     def csv_str_w_ref(self):
         if self.div == -1:
 #            return "SKILLS CLINIC,,"
-            return "WARM-UP,,"
+            return "WARM UP,,"
         div_csv_str = "RICP "
         out = ""
         out += div_csv_str[self.div] + "%s" % (self.team1 + 1)
@@ -90,8 +90,8 @@ class Day(object):
     def audit_view(self, rolling_sum_play, rolling_sum_ref):
         out = []
     #    header = "," + ",".join('CT '+ str(idx + 1) + ',Ref' for idx in range(5))
-        header = "," + ",".join('CT '+ str(idx + 1) for idx in range(5))
-        header += " ||| Rec Inter Comp Power Playing sums followed by Reffing Sums"
+        header = ",".join('CT '+ str(idx + 1) for idx in range(5))
+        header += ",  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums"
         out += [header]
         time_count = len(self.courts[0])
         for time in range(len(self.courts[0])):
@@ -185,10 +185,15 @@ class Day(object):
                   (div_idx, div.team_count, games))
             print("There should br %s games" % (div.team_count * 2))
         # fill in players
+        count_team_in_time = [[0] * 16 for _ in range(div.team_count)]
         for game_idx in range(games):
             # team 1
             court, time = game_slots[game_idx]
-            team1_idx = choice(teams_to_play)
+
+            for attempts in range(10):
+                team1_idx = choice(teams_to_play)
+                if count_team_in_time[team1_idx][time] == 0:
+                    break
             team1_obj = div.teams[team1_idx]
             self.courts[court][time].team1 = team1_obj.team_idx
             del teams_to_play[teams_to_play.index(team1_idx)]
@@ -197,10 +202,13 @@ class Day(object):
             best_list = list_filter(teams_to_play, best_opponent)
             for attempts in range(10):
                 team2_idx = choice(teams_to_play)
-                if team2_idx != team1_idx:
+                if (team2_idx != team1_idx and
+                    count_team_in_time[team2_idx][time] == 0):
                     break
             self.courts[court][time].team2 = team2_idx
             del teams_to_play[teams_to_play.index(team2_idx)]
+            count_team_in_time[team1_idx][time] += 1
+            count_team_in_time[team2_idx][time] += 1
             self.courts[court][time].div = div_idx
 
 class Division(object):

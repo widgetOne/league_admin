@@ -58,19 +58,11 @@ class Schedule(object):
                 row = ",".join([str(num) for num in team.times_team_played])
                 out += [row]
         out += ["team play w time"]
-        div_team_times = []
-        for div_idx in range(4):
-            div_team_times.append([[0]*16 for _ in range(self.team_counts[div_idx])])
-        for court in self.days[0].courts:
-            for time, game in enumerate(court):
-                if game.div >= 0:
-                    div_team_times[game.div][game.team1][time] += 1
-                    div_team_times[game.div][game.team2][time] += 1
         for div_idx in range(4):
             out += ["team schedules for division %s" % (div_idx + 1)]
             for team in self.divisions[div_idx].teams:
             ###    history = ','.join(team.times_team_played) qwer
-                hist = ','.join([str(num) for num in div_team_times[div_idx][team.team_idx]])
+                hist = ','.join([str(num) for num in self.div_team_times[div_idx][team.team_idx]])
                 out += ['team %s games w time = %s' % (int(team.team_idx), hist)]
         with open(loc, "w") as csv_file:
             print("\n".join(out), file=csv_file)
@@ -148,9 +140,20 @@ class Schedule(object):
                 min_teams = others - max_teams
                 loss_per_team = pow(min_plays, 2) * min_teams + pow(max_plays, 2) * max_teams
                 self.max_fitness -= loss_per_team * div_teams
+                if div_idx in [1,3]:
+                    div_fitness -= 1 # for their extra game
+                    self.max_fitness -= 1 # for their extra game
                 div_fitness -= loss_per_team * div_teams
                 self.div_max_fitness.append(div_fitness)
         fitness = 0
+        self.div_team_times = []
+        for div_idx in range(4):
+            self.div_team_times.append([[0]*16 for _ in range(self.team_counts[div_idx])])
+        for court in self.days[0].courts:
+            for time, game in enumerate(court):
+                if game.div >= 0:
+                    self.div_team_times[game.div][game.team1][time] += 1
+                    self.div_team_times[game.div][game.team2][time] += 1
         for div_idx, div in enumerate(self.divisions):
             div_fit = -self.div_max_fitness[div_idx]
             for team_idx, team in enumerate(div.teams):
@@ -161,6 +164,9 @@ class Schedule(object):
                         div_fit -= pow(plays, 2)
                     else:
                         div_fit -= 100 * (plays - 1000) # penalty for team v self
+                for play_at_time in self.div_team_times[div_idx][team_idx]:
+                    if play_at_time > 1:
+                        div_fit -= 50
             fitness += div_fit
             div.current_fitness = div_fit
         return fitness
