@@ -171,6 +171,35 @@ class Schedule(object):
             div.current_fitness = div_fit
         return fitness
 
+    def sitting_fitness(self):
+        '''returns the total number of games sat by all teams'''
+        sit_fitness = 0
+        long_sit = 0
+        for div_idx in range(4):
+            for team_idx in range(self.divisions[div_idx].team_count):
+                start = -1
+                consecutive = 0
+                count = 0
+                three_consec_found = False
+                play_v_time = self.div_team_times[div_idx][team_idx]
+                for time, plays in enumerate(play_v_time):
+                    if plays > 0:
+                        if start == -1:
+                            start = time
+                        end = time
+                        count += 1
+                        consecutive = 0
+                        if three_consec_found:
+                            long_sit += 1
+                            three_consec_found = False
+                    else:
+                        if start >= 0:
+                            consecutive += 1
+                    if consecutive == 3:
+                        three_consec_found = True
+                sit_fitness -= float(end - start - count + 1)
+        return round(sit_fitness, 1), long_sit
+
     def add_day_to_division_history(self, day, sign=1):
         for court_idx, court in enumerate(day.courts):
             for game in court:

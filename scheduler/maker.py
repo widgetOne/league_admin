@@ -45,11 +45,15 @@ def compare_days(day1, day2):
             game2_sum += game2.small_str()
         print(game1_sum + "  " + game2_sum)
 
-def make_schedule(team_counts, facilities, tries=500):
+def make_schedule(team_counts, facilities, tries=500, seed=None):
     from schedule import Schedule
     from random import choice, randrange
+    import random
+    if seed != None:
+        random.seed(seed)
     start = epochNow()
     sch = Schedule(team_counts, facilities)
+    sch.seed = seed
     for mut_idx in range(tries):
    #     target1 = randrange(sch.daycount)
    #     target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
@@ -71,7 +75,7 @@ def make_schedule(team_counts, facilities, tries=500):
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
     sch.gen_csv(path + "test.csv")
     sch.gen_audit(path + "test_audit_2016_spr.csv")
-    return fitness
+    return sch
 
 def make_regular_season(team_counts, tries=500, seed=1):
     from facility import SCVL_Facility_Day
@@ -84,12 +88,13 @@ def make_regular_season(team_counts, tries=500, seed=1):
         rec_plays_first = day_idx % 2 == 1
         league = League(ndivs=4, ndays=9, ncourts=5, ntimes=4,
                         team_counts=team_counts, day_type=SCVL_Facility_Day)
-    fitness = make_schedule(team_counts, league.days, tries=tries)
-    return fitness
+    sch = make_schedule(team_counts, league.days, tries=tries)
+    return sch.fitness()
 
 def make_round_robin(team_counts, tries=500, seed=1):
     from facility import SCVL_Round_Robin, League
     import random
+    import pickle
     random.seed(seed)
     rec_plays_first = False
     league = League(ndivs=4, ndays=1, ncourts=5, ntimes=4,
@@ -97,8 +102,74 @@ def make_round_robin(team_counts, tries=500, seed=1):
 
  #   league.days.append(SCVL_Round_Robin(5, 4,
  #                                      team_counts, rec_plays_first, 9))
-    fitness = make_schedule(team_counts, league.days, tries=tries)
-    return fitness
+    best_sit_idx = None
+    best_long_sit_idx = None
+    schedules = get_schedules()
+    initial_seed_schedule_len = len(schedules)
+
+   # schedules = []
+ #   for seed in range(855):
+    for seed in range(10000):
+        print('\nMaking schedule %s.' % seed)
+        if seed >= len(schedules):
+            sch = make_schedule(team_counts, league.days, tries=tries, seed=seed)
+            schedules.append(sch)
+        else:
+            sch = schedules[seed]
+        print("%s - Sitting fitness = %s. " % (seed, sch.sitting_fitness()[0]))
+        print("%s - Min-Sit = %s and Min-long-sit = %s" % (seed, best_sit_idx, best_long_sit_idx))
+        print("%s\n%s" % (seed, seed))
+        if seed > initial_seed_schedule_len and (seed % 20) == 0:
+            save_schedules(schedules)
+    ## schedules.sort(key=lambda x: x.sitting_fitness()[1], reverse=True)
+    for idx, sch in enumerate(schedules):
+
+        if best_sit_idx == None:
+            best_sit_idx = idx
+        elif (sch.sitting_fitness()[0] > schedules[best_sit_idx].sitting_fitness()[0]):
+            best_sit_idx = idx
+
+        if best_long_sit_idx == None:
+            best_long_sit_idx = idx
+        elif sch.sitting_fitness()[1] < schedules[best_long_sit_idx].sitting_fitness()[1]:
+            best_long_sit_idx = idx
+        elif sch.sitting_fitness()[1] == schedules[best_long_sit_idx].sitting_fitness()[1]:
+            if sch.sitting_fitness()[0] > schedules[best_long_sit_idx].sitting_fitness()[0]:
+                best_long_sit_idx = idx
+
+        print('min = %s, min-long = %s' % (best_sit_idx, best_long_sit_idx), end='')
+        print('The sitting fitness of schedule %s is %s. ' % (idx, sch.sitting_fitness()[0]), end="")
+        print('This is %s minutes of sitting per team.' % (sch.sitting_fitness()[0] / 40 * 15), end='')
+        print('long sits = %s' % sch.sitting_fitness()[1])
+    if best_sit_idx != None:
+        report_schedule('min-sit', best_sit_idx, schedules[best_sit_idx])
+    if best_long_sit_idx != None:
+        report_schedule('no-long-sit', best_long_sit_idx, schedules[best_long_sit_idx])
+    save_schedules(schedules)
+
+def save_schedules(schedules):
+    import pickle
+    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
+    round_r_schedules_path = path + 'round-robin-schedules-objects'
+    with open(round_r_schedules_path, 'wb') as pic_file:
+        pickle.dump(schedules, pic_file)
+
+def get_schedules():
+    import pickle
+    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
+    round_r_schedules_path = path + 'round-robin-schedules-objects'
+    with open(round_r_schedules_path, 'rb') as pic_file:
+        schedules = pickle.load(pic_file)
+        return schedules
+
+
+def report_schedule(name, sch_idx, schedule):
+    print("reporting %s from schedule %s with a average sitting time of %s and %s long sits."
+          % (name, sch_idx, (schedule.sitting_fitness()[0] / 40 * 15), schedule.sitting_fitness()[1]))
+    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
+    schedule.gen_csv(path + name + "-simple_2016_spr.csv")
+    schedule.gen_audit(path + name + "-audit_2016_spr.csv")
+
 
 if __name__ == '__main__':
  #   make_round_robin([6,14,14,6], tries=5, seed=5)

@@ -18,7 +18,7 @@ class Game(object):
     def csv_str(self):
         if self.div == -1:
 #            return "SKILLS CLINIC,,"
-            return "WARM-UP,"
+            return "WARM UP,"
         div_csv_str = ['REC', 'INT', 'COM', 'POW', '']
         out = ""
         out += div_csv_str[self.div] + " %s" % (self.team1 + 1)
@@ -75,7 +75,7 @@ class Day(object):
 
     def csv_str(self):
         out = []
-        header = "," + ",".join('CT '+ str(idx+1) + ',Ref' for idx in range(5))
+        header = ",".join('CT '+ str(idx+1) + ',Ref' for idx in range(5))
         out += [header]
         time_count = len(self.courts[0])
         for time in range(len(self.courts[0])):
