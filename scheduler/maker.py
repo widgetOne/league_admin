@@ -45,7 +45,7 @@ def compare_days(day1, day2):
             game2_sum += game2.small_str()
         print(game1_sum + "  " + game2_sum)
 
-def make_schedule(team_counts, facilities, tries=500, seed=None):
+def make_schedule(team_counts, facilities, sch_tries=500, seed=None):
     from schedule import Schedule
     from random import choice, randrange
     import random
@@ -54,7 +54,7 @@ def make_schedule(team_counts, facilities, tries=500, seed=None):
     start = epochNow()
     sch = Schedule(team_counts, facilities)
     sch.seed = seed
-    for mut_idx in range(tries):
+    for mut_idx in range(sch_tries):
    #     target1 = randrange(sch.daycount)
    #     target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
    #     target = [target1, target2]
@@ -77,7 +77,7 @@ def make_schedule(team_counts, facilities, tries=500, seed=None):
     sch.gen_audit(path + "test_audit_2016_spr.csv")
     return sch
 
-def make_regular_season(team_counts, tries=500, seed=1):
+def make_regular_season(team_counts, sch_tries=500, seed=1):
     from facility import SCVL_Facility_Day
     from facility import League
     days = []
@@ -85,13 +85,14 @@ def make_regular_season(team_counts, tries=500, seed=1):
     random.seed(seed)
     league = League
     for day_idx in range(9):
-        rec_plays_first = day_idx % 2 == 1
         league = League(ndivs=4, ndays=9, ncourts=5, ntimes=4,
                         team_counts=team_counts, day_type=SCVL_Facility_Day)
-    sch = make_schedule(team_counts, league.days, tries=tries)
-    return sch.fitness()
+    league.debug_print()
+  #  sch = make_schedule(team_counts, league.days, tries=sch_tries)
+  #  return sch.fitness()
 
-def make_round_robin(team_counts, tries=500, seed=1):
+def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
+                     total_sch=2):
     from facility import SCVL_Round_Robin, League
     import random
     import pickle
@@ -109,17 +110,17 @@ def make_round_robin(team_counts, tries=500, seed=1):
 
    # schedules = []
  #   for seed in range(855):
-    for seed in range(10000):
+    for seed in range(total_sch):
         print('\nMaking schedule %s.' % seed)
         if seed >= len(schedules):
-            sch = make_schedule(team_counts, league.days, tries=tries, seed=seed)
+            sch = make_schedule(team_counts, league.days, tries=sch_tries, seed=seed)
             schedules.append(sch)
         else:
             sch = schedules[seed]
         print("%s - Sitting fitness = %s. " % (seed, sch.sitting_fitness()[0]))
         print("%s - Min-Sit = %s and Min-long-sit = %s" % (seed, best_sit_idx, best_long_sit_idx))
         print("%s\n%s" % (seed, seed))
-        if seed > initial_seed_schedule_len and (seed % 20) == 0:
+        if save_progress and seed > initial_seed_schedule_len and (seed % 20) == 0:
             save_schedules(schedules)
     ## schedules.sort(key=lambda x: x.sitting_fitness()[1], reverse=True)
     for idx, sch in enumerate(schedules):
@@ -145,23 +146,28 @@ def make_round_robin(team_counts, tries=500, seed=1):
         report_schedule('min-sit', best_sit_idx, schedules[best_sit_idx])
     if best_long_sit_idx != None:
         report_schedule('no-long-sit', best_long_sit_idx, schedules[best_long_sit_idx])
-    save_schedules(schedules)
+    if save_progress:
+        save_schedules(schedules)
+    return schedules[best_sit_idx]
 
 def save_schedules(schedules):
     import pickle
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
-    round_r_schedules_path = path + 'round-robin-schedules-objects'
+    round_r_schedules_path = path + 'new-round-robin-schedules-objects'
     with open(round_r_schedules_path, 'wb') as pic_file:
         pickle.dump(schedules, pic_file)
 
 def get_schedules():
+    import os
     import pickle
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
-    round_r_schedules_path = path + 'round-robin-schedules-objects'
-    with open(round_r_schedules_path, 'rb') as pic_file:
-        schedules = pickle.load(pic_file)
-        return schedules
-
+    round_r_schedules_path = path + 'new-round-robin-schedules-objects'
+    if os.path.isfile(round_r_schedules_path):
+        with open(round_r_schedules_path, 'rb') as pic_file:
+            schedules = pickle.load(pic_file)
+    else:
+        schedules = []
+    return schedules
 
 def report_schedule(name, sch_idx, schedule):
     print("reporting %s from schedule %s with a average sitting time of %s and %s long sits."
@@ -173,7 +179,7 @@ def report_schedule(name, sch_idx, schedule):
 
 if __name__ == '__main__':
  #   make_round_robin([6,14,14,6], tries=5, seed=5)
-    make_round_robin([6,13,14,7], tries=9, seed=5)
+    make_regular_season([6,13,14,7], sch_tries=9, seed=5)
 #
 
 
