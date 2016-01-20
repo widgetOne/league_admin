@@ -130,28 +130,31 @@ class Schedule(object):
                 div_fitness = 0
                 if (self.days[0].facilities.refs == True):
                     # adjust fitness to use total games
-                    min_ref = self.games_per_team // 2
-                    max_ref = self.games_per_team // 2 + self.games_per_team % 2
-                    min_ref_teams = div_teams // 2
-                    max_ref_teams = div_teams - min_ref_teams
+                    total_reffings = total_games[div_idx]
+                    max_ref_teams = total_reffings % div_teams
+                    min_ref_teams = div_teams - max_ref_teams
+                    max_ref = total_reffings // div_teams
+                    min_ref = max_ref + 1
                     div_ref_max_fitness = min_ref_teams * pow(min_ref, 2) + \
                                           max_ref_teams * pow(max_ref, 2)
                     div_fitness -= div_ref_max_fitness
-                others = div_teams - 1
-                min_plays = self.games_per_team // others
+                total_plays = total_games[div_idx]
+                total_combinations = div_teams * (div_teams - 1) / 2
+                min_plays = total_plays // total_combinations
                 max_plays = min_plays + 1
-                max_teams = self.games_per_team - others * min_plays
-                min_teams = others - max_teams
-                loss_per_team = pow(min_plays, 2) * min_teams + pow(max_plays, 2) * max_teams
+                max_count = total_plays % total_combinations
+                min_count = total_combinations - max_count
+                loss_per_team = (pow(min_plays, 2) * min_count +
+                                 pow(max_plays, 2) * max_count) * 2
             #    if div_idx in [1,3]: # todo, rectify this round robin hack with
             #                         # the regular season schedule logic
             #        ## Add something here about summing up fac games
             #        div_fitness -= 1 # for their extra game
             #        self.max_fitness -= 1 # for their extra game
             #        # todo, make this more unit testible
-                div_fitness -= loss_per_team * div_teams
+                div_fitness -= loss_per_team
                 self.div_max_fitness.append(div_fitness)
-                self.max_fitness -= div_fitness
+                self.max_fitness += div_fitness
         fitness = 0
         self.div_team_times = []
         for div_idx in range(4):
