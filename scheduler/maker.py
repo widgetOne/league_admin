@@ -45,14 +45,15 @@ def compare_days(day1, day2):
             game2_sum += game2.small_str()
         print(game1_sum + "  " + game2_sum)
 
-def make_schedule(team_counts, facilities, sch_tries=500, seed=None):
+def make_schedule(team_counts, league, sch_tries=500, seed=None):
     from schedule import Schedule
     from random import choice, randrange
     import random
+    facilities = league.days
     if seed != None:
         random.seed(seed)
     start = epochNow()
-    sch = Schedule(team_counts, facilities)
+    sch = Schedule(league, team_counts, facilities)
     sch.seed = seed
     for mut_idx in range(sch_tries):
         target1 = randrange(sch.daycount)
@@ -69,7 +70,7 @@ def make_schedule(team_counts, facilities, sch_tries=500, seed=None):
         if (fitness == 0):
             print("correct schedule found!!!!!")
             break
-    fitness = sch.fitness()
+    fitness = sch.fitness(league.games_per_div)
     end = epochNow()
     print("total run time was %s second" % (float(end - start)))
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
@@ -86,8 +87,8 @@ def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
     league = League(ndivs=4, ndays=ndays, ncourts=5, ntimes=4,
                     team_counts=team_counts, day_type=SCVL_Facility_Day)
     league.debug_print()
-    sch = make_schedule(team_counts, league.days, sch_tries=sch_tries)
-    return sch.fitness()
+    sch = make_schedule(team_counts, league, sch_tries=sch_tries)
+    return sch.fitness(league.games_per_div)
 
 def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
                      total_sch=2):
@@ -111,7 +112,7 @@ def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
     for seed in range(total_sch):
         print('\nMaking schedule %s.' % seed)
         if seed >= len(schedules):
-            sch = make_schedule(team_counts, league.days, tries=sch_tries, seed=seed)
+            sch = make_schedule(team_counts, league, tries=sch_tries, seed=seed)
             schedules.append(sch)
         else:
             sch = schedules[seed]
@@ -178,8 +179,9 @@ def report_schedule(name, sch_idx, schedule):
 if __name__ == '__main__':
  #   make_round_robin([6,14,14,6], tries=5, seed=5)
  #   make_regular_season([6,13,14,7], ndays=9, sch_tries=4, seed=5)
-    make_regular_season([6,12,12,6], ndays=9, sch_tries=7000, seed=5)
- #   make_regular_season([6,14,14,6], ndays=9, sch_tries=4, seed=5)
+ #   make_regular_season([6,12,12,6], ndays=9, sch_tries=7000, seed=5)
+ #   make_regular_season([6,14,14,6], ndays=9, sch_tries=400, seed=5)
+    make_regular_season([6,13,14,7], ndays=9, sch_tries=400, seed=5)
 #
 
 

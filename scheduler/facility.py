@@ -8,11 +8,10 @@ class League(object):
         self.ntimes = ntimes
         self.team_counts = team_counts
         self.day_type = day_type
-        self.games_per_div = [0] * 4
         self.days = []
         if (ncourts * ntimes * 2 < sum(team_counts)):
             raise(ValueError("This schedule has too many teams for its courts"))
-        self.games_per_div = [0 for _ in range(ndivs)]
+        self.games_per_div = [0] * 4
         for day_idx in range(ndays):
             rec_first = day_idx % 2 == 1
             day = SCVL_Facility_Day(court_count=ncourts, time_count=ntimes,

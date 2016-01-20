@@ -10,13 +10,14 @@ def list_filter(primary, filter):
 class Schedule(object):
     time_string = ['6pm','7pm','8pm','9pm']
     rec_first = True
-    def __init__(self, team_counts, facs):
+    def __init__(self, league, team_counts, facs):
         from model import Division
         self.team_counts = team_counts
         self.divisions = [Division(count) for count in team_counts]
         self.division_count = len(team_counts)
         self.max_fitness = 0
         self.daycount = len(facs)
+        self.league = league
         self.courts = 5
         self.times = 4
         self.games_per_team = self.daycount
@@ -78,7 +79,7 @@ class Schedule(object):
         from copy import deepcopy
         origional_days = deepcopy(self.days)
         origional_division = deepcopy(self.divisions)
-        origional_fitness = self.fitness()
+        origional_fitness = self.fitness(self.league.games_per_div)
         for day_idx in day_indexs:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexs:
@@ -86,7 +87,7 @@ class Schedule(object):
                                     self.days[day_idx])
             self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
-        new_fitness = self.fitness()
+        new_fitness = self.fitness(self.league.games_per_div)
     #    print("old fitness was %s and new fitness is %s: "
     #          % (origional_fitness, new_fitness), end="")
         if origional_fitness > new_fitness:
@@ -109,7 +110,7 @@ class Schedule(object):
                     if old_day != None:
                         day.import_div_games(div_idx, old_day)
                         continue
-                day.schedule_div_ref_then_play(fac, div_idx, div)  # YOYO
+                day.schedule_div_play_then_div(fac, div_idx, div)  # YOYO
          ###       day.schedule_div_play_then_ref(fac, div_idx, div)  # todo: need a perminent solution here
                 # probably an efficient hybrid methods for round robin and regular
 
@@ -121,13 +122,14 @@ class Schedule(object):
                 best_day = day
         return best_day
 
-    def fitness(self):
+    def fitness(self, total_games):
         from math import pow
         if self.max_fitness == 0:
             self.div_max_fitness = []
             for div_idx, div_teams in enumerate(self.team_counts):
                 div_fitness = 0
                 if (self.days[0].facilities.refs == True):
+                    # adjust fitness to use total games
                     min_ref = self.games_per_team // 2
                     max_ref = self.games_per_team // 2 + self.games_per_team % 2
                     min_ref_teams = div_teams // 2
