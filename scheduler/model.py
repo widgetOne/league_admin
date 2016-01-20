@@ -126,8 +126,8 @@ class Day(object):
         from random import shuffle, choice
         from schedule import list_filter
         locs, times = fac.div_times_locs[div_idx]
-        games = div.team_count // 2
         game_slots = fac.div_games[div_idx].copy()
+        games = len(game_slots)
         shuffle(game_slots)
         ref_slots = game_slots.copy()
         teams_to_play = list(range(div.team_count))
@@ -159,14 +159,16 @@ class Day(object):
             if self.courts[court][time].team2 < 0:
                 team1 = div.teams[self.courts[court][time].team1]
                 best_opponent = team1.teams_least_played()
-                best_list = list_filter(teams_to_play, best_opponent)
+                best_list = list_filter(teams_to_play, div.teams_w_least_play())
+                best_list = list_filter(best_list, best_opponent)
                 team2_idx = choice(best_list)
                 self.courts[court][time].team2 = team2_idx
                 del teams_to_play[teams_to_play.index(team2_idx)]
             if self.courts[court][time].team1 < 0:
                 team2_obj = div.teams[self.courts[court][time].team1]
                 best_opponent = team2_obj.teams_least_played()
-                best_list = list_filter(teams_to_play, best_opponent)
+                best_list = list_filter(teams_to_play, div.teams_w_least_play())
+                best_list = list_filter(best_list, best_opponent)
                 team1_idx = choice(best_list)
                 self.courts[court][time].team1 = team1_idx
                 del teams_to_play[teams_to_play.index(team1_idx)]
@@ -181,7 +183,8 @@ class Day(object):
         ref_slots = game_slots.copy()
         teams_to_play = list(range(div.team_count))
         if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
-            teams_to_play.append(choice(div.teams_w_least_play()))
+            teams_w_least_play = div.teams_w_least_play()
+            teams_to_play.append(choice(teams_w_least_play))
         if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
             raise(ValueError('Something unexpected happened in scheduling\n' +
                              'it is assumed that all days only have 1 team ' +
@@ -209,6 +212,7 @@ class Day(object):
                 team1 = div.teams[self.courts[court][time].team1]
                 best_opponent = team1.teams_least_played()
                 best_list = list_filter(teams_to_play, best_opponent)
+                best_list = list_filter(best_list, div.teams_w_least_play())
                 team2_idx = choice(best_list)
                 self.courts[court][time].team2 = team2_idx
                 del teams_to_play[teams_to_play.index(team2_idx)]
@@ -216,6 +220,7 @@ class Day(object):
                 team2_obj = div.teams[self.courts[court][time].team1]
                 best_opponent = team2_obj.teams_least_played()
                 best_list = list_filter(teams_to_play, best_opponent)
+                best_list = list_filter(best_list, div.teams_w_least_play())
                 team1_idx = choice(best_list)
                 self.courts[court][time].team1 = team1_idx
                 del teams_to_play[teams_to_play.index(team1_idx)]

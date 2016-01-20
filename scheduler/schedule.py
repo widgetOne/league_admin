@@ -58,13 +58,13 @@ class Schedule(object):
                 team = self.divisions[div_idx].teams[team_idx]
                 row = ",".join([str(num) for num in team.times_team_played])
                 out += [row]
-        out += ["team play w time"]
-        for div_idx in range(4):
-            out += ["team schedules for division %s" % (div_idx + 1)]
-            for team in self.divisions[div_idx].teams:
-            ###    history = ','.join(team.times_team_played) qwer
-                hist = ','.join([str(num) for num in self.div_team_times[div_idx][team.team_idx]])
-                out += ['team %s games w time = %s' % (int(team.team_idx), hist)]
+    #    out += ["team play w time"]
+    #    for div_idx in range(4):
+    #        out += ["team schedules for division %s" % (div_idx + 1)]
+    #        for team in self.divisions[div_idx].teams:
+    #        ###    history = ','.join(team.times_team_played) qwer
+    #            hist = ','.join([str(num) for num in self.div_team_times[div_idx][team.team_idx]])
+    #            out += ['team %s games w time = %s' % (int(team.team_idx), hist)]
         with open(loc, "w") as csv_file:
             print("\n".join(out), file=csv_file)
 
@@ -133,8 +133,8 @@ class Schedule(object):
                     total_reffings = total_games[div_idx]
                     max_ref_teams = total_reffings % div_teams
                     min_ref_teams = div_teams - max_ref_teams
-                    max_ref = total_reffings // div_teams
-                    min_ref = max_ref + 1
+                    min_ref = total_reffings // div_teams
+                    max_ref = min_ref + 1
                     div_ref_max_fitness = min_ref_teams * pow(min_ref, 2) + \
                                           max_ref_teams * pow(max_ref, 2)
                     div_fitness -= div_ref_max_fitness
@@ -144,15 +144,15 @@ class Schedule(object):
                 max_plays = min_plays + 1
                 max_count = total_plays % total_combinations
                 min_count = total_combinations - max_count
-                loss_per_team = (pow(min_plays, 2) * min_count +
-                                 pow(max_plays, 2) * max_count) * 2
+                loss_to_play = (pow(min_plays, 2) * min_count +
+                                pow(max_plays, 2) * max_count) * 2
             #    if div_idx in [1,3]: # todo, rectify this round robin hack with
             #                         # the regular season schedule logic
             #        ## Add something here about summing up fac games
             #        div_fitness -= 1 # for their extra game
             #        self.max_fitness -= 1 # for their extra game
             #        # todo, make this more unit testible
-                div_fitness -= loss_per_team
+                div_fitness -= loss_to_play
                 self.div_max_fitness.append(div_fitness)
                 self.max_fitness += div_fitness
         fitness = 0
@@ -165,6 +165,7 @@ class Schedule(object):
                     self.div_team_times[game.div][game.team1][time] += 1
                     self.div_team_times[game.div][game.team2][time] += 1
         for div_idx, div in enumerate(self.divisions):
+            games_played = 0
             div_fit = -self.div_max_fitness[div_idx]
             for team_idx, team in enumerate(div.teams):
                 if (self.days[0].facilities.refs == True):
@@ -172,6 +173,7 @@ class Schedule(object):
                 for plays in team.times_team_played:
                     if plays < 1000:
                         div_fit -= pow(plays, 2)
+                        games_played += plays
                     else:
                         div_fit -= 100 * (plays - 1000) # penalty for team v self
                 for play_at_time in self.div_team_times[div_idx][team_idx]:
