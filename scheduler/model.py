@@ -181,7 +181,7 @@ class Day(object):
             teams_to_play += [choice(range(div.team_count))]
 
         if len(teams_to_play) // 2 != games:
-            print("Error: in division %s there are %s teams and %s games" %
+            print("Model.py Error: in division %s there are %s teams and %s games" %
                   (div_idx, div.team_count, games))
             print("There should br %s games" % (div.team_count * 2))
         # fill in players

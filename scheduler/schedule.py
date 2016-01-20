@@ -16,10 +16,10 @@ class Schedule(object):
         self.divisions = [Division(count) for count in team_counts]
         self.division_count = len(team_counts)
         self.max_fitness = 0
-        self.daycount = 1 # qwer yoyo
+        self.daycount = len(facs)
         self.courts = 5
         self.times = 4
-        self.games_per_team = 3
+        self.games_per_team = self.daycount
 
         self.div_max_fitness = [-1 for _ in range(4)]
         self.enhance_success = 0
@@ -109,8 +109,9 @@ class Schedule(object):
                     if old_day != None:
                         day.import_div_games(div_idx, old_day)
                         continue
-     ###           day.schedule_div_ref_then_play(fac, div_idx, div)
-                day.schedule_div_play_then_ref(fac, div_idx, div)
+                day.schedule_div_ref_then_play(fac, div_idx, div)  # YOYO
+         ###       day.schedule_div_play_then_ref(fac, div_idx, div)  # todo: need a perminent solution here
+                # probably an efficient hybrid methods for round robin and regular
 
             if best_day:
                 best_day_fitness = best_day.fitness(self.divisions)
@@ -124,27 +125,31 @@ class Schedule(object):
         from math import pow
         if self.max_fitness == 0:
             self.div_max_fitness = []
-            if (self.days[0].facilities.refs == True):
-                min_ref = self.games_per_team // 2
-                max_ref = self.games_per_team // 2 + self.games_per_team % 2
-                ref_fit_per_team = pow(min_ref, 2) + pow(max_ref, 2)
-                self.max_fitness -= ref_fit_per_team * sum(self.team_counts) / 2.0
             for div_idx, div_teams in enumerate(self.team_counts):
                 div_fitness = 0
                 if (self.days[0].facilities.refs == True):
-                    div_fitness += -ref_fit_per_team * div_teams / 2
+                    min_ref = self.games_per_team // 2
+                    max_ref = self.games_per_team // 2 + self.games_per_team % 2
+                    min_ref_teams = div_teams // 2
+                    max_ref_teams = div_teams - min_ref_teams
+                    div_ref_max_fitness = min_ref_teams * pow(min_ref, 2) + \
+                                          max_ref_teams * pow(max_ref, 2)
+                    div_fitness -= div_ref_max_fitness
                 others = div_teams - 1
                 min_plays = self.games_per_team // others
                 max_plays = min_plays + 1
                 max_teams = self.games_per_team - others * min_plays
                 min_teams = others - max_teams
                 loss_per_team = pow(min_plays, 2) * min_teams + pow(max_plays, 2) * max_teams
-                self.max_fitness -= loss_per_team * div_teams
-                if div_idx in [1,3]:
-                    div_fitness -= 1 # for their extra game
-                    self.max_fitness -= 1 # for their extra game
+            #    if div_idx in [1,3]: # todo, rectify this round robin hack with
+            #                         # the regular season schedule logic
+            #        ## Add something here about summing up fac games
+            #        div_fitness -= 1 # for their extra game
+            #        self.max_fitness -= 1 # for their extra game
+            #        # todo, make this more unit testible
                 div_fitness -= loss_per_team * div_teams
                 self.div_max_fitness.append(div_fitness)
+                self.max_fitness -= div_fitness
         fitness = 0
         self.div_team_times = []
         for div_idx in range(4):

@@ -55,13 +55,13 @@ def make_schedule(team_counts, facilities, sch_tries=500, seed=None):
     sch = Schedule(team_counts, facilities)
     sch.seed = seed
     for mut_idx in range(sch_tries):
-   #     target1 = randrange(sch.daycount)
-   #     target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
-   #     target = [target1, target2]
-   #     sch.try_remake_days(target)
-   #     target = [randrange(9)]
-   #     sch.try_remake_days(target)
-   #     count = 1 + randrange(4)
+        target1 = randrange(sch.daycount)
+        target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
+        target = [target1, target2]
+        sch.try_remake_days(target)
+        target = [randrange(9)]
+        sch.try_remake_days(target)
+        count = 1 + randrange(4)
         count = 1
         fitness = sch.remake_worst_day(count)
         print("fitness = %s while on mutation step %s: " % (fitness, mut_idx), end="")
@@ -77,19 +77,17 @@ def make_schedule(team_counts, facilities, sch_tries=500, seed=None):
     sch.gen_audit(path + "test_audit_2016_spr.csv")
     return sch
 
-def make_regular_season(team_counts, sch_tries=500, seed=1):
+def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
     from facility import SCVL_Facility_Day
     from facility import League
     days = []
     import random
     random.seed(seed)
-    league = League
-    for day_idx in range(9):
-        league = League(ndivs=4, ndays=9, ncourts=5, ntimes=4,
-                        team_counts=team_counts, day_type=SCVL_Facility_Day)
+    league = League(ndivs=4, ndays=ndays, ncourts=5, ntimes=4,
+                    team_counts=team_counts, day_type=SCVL_Facility_Day)
     league.debug_print()
-  #  sch = make_schedule(team_counts, league.days, tries=sch_tries)
-  #  return sch.fitness()
+    sch = make_schedule(team_counts, league.days, sch_tries=sch_tries)
+    return sch.fitness()
 
 def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
                      total_sch=2):
@@ -179,7 +177,9 @@ def report_schedule(name, sch_idx, schedule):
 
 if __name__ == '__main__':
  #   make_round_robin([6,14,14,6], tries=5, seed=5)
-    make_regular_season([6,13,14,7], sch_tries=9, seed=5)
+ #   make_regular_season([6,13,14,7], ndays=9, sch_tries=4, seed=5)
+    make_regular_season([6,12,12,6], ndays=9, sch_tries=7000, seed=5)
+ #   make_regular_season([6,14,14,6], ndays=9, sch_tries=4, seed=5)
 #
 
 

@@ -105,6 +105,7 @@ class Facility_Day(object):
         self.court_divisions[court][time] = div_idx
         self.div_times_games[div_idx].append((court, time))
         self.games_per_division[div_idx] += 1
+        self.div_games[div_idx].append((court, time))
 
     def add_odd_games(self, div_missing_games, games_per_div, days_to_add):
         for court, time in self.open_slots():
@@ -138,8 +139,8 @@ class SCVL_Facility_Day(Facility_Day):
         self.team_counts = team_counts
         self.rec_first = rec_first
         self.games_per_division = [0] * 4
-        self.refs = True
         super(SCVL_Facility_Day, self).__init__(court_count, time_count)
+        self.refs = True
 
     def set_division(self):
         from random import choice
@@ -162,7 +163,7 @@ class SCVL_Facility_Day(Facility_Day):
                             (outer, inter_power_times),
                              ]
         self.alternate_div_loc = [inner, outer, outer, inner]
-        self.div_games = []
+        self.div_games = [[] for _ in range(4)]
         self.div_times_games = [[] for _ in range(4)]
         spares_rc_ip = [[] for _ in range(2)] # note rec and comp share slots, etc
         spare_slots = spares_rc_ip + spares_rc_ip
@@ -179,7 +180,6 @@ class SCVL_Facility_Day(Facility_Day):
                 rm_loc = choice(range(games))
                 spare_slots[spare_div[div_idx]].append(game_slots[rm_loc])
                 del game_slots[rm_loc]
-            self.div_games.append(game_slots)
             for court, time in game_slots:
                 self.add_game(court, time, div_idx)
         # filling in gaps
