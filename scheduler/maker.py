@@ -74,8 +74,9 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     end = epochNow()
     print("total run time was %s second" % (float(end - start)))
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
-    sch.gen_csv(path + "test.csv")
-    sch.gen_audit(path + "test_audit_2016_spr.csv")
+    tag = '2016-01-21b_'
+    sch.gen_csv(path + tag + "simple.csv")
+    sch.gen_audit(path + tag + "audit_2016_spr.csv")
     return sch
 
 def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
@@ -177,11 +178,14 @@ def report_schedule(name, sch_idx, schedule):
 
 
 if __name__ == '__main__':
+    import os
  #   make_round_robin([6,14,14,6], tries=5, seed=5)
  #   make_regular_season([6,13,14,7], ndays=9, sch_tries=4, seed=5)
  #   make_regular_season([6,12,12,6], ndays=9, sch_tries=7000, seed=5)
  #   make_regular_season([6,14,14,6], ndays=9, sch_tries=400, seed=5)
     make_regular_season([6,13,14,7], ndays=9, sch_tries=10000, seed=5)
+    os.system('say "schedule creation is complete"')
+
 #
 
 

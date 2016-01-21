@@ -40,17 +40,27 @@ class Schedule(object):
         with open(loc, "w") as csv_file:
             print("\n".join(out), file=csv_file)
 
-    def gen_audit(self, loc):
+    def make_audit_structures(self):
         from copy import deepcopy
         rolling_sum_play = []
         rolling_sum_ref = []
+        total_use = []
         for div_idx in range(4):
             div_arr = [0] * self.team_counts[div_idx]
             rolling_sum_play.append(deepcopy(div_arr))
             rolling_sum_ref.append(deepcopy(div_arr))
-        out = []
+            total_use.append(deepcopy(div_arr))
+        return rolling_sum_play, rolling_sum_ref, total_use
+
+    def gen_audit(self, loc):
+        from copy import deepcopy
+        rolling_sum_play, rolling_sum_ref, total_use = self.make_audit_structures()
+        out = ['audit of cumulative plays and refs by team']
         for day in self.days:
             out += day.audit_view(rolling_sum_play, rolling_sum_ref)
+        out += ['audit report of total play by each team at each time']
+        for day in self.days:
+            out += day.audit_total_use_view(total_use)
         out += []
         out += ['final reports']
         play_str = ''
@@ -132,9 +142,16 @@ class Schedule(object):
                     if old_day != None:
                         day.import_div_games(div_idx, old_day)
                         continue
-                day.schedule_div_play_then_div(fac, div_idx, div)  # YOYO
+        #        day.schedule_div_ref_then_players(fac, div_idx, div)  # YOYO
+                day.draft_actual_play_then_ref(fac, div_idx, div)  # qwer
          ###       day.schedule_div_play_then_ref(fac, div_idx, div)  # todo: need a perminent solution here
                 # probably an efficient hybrid methods for round robin and regular
+            if True:
+                asd, sdf, dfg = self.make_audit_structures()
+                out = []
+                out += day.audit_view(asd, sdf)
+                out += day.audit_total_use_view(dfg)
+                print('\n'.join(out))
 
             if best_day:
                 best_day_fitness = best_day.fitness(self.divisions)
@@ -217,6 +234,23 @@ class Schedule(object):
             bye_fitness = 0
             ref_debug = ''
             div_fit = -self.div_max_fitness[div_idx]
+            team_count = len(div.teams)
+            # double book penalty
+            double_use_penalty = 0
+            for day in self.days:
+                for time in range(len(day.courts[0])):
+                    teams_used = [0] * team_count
+                    for court in range(len(day.courts)):
+                        game = day.courts[court][time]
+                        if game.div == div_idx:
+                            teams_used[game.team1] += 1
+                            teams_used[game.team2] += 1
+                            teams_used[game.ref] += 1
+                    for team_idx, use_count in enumerate(teams_used):
+                        if use_count > 1:
+                            double_use_penalty -= 100
+                            print('div %s team %s is used %s'
+                                  % (div_idx, team_idx, use_count))
             for team_idx, team in enumerate(div.teams):
                 if (self.days[0].facilities.refs == True):
                     div_ref_actual_fitness -= pow(team.refs, 2)
@@ -245,6 +279,7 @@ class Schedule(object):
     #                if bye_count > 1:
     #                    print('team %s has too many byes: %s' % (team_idx, bye_count))
                     bye_fitness -= pow(bye_count, 2) * bye_worth
+            div_fit += double_use_penalty
             div_fit += bye_fitness
             div_fit += div_total_team_play_fitness
             div_fit += div_plays_vs_fitness

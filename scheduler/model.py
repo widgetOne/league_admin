@@ -53,6 +53,7 @@ class Day(object):
 
     def div_fitness(self, divisions, div_idx):
         fitness = 0
+        team_count = len(divisions[div_idx].teams)
         played_at_time = [0] * len(divisions[div_idx].teams)
         div = divisions[div_idx]
         new_games = [(sum(team.times_team_played)-1000) for team in div.teams]
@@ -71,7 +72,21 @@ class Day(object):
                     if team1 == team2:
                         fitness -= 100
         for count in new_games:
-            fitness -= (old_count1 + old_count2) * 2 + 2
+            fitness -= count * count
+        for time in range(len(self.courts[0])):
+            teams_used = [0] * team_count
+            for court in range(len(self.courts)):
+                game = self.courts[court][time]
+                if game.div == div_idx:
+                    teams_used[game.team1] += 1
+                    teams_used[game.team2] += 1
+                    teams_used[game.ref] += 1
+            for team_idx, use_count in enumerate(teams_used):
+                if use_count > 1:
+                    double_use_penalty = 100
+                    fitness -= double_use_penalty
+                    print('div %s team %s is used %s at time %s on day %s'
+                          % (div_idx, team_idx, use_count, time, self.num))
         return fitness
 
     def team_shuffle(self):
@@ -119,6 +134,34 @@ class Day(object):
         out += ["," * 2 * 5]
         return out
 
+    def audit_total_use_view(self, total_use):
+        out = []
+    #    header = "," + ",".join('CT '+ str(idx + 1) + ',Ref' for idx in range(5))
+        header = ",".join('CT '+ str(idx + 1) for idx in range(5))
+        header += ",  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums"
+        out += [header]
+        time_count = len(self.courts[0])
+        for time in range(len(self.courts[0])):
+            for time_idx in range(len(total_use)):
+                for team_idx in range(len(total_use[time_idx])):
+                    total_use[time_idx][team_idx] = 0
+            row = ""
+            for court in range(len(self.courts)):
+                game = self.courts[court][time]
+                game_str = game.csv_str_w_ref()
+                if (game.div >= 0):
+                    if (game.ref >= 0):
+                        total_use[game.div][game.ref] += 1
+                        total_use[game.div][game.team1] += 1
+                        total_use[game.div][game.team2] += 1
+                row += game_str
+            use_str = ""
+            for div_idx in range(4):
+                use_str += ",,Total Use," + ",".join([(str(num)) for num in total_use[div_idx]])
+            out += [row + use_str]
+        out += ["," * 2 * 5]
+        return out
+
     def import_div_games(self, div_idx, old_day):
         from copy import deepcopy
         # copy forward the games from the old day in this div
@@ -127,7 +170,7 @@ class Day(object):
                 if old_day.courts[court_idx][time_idx].div == div_idx:
                     self.courts[court_idx][time_idx] = deepcopy(game)
 
-    def schedule_div_play_then_div(self, fac, div_idx, div):
+    def schedule_div_ref_then_players(self, fac, div_idx, div):
         from random import shuffle, choice
         from schedule import list_filter
         locs, times = fac.div_times_locs[div_idx]
@@ -181,53 +224,73 @@ class Day(object):
     def draft_actual_play_then_ref(self, fac, div_idx, div):
         from random import shuffle, choice
         from schedule import list_filter
+        #print('new method', end='') qwer
         locs, times = fac.div_times_locs[div_idx]
         game_slots = fac.div_games[div_idx].copy()
         games = len(game_slots)
         shuffle(game_slots)
         ref_slots = game_slots.copy()
+        extra_player = False
         teams_to_play = list(range(div.team_count))
+        shuffle(teams_to_play)
         if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
+            extra_player = True
             teams_to_play.append(choice(div.teams_w_least_play()))
         if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
             raise(ValueError('Something unexpected happened in scheduling\n' +
                              'it is assumed that all days only have 1 team ' +
                              'that gets a bye.'))
+        ##################################
+        done = False
+        ## new logic
         # add refs
-        for game_idx in range(games):
-            short_ref_teams = list_filter(teams_to_play, div.teams_w_least_ref())
-            current_team_num = choice(short_ref_teams)
-            court, ref_time = game_slots[game_idx]
-            self.courts[court][ref_time].ref = current_team_num
-            self.courts[court][ref_time].div = div_idx
+        teams_playing_w_time = [[],[],[],[]]
+        for play_time in times:
+            for court, time in game_slots:
+                if play_time == time:
+                    game = self.courts[court][time]
+                    # team 1
+                    if extra_player:
+                        next_team1 = teams_to_play[-1]
+                        game.team1 = next_team1
+                        del teams_to_play[-1]
+                        extra_player = False
+                    else:
+                        best_list = [idx for idx in teams_to_play
+                                     if idx not in teams_playing_w_time[time]]
+                        best_list = list_filter(best_list, div.teams_w_least_play())
+                        next_team1 = choice(best_list)
+                        game.team1 = next_team1
+                        teams_playing_w_time[time].append(next_team1)
+                        teams_to_play = [idx for idx in teams_to_play
+                                         if idx != next_team1]
+                    # team 2
+                    best_list = [idx for idx in teams_to_play
+                                 if idx not in teams_playing_w_time[time]]
+                    best_opponent = div.teams[next_team1].teams_least_played()
+                    best_list = list_filter(best_list, best_opponent)
+                    best_list = list_filter(best_list, div.teams_w_least_play())
+                    next_team2 = choice(best_list)
+                    game.team2 = next_team2
+                    teams_playing_w_time[time].append(next_team2)
+                    teams_to_play = [idx for idx in teams_to_play
+                                     if idx != next_team2]
+                    self.courts[court][time] = game
+        # place refs
+        teams_reffing_w_time = [[],[],[],[]]
+        for court, ref_time in game_slots:
             play_time = times[(times.index(ref_time) + 1) % len(times)]
-            if (court, play_time) in game_slots:
-                self.courts[court][play_time].team1 = current_team_num
-            else:
-                while (court, play_time) not in game_slots:
-                    court = (court + 1) % 5
-                self.courts[court][play_time].team2 = current_team_num
-            del teams_to_play[teams_to_play.index(current_team_num)]
-
-        # fill in players
-        for game_idx in range(games):
-            court, time = game_slots[game_idx]
-            if self.courts[court][time].team2 < 0:
-                team1 = div.teams[self.courts[court][time].team1]
-                best_opponent = team1.teams_least_played()
-                best_list = list_filter(teams_to_play, div.teams_w_least_play())
-                best_list = list_filter(best_list, best_opponent)
-                team2_idx = choice(best_list)
-                self.courts[court][time].team2 = team2_idx
-                del teams_to_play[teams_to_play.index(team2_idx)]
-            if self.courts[court][time].team1 < 0:
-                team2_obj = div.teams[self.courts[court][time].team1]
-                best_opponent = team2_obj.teams_least_played()
-                best_list = list_filter(teams_to_play, div.teams_w_least_play())
-                best_list = list_filter(best_list, best_opponent)
-                team1_idx = choice(best_list)
-                self.courts[court][time].team1 = team1_idx
-                del teams_to_play[teams_to_play.index(team1_idx)]
+            pot_refs = teams_playing_w_time[play_time]
+            pot_refs = [ref for ref in pot_refs
+                        if ref not in teams_reffing_w_time[ref_time]]
+            pot_refs = [ref for ref in pot_refs
+                        if ref not in teams_playing_w_time[ref_time]]
+            ref = choice(pot_refs)
+            self.courts[court][ref_time].ref = ref
+            self.courts[court][ref_time].div = div_idx
+            teams_reffing_w_time[ref_time].append(ref)
+           ## end new logic
+            ##################################
 
     def schedule_div_ref_then_play(self, fac, div_idx, div):
         from random import shuffle, choice
