@@ -193,8 +193,7 @@ class SCVL_Facility_Day(Facility_Day):
             for idx in range(self.team_counts[div_idx] // 2 -
                                              len(locs) * len(times) ):
                 if len(spare_slots[div_idx]) < 1:
-                    break  ## qwer
-                    raise(Exception())
+                    break
                 court, time = spare_slots[div_idx][0]
                 self.add_game(court, time, div_idx)
                 del spare_slots[div_idx][0]

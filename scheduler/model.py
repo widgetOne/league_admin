@@ -30,20 +30,22 @@ class Game(object):
         if self.div == -1:
 #            return "SKILLS CLINIC,,"
             return "WARM UP,,"
-        div_csv_str = "RICP "
+#        div_csv_str = "RICP "
+        div_csv_str = ['REC', 'INT', 'COM', 'POW', '']
         out = ""
-        out += div_csv_str[self.div] + "%s" % (self.team1 + 1)
+        out += div_csv_str[self.div] + " %s" % (self.team1 + 1)
         out += 'v' + "%s" % (self.team2 + 1)
-        out += ',' + div_csv_str[self.div] + "%s" % (self.ref + 1) + ", "
+        out += ',' + div_csv_str[self.div] + " %s" % (self.ref + 1) + ", "
         return out
 
 
 class Day(object):
-    def __init__(self, facilities):
+    def __init__(self, facilities, day_num):
         from copy import deepcopy
-        court = [Game() for _ in range(len(facilities.court_divisions))]
+        court = [Game() for _ in range(4)]
         self.courts = [deepcopy(court) for _ in range(5)]
         self.facilities = facilities
+        self.num = day_num
 
     def fitness(self, divisions):
         fitness = sum(self.div_fitness(divisions, div) for div in range(4))
@@ -52,21 +54,24 @@ class Day(object):
     def div_fitness(self, divisions, div_idx):
         fitness = 0
         played_at_time = [0] * len(divisions[div_idx].teams)
+        div = divisions[div_idx]
+        new_games = [(sum(team.times_team_played)-1000) for team in div.teams]
         for court in self.courts:
             for game in court:
                 if div_idx == game.div:
                     team1 = divisions[game.div].teams[game.team1]
                     team2 = divisions[game.div].teams[game.team2]
+                    new_games[team1.team_idx] += 1
+                    new_games[team2.team_idx] += 1
                     old_count1 = team1.times_team_played[team2.team_idx]
                     old_count2 = team2.times_team_played[team1.team_idx]
-                    fitness -= (old_count1 + old_count2) * 2 + 2
+            #        fitness -= (old_count1 + old_count2) * 2 + 2
                     played_at_time[team1.team_idx] += 1
                     played_at_time[team2.team_idx] += 1
                     if team1 == team2:
                         fitness -= 100
-        for count in played_at_time:
-            if count > 0:
-                fitness -= 10
+        for count in new_games:
+            fitness -= (old_count1 + old_count2) * 2 + 2
         return fitness
 
     def team_shuffle(self):
@@ -81,7 +86,7 @@ class Day(object):
         for time in range(len(self.courts[0])):
             row = ""
             for court in range(len(self.courts)):
-                game_str = self.courts[court][time].csv_str()
+                game_str = self.courts[court][time].csv_str_w_ref()
                 row += game_str
             out += [row]
         out += ["," * 2 * 5]
@@ -98,7 +103,7 @@ class Day(object):
             row = ""
             for court in range(len(self.courts)):
                 game = self.courts[court][time]
-                game_str = game.csv_str()
+                game_str = game.csv_str_w_ref()
                 if (game.div >= 0):
                     if (game.ref >= 0):
                         rolling_sum_ref[game.div][game.ref] += 1
@@ -123,6 +128,57 @@ class Day(object):
                     self.courts[court_idx][time_idx] = deepcopy(game)
 
     def schedule_div_play_then_div(self, fac, div_idx, div):
+        from random import shuffle, choice
+        from schedule import list_filter
+        locs, times = fac.div_times_locs[div_idx]
+        game_slots = fac.div_games[div_idx].copy()
+        games = len(game_slots)
+        shuffle(game_slots)
+        ref_slots = game_slots.copy()
+        teams_to_play = list(range(div.team_count))
+        if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
+            teams_to_play.append(choice(div.teams_w_least_play()))
+        if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
+            raise(ValueError('Something unexpected happened in scheduling\n' +
+                             'it is assumed that all days only have 1 team ' +
+                             'that gets a bye.'))
+        # add refs
+        for game_idx in range(games):
+            short_ref_teams = list_filter(teams_to_play, div.teams_w_least_ref())
+            current_team_num = choice(short_ref_teams)
+            court, ref_time = game_slots[game_idx]
+            self.courts[court][ref_time].ref = current_team_num
+            self.courts[court][ref_time].div = div_idx
+            play_time = times[(times.index(ref_time) + 1) % len(times)]
+            if (court, play_time) in game_slots:
+                self.courts[court][play_time].team1 = current_team_num
+            else:
+                while (court, play_time) not in game_slots:
+                    court = (court + 1) % 5
+                self.courts[court][play_time].team2 = current_team_num
+            del teams_to_play[teams_to_play.index(current_team_num)]
+
+        # fill in players
+        for game_idx in range(games):
+            court, time = game_slots[game_idx]
+            if self.courts[court][time].team2 < 0:
+                team1 = div.teams[self.courts[court][time].team1]
+                best_opponent = team1.teams_least_played()
+                best_list = list_filter(teams_to_play, div.teams_w_least_play())
+                best_list = list_filter(best_list, best_opponent)
+                team2_idx = choice(best_list)
+                self.courts[court][time].team2 = team2_idx
+                del teams_to_play[teams_to_play.index(team2_idx)]
+            if self.courts[court][time].team1 < 0:
+                team2_obj = div.teams[self.courts[court][time].team1]
+                best_opponent = team2_obj.teams_least_played()
+                best_list = list_filter(teams_to_play, div.teams_w_least_play())
+                best_list = list_filter(best_list, best_opponent)
+                team1_idx = choice(best_list)
+                self.courts[court][time].team1 = team1_idx
+                del teams_to_play[teams_to_play.index(team1_idx)]
+
+    def draft_actual_play_then_ref(self, fac, div_idx, div):
         from random import shuffle, choice
         from schedule import list_filter
         locs, times = fac.div_times_locs[div_idx]
@@ -271,12 +327,12 @@ class Day(object):
             self.courts[court][time].div = div_idx
 
 class Division(object):
-    def __init__(self, team_count):
+    def __init__(self, team_count, ndays):
         self.teams = []
         self.current_fitness = -1
         self.team_count = team_count
         for team_idx in range(team_count):
-            self.teams.append(Team(team_idx, team_count))
+            self.teams.append(Team(team_idx, team_count, ndays))
 
     def teams_w_least_ref(self):
         min_plays = min([team.refs for team in self.teams])
@@ -299,13 +355,14 @@ class Division(object):
             pass
 
 class Team(object):
-    def __init__(self, team_idx, teams_in_division):
+    def __init__(self, team_idx, teams_in_division, ndays):
         time_slots = 4
         self.games = 0
         self.refs = 0
         self.team_idx = team_idx
         self.days_comma_games = []
         self.time_slot_count = [0 for _ in range(time_slots)]
+        self.games_per_day = [0] * ndays
         self.times_team_played = [0 for _ in range(teams_in_division)]
         self.times_team_played[team_idx] = 1000
 

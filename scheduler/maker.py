@@ -181,7 +181,7 @@ if __name__ == '__main__':
  #   make_regular_season([6,13,14,7], ndays=9, sch_tries=4, seed=5)
  #   make_regular_season([6,12,12,6], ndays=9, sch_tries=7000, seed=5)
  #   make_regular_season([6,14,14,6], ndays=9, sch_tries=400, seed=5)
-    make_regular_season([6,13,14,7], ndays=9, sch_tries=400, seed=5)
+    make_regular_season([6,13,14,7], ndays=9, sch_tries=10000, seed=5)
 #
 
 
