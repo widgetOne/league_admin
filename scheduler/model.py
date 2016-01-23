@@ -85,8 +85,8 @@ class Day(object):
                 if use_count > 1:
                     double_use_penalty = 100
                     fitness -= double_use_penalty
-                    print('div %s team %s is used %s at time %s on day %s'
-                          % (div_idx, team_idx, use_count, time, self.num))
+        #            print('div %s team %s is used %s at time %s on day %s'
+        #                  % (div_idx, team_idx, use_count, time, self.num))
         return fitness
 
     def team_shuffle(self):

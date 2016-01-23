@@ -142,11 +142,11 @@ class Schedule(object):
                     if old_day != None:
                         day.import_div_games(div_idx, old_day)
                         continue
-        #        day.schedule_div_ref_then_players(fac, div_idx, div)  # YOYO
-                day.draft_actual_play_then_ref(fac, div_idx, div)  # qwer
+                day.schedule_div_ref_then_players(fac, div_idx, div)  # YOYO
+        #        day.draft_actual_play_then_ref(fac, div_idx, div)  # qwer
          ###       day.schedule_div_play_then_ref(fac, div_idx, div)  # todo: need a perminent solution here
                 # probably an efficient hybrid methods for round robin and regular
-            if True:
+            if False:
                 asd, sdf, dfg = self.make_audit_structures()
                 out = []
                 out += day.audit_view(asd, sdf)
@@ -249,8 +249,8 @@ class Schedule(object):
                     for team_idx, use_count in enumerate(teams_used):
                         if use_count > 1:
                             double_use_penalty -= 100
-                            print('div %s team %s is used %s'
-                                  % (div_idx, team_idx, use_count))
+        #                    print('div %s team %s is used %s'
+        #                          % (div_idx, team_idx, use_count))
             for team_idx, team in enumerate(div.teams):
                 if (self.days[0].facilities.refs == True):
                     div_ref_actual_fitness -= pow(team.refs, 2)

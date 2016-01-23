@@ -74,7 +74,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     end = epochNow()
     print("total run time was %s second" % (float(end - start)))
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
-    tag = '2016-01-21b_'
+    tag = '2016-01-22a_'
     sch.gen_csv(path + tag + "simple.csv")
     sch.gen_audit(path + tag + "audit_2016_spr.csv")
     return sch
