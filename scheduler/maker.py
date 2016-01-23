@@ -49,6 +49,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     from schedule import Schedule
     from random import choice, randrange
     import random
+    import pickle
     facilities = league.days
     if seed != None:
         random.seed(seed)
@@ -77,7 +78,19 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     tag = '2016-01-22a_'
     sch.gen_csv(path + tag + "simple.csv")
     sch.gen_audit(path + tag + "audit_2016_spr.csv")
+    sch_py_obj = path + tag + 'python_file_obj.pickle'
+    with open(sch_py_obj,'wb') as sch_file:
+        pickle.dump(sch, sch_file)
+    # qwer
     return sch
+
+def load_reg_schedule():
+    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
+    tag = '2016-01-22a_'
+    sch_py_obj = path + tag + 'python_file_obj.pickle'
+    with open(sch_py_obj,'rb') as sch_file:
+        schedule = pickle.load(sch_file)
+        return schedule
 
 def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
     from facility import SCVL_Facility_Day
