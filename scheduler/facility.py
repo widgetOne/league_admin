@@ -1,4 +1,6 @@
 
+from model import init_value
+
 class League(object):
     '''This is basically all the set characteristics of the problem'''
     def __init__(self, ndivs, ndays, ncourts, ntimes, team_counts, day_type):
@@ -83,10 +85,10 @@ class Facility_Day(object):
         self.court_count = court_count
         self.time_count = time_count
         self.refs = False
-        self.court_divisions = [[-1 for _ in range(time_count)]
+        self.court_divisions = [[init_value for _ in range(time_count)]
                        for __ in range(court_count)]
         self.div_times_locs = []
-        self.day_type = -1 # tool for distinguishing types for days during mutation
+        self.day_type = init_value # tool for distinguishing types for days during mutation
         self.div_games = []
         self.set_division()
 
@@ -233,13 +235,13 @@ class SCVL_Round_Robin(Facility_Day):
         self.div_games = [[] for _ in range(4)]
 
         times = []
-        gap = [-1,-1,-1,-1,-1]
+        gap = [init_value] * 5
         comp = [2,2,2,2,2]
         comp_r = [0,2,2,2,2]
         rec_comp = [0,2,2,2,0]
         pow_int = [3,1,1,1,3]
         inter_p = [3,1,1,1,1]
-        int_gap = [1,-1,-1,-1,-1]
+        int_gap = [1] + ([init_value] * 4)
         times += [gap for _ in range(1)]
         times += [comp for _ in range(1)]
         times += [comp_r for _ in range(1)]

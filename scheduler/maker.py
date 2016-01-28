@@ -85,6 +85,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     return sch
 
 def load_reg_schedule():
+    import pickle
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
     tag = '2016-01-22a_'
     sch_py_obj = path + tag + 'python_file_obj.pickle'

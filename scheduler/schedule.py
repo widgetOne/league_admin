@@ -1,3 +1,4 @@
+from model import init_value
 
 
 def list_filter(primary, filter):
@@ -22,7 +23,7 @@ class Schedule(object):
         self.times = 4
         self.games_per_team = self.daycount
 
-        self.div_max_fitness = [-1 for _ in range(4)]
+        self.div_max_fitness = [init_value for _ in range(4)]
         self.enhance_success = 0
         self.skillz_clinic_count()
 
@@ -304,14 +305,14 @@ class Schedule(object):
         long_sit = 0
         for div_idx in range(4):
             for team_idx in range(self.divisions[div_idx].team_count):
-                start = -1
+                start = init_value
                 consecutive = 0
                 count = 0
                 three_consec_found = False
                 play_v_time = self.div_team_times[div_idx][team_idx]
                 for time, plays in enumerate(play_v_time):
                     if plays > 0:
-                        if start == -1:
+                        if start == init_value:
                             start = time
                         end = time
                         count += 1
@@ -330,7 +331,7 @@ class Schedule(object):
     def add_day_to_division_history(self, day, sign=1):
         for court_idx, court in enumerate(day.courts):
             for game in court:
-                if (game.div == -1):
+                if (game.div == init_value):
                     continue
                 self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
                 self.divisions[game.div].teams[game.team2].times_team_played[game.team1] += sign

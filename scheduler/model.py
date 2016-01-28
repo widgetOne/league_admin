@@ -1,11 +1,12 @@
 
+init_value = -999999
 
 class Game(object):
     def __init__(self):
-        self.team1 = -1
-        self.team2 = -1
-        self.ref = -1
-        self.div = -1
+        self.team1 = init_value
+        self.team2 = init_value
+        self.ref = init_value
+        self.div = init_value
 
     def small_str(self):
         div_char = "ricp "
@@ -16,7 +17,7 @@ class Game(object):
         return out
 
     def csv_str(self):
-        if self.div == -1:
+        if self.div == init_value:
 #            return "SKILLS CLINIC,,"
             return "WARM UP,"
         div_csv_str = ['REC', 'INT', 'COM', 'POW', '']
@@ -27,7 +28,7 @@ class Game(object):
         return out
 
     def csv_str_w_ref(self):
-        if self.div == -1:
+        if self.div == init_value:
 #            return "SKILLS CLINIC,,"
             return "WARM UP,,"
 #        div_csv_str = "RICP "
@@ -205,7 +206,11 @@ class Day(object):
         for game_idx in range(games):
             court, time = game_slots[game_idx]
             if self.courts[court][time].team2 < 0:
-                team1 = div.teams[self.courts[court][time].team1]
+                if self.courts[court][time].team1 < 0:
+                    temp_team_1 = -1
+                else:
+                    temp_team_1 = self.courts[court][time].team1
+                team1 = div.teams[temp_team_1]
                 best_opponent = team1.teams_least_played()
                 best_list = list_filter(teams_to_play, div.teams_w_least_play())
                 best_list = list_filter(best_list, best_opponent)
@@ -213,7 +218,11 @@ class Day(object):
                 self.courts[court][time].team2 = team2_idx
                 del teams_to_play[teams_to_play.index(team2_idx)]
             if self.courts[court][time].team1 < 0:
-                team2_obj = div.teams[self.courts[court][time].team1]
+                if self.courts[court][time].team1 < 0:
+                    temp_team_1 = -1
+                else:
+                    temp_team_1 = self.courts[court][time].team1
+                team2_obj = div.teams[temp_team_1]
                 best_opponent = team2_obj.teams_least_played()
                 best_list = list_filter(teams_to_play, div.teams_w_least_play())
                 best_list = list_filter(best_list, best_opponent)
@@ -392,7 +401,7 @@ class Day(object):
 class Division(object):
     def __init__(self, team_count, ndays):
         self.teams = []
-        self.current_fitness = -1
+        self.current_fitness = init_value
         self.team_count = team_count
         for team_idx in range(team_count):
             self.teams.append(Team(team_idx, team_count, ndays))
