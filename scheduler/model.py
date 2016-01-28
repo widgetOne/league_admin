@@ -205,6 +205,21 @@ class Day(object):
         # fill in players
         for game_idx in range(games):
             court, time = game_slots[game_idx]
+            # place team 1
+            if self.courts[court][time].team1 < 0:
+                if self.courts[court][time].team2 < 0:
+                    temp_team_2 = -1
+                else:
+                    temp_team_2 = self.courts[court][time].team2
+                team2_obj = div.teams[temp_team_2]
+                best_opponent = team2_obj.teams_least_played()
+                # todo, this teams_w_least_play is not getting updated within this routine
+                best_list = list_filter(teams_to_play, div.teams_w_least_play())
+                best_list = list_filter(best_list, best_opponent)
+                team1_idx = choice(best_list)
+                self.courts[court][time].team1 = team1_idx
+                del teams_to_play[teams_to_play.index(team1_idx)]
+            # place team 2
             if self.courts[court][time].team2 < 0:
                 if self.courts[court][time].team1 < 0:
                     temp_team_1 = -1
@@ -212,23 +227,12 @@ class Day(object):
                     temp_team_1 = self.courts[court][time].team1
                 team1 = div.teams[temp_team_1]
                 best_opponent = team1.teams_least_played()
+                # todo, this teams_w_least_play is not getting updated within this routine
                 best_list = list_filter(teams_to_play, div.teams_w_least_play())
                 best_list = list_filter(best_list, best_opponent)
                 team2_idx = choice(best_list)
                 self.courts[court][time].team2 = team2_idx
                 del teams_to_play[teams_to_play.index(team2_idx)]
-            if self.courts[court][time].team1 < 0:
-                if self.courts[court][time].team1 < 0:
-                    temp_team_1 = -1
-                else:
-                    temp_team_1 = self.courts[court][time].team1
-                team2_obj = div.teams[temp_team_1]
-                best_opponent = team2_obj.teams_least_played()
-                best_list = list_filter(teams_to_play, div.teams_w_least_play())
-                best_list = list_filter(best_list, best_opponent)
-                team1_idx = choice(best_list)
-                self.courts[court][time].team1 = team1_idx
-                del teams_to_play[teams_to_play.index(team1_idx)]
 
     def draft_actual_play_then_ref(self, fac, div_idx, div):
         from random import shuffle, choice
