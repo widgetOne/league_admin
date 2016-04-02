@@ -1,0 +1,60 @@
+
+Overview:
+My local volleyball league has increasing membership and constraints for
+scheduling that I have not seen available in other tools. In addition, I am
+interested in discrete optimization and decided to have some fun with the
+problem.
+
+Current core use cases (subject to change with changing facilities):
+1. 1 day, 5 hour schedule with all teams play single games and no reffing
+2. 9 day, 4 hour schedule with ~all teams playing matches with reffing
+w potential teams per division [6,12,12,6], [6,13,12,7],
+
+Likely future challenges:
+1. 5 hour weekly games with shifting early-late game boundary based on team
+counts (e.g. div 1 slots by day 0-1,2-4,0-1,3-4,0-2,3-4,0-1,2-4,0-2)
+2. Increase the regular season days from 9
+
+Requirement:
+1. Balance
+The following parameters should be as balanced as possible:
+a. Games played per team
+b. Early vs Late games played per team or division
+c.
+
+Goals (for optimization) - Not currently implimented:
+1. Minimize
+a. Sit team for members between games
+2. Maximize
+a. Space between match-ups of the same set of teams
+
+Design:
+There are 4 main components of the program:
+1. the problem
+facility.py
+This section defines the problem to be solved. Specifically, it defines
+the number of days, which times/courts will be available, and determines which
+divisions will have which slots.
+todo: this logic is very custom at the moment and needs to be generalized
+2. a solution
+schedule.py, model.py, members.py
+This logic creates a schedule or schdule day and provides support tools for
+changing it
+3. the solution
+maker.py
+This is the main program interface. It creates the facility model and
+then drives the solution logic to solve and then optimize the schedule.
+4. Report
+reports.py
+Back-end post-processors to report the schedule as needed.
+
+Future Development:
+todo: Expand low-level unit test coverage to ease refactoring
+todo: Simplify interface for core use cases
+todo: Plug this in to a Django site
+todo: Abstract out a optimizer class with mutation methods
+    for use with div-days, day, schedules
+todo: Add mutation methods effectiveness database
+todo: Add logic to preferencially choose more effective methods
+
+

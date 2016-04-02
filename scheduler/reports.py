@@ -10,12 +10,11 @@ def check_schedule_vs_members(sch, members):
             raise(ValueError('the members and schedule structures are inconsistent'))
 
 def schedule_report():
-    from maker import load_reg_schedule
+    from schedule import load_reg_schedule
     sch = load_reg_schedule()
-    ## something something something debug
 
 if __name__ == '__main__':
-    from maker import load_reg_schedule
+    from schedule import load_reg_schedule
     from members import import_teams
     sch = load_reg_schedule()
     members = import_teams()

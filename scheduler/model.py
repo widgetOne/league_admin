@@ -2,11 +2,12 @@
 init_value = -999999
 
 class Game(object):
-    def __init__(self):
-        self.team1 = init_value
-        self.team2 = init_value
-        self.ref = init_value
-        self.div = init_value
+    def __init__(self, team1=init_value, team2=init_value,
+                 ref=init_value, div=init_value):
+        self.team1 = team1
+        self.team2 = team2
+        self.ref = ref
+        self.div = div
 
     def small_str(self):
         div_char = "ricp "
@@ -39,6 +40,18 @@ class Game(object):
         out += ',' + div_csv_str[self.div] + " %s" % (self.ref + 1) + ", "
         return out
 
+    def gen_dict(self):
+        out = {
+                'team1' : self.team1,
+                'team2' : self.team2,
+                'ref' : self.ref,
+                'div' : self.div,
+               }
+        return out
+
+def gen_day_from_dict(input_dict):
+    out = Game(input_dict['team1'], input_dict['team2'],
+               input_dict['ref'], input_dict['ref'])
 
 class Day(object):
     def __init__(self, facilities, day_num):

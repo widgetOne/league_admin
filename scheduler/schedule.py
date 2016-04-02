@@ -277,25 +277,18 @@ class Schedule(object):
                         elif games_on_day < 0:
                             bye_fitness -= 100 * bye_worth
                             total_bye_count += 1
-    #                if bye_count > 1:
-    #                    print('team %s has too many byes: %s' % (team_idx, bye_count))
                     bye_fitness -= pow(bye_count, 2) * bye_worth
             div_fit += double_use_penalty
             div_fit += bye_fitness
             div_fit += div_total_team_play_fitness
             div_fit += div_plays_vs_fitness
             div_fit += div_ref_actual_fitness
-        #    if div_idx == 1:
-        #        print("ref act %s; play vs act %s; play total %s; ref debug %s"
-        #              % (div_ref_actual_fitness, div_plays_vs_fitness,
-        #                 div_total_team_play_fitness, ref_debug))
-        #    print("bye fitness = %s " % bye_fitness, end='')
             fitness += div_fit
             div.current_fitness = div_fit
-        # print('') # cap to the bye fitness line
         if total_bye_count < 9:
             print('creating a file as this thing is Fed up')
-            self.gen_audit('/Users/coulter/Desktop/life_notes/2016_q1/scvl/critical_error_debug.txt')
+            self.gen_audit('/Users/coulter/Desktop/life_notes/' +
+                           '2016_q1/scvl/critical_error_debug.txt')
             fitness = 0
         return fitness
 
@@ -350,5 +343,35 @@ class Schedule(object):
         print("There will be %s skillz clinics in this schedule"
               % self.skillz_clinics)
 
-    def create_daily_schedule(self):
-        pass
+    def create_json_schedule(self):
+        import json
+        sch_obj = []
+        for day in self.days:
+            court_list = []
+            for court in range(len(day.courts)):
+                time_list = []
+                for time in range(len(day.courts[0])):
+                    game_dict = day.courts[court][time].gen_dict()
+                    time_list.append(game_dict)
+                court_list.append(time_list)
+            sch_obj.append(court_list)
+        out = json.dumps(sch_obj)
+        return out
+
+def gen_schedule_from_json(json_input):
+    import json
+    #out = Schedule()
+
+def load_reg_schedule():
+    import pickle
+    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
+    tag = '2016-01-22a_'
+    sch_py_obj = path + tag + 'python_file_obj.pickle'
+    with open(sch_py_obj,'rb') as sch_file:
+        schedule = pickle.load(sch_file)
+        return schedule
+
+if __name__ == '__main__':
+    sch = load_reg_schedule()
+    json_sch = sch.create_json_schedule()
+    print(json_sch)
