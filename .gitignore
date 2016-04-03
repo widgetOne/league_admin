@@ -65,4 +65,4 @@ target/
 league/
 league_admin/
 static/
-
+db.sqlite3
