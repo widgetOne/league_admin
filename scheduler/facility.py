@@ -55,8 +55,10 @@ class League(object):
 
     def debug_deltas(self):
         print('deltas for each division')
-        print('games per div * 2 = %s' % ','.join([str(num * 2) for num in self.games_per_div]))
-        print('games need for team_counts = %s' % ','.join([str(num * self.ndays) for num in self.team_counts]))
+        print('games per div * 2 = %s' % ','.join(
+              [str(num * 2) for num in self.games_per_div]))
+        print('games need for team_counts = %s' % ','.join(
+              [str(num * self.ndays) for num in self.team_counts]))
         for div_idx in range(self.ndivs):
             print('Division %s ', end='')
             delta = self.div_missing_game_count(div_idx)

@@ -56,5 +56,9 @@ todo: Abstract out a optimizer class with mutation methods
     for use with div-days, day, schedules
 todo: Add mutation methods effectiveness database
 todo: Add logic to preferencially choose more effective methods
+todo: Add generic back-end reporting logic for translation from times (0-4) to
+    any format
+todo: add reporting tool to support mid-season rerating (basically player
+    availability cross-referencing
 
 
