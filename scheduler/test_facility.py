@@ -71,14 +71,14 @@ class TestSchedulerFacility(TestCase):
 
     def test_regular_season_day_no_overflow(self):
         from facility import SCVL_Facility_Day
-        team_counts = [6,12,12,6]
+        team_counts = [6, 12, 12, 6]
         count_court = 5
         day = SCVL_Facility_Day(court_count=count_court, time_count=4,
                                 team_counts=team_counts, rec_first=True)
         first_games = [day.court_divisions[icourt][0] for icourt
-                                           in range(count_court)]
+                       in range(count_court)]
         last_games = [day.court_divisions[icourt][3] for icourt
-                                          in range(count_court)]
+                      in range(count_court)]
         self.assertEqual(len(day.court_divisions), 5)
         self.assertEqual(sum(day.games_per_division) * 2, sum(team_counts))
         self.assertTrue(0 in first_games)
@@ -88,32 +88,30 @@ class TestSchedulerFacility(TestCase):
                              team_counts[div_idx])
 
         day_rec_last = SCVL_Facility_Day(court_count=count_court, time_count=4,
-                                         team_counts=team_counts, rec_first=False)
+                                         team_counts=team_counts,
+                                         rec_first=False)
         first_games = [day_rec_last.court_divisions[icourt][0] for icourt
-                                                    in range(count_court)]
+                       in range(count_court)]
         last_games = [day_rec_last.court_divisions[icourt][3] for icourt
-                                                   in range(count_court)]
+                      in range(count_court)]
         self.assertTrue(0 not in first_games)
         self.assertTrue(0 in last_games)
 
     def test_regular_season_day_full(self):
         from facility import SCVL_Facility_Day
-        team_counts = [6,14,14,6]
+        team_counts = [6, 14, 14, 6]
         day = SCVL_Facility_Day(court_count=5, time_count=4,
                                 team_counts=team_counts, rec_first=True)
         self.assertEqual(len(day.court_divisions), 5)
         self.assertEqual(sum(day.games_per_division) * 2, sum(team_counts))
 
-
     def test_regular_season_day_odd_teams(self):
         '''This test is support to give a number too low. For odd
         numbers of teams, the final games should be handled by league'''
         from facility import SCVL_Facility_Day
-        team_counts = [6,13,14,7]
+        team_counts = [6, 13, 14, 7]
         day = SCVL_Facility_Day(court_count=5, time_count=4,
                                 team_counts=team_counts, rec_first=True)
         WRONG_GAME_COUNT = sum(team_counts) // 2 - 1
         self.assertEqual(len(day.court_divisions), 5)
         self.assertEqual(sum(day.games_per_division), WRONG_GAME_COUNT)
-
-

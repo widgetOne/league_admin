@@ -98,7 +98,7 @@ def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
                     team_counts=team_counts, day_type=SCVL_Facility_Day)
     league.debug_print()
     sch = make_schedule(team_counts, league, sch_tries=sch_tries)
-    return sch.fitness(league.games_per_div)
+    return sch
 
 def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
                      total_sch=2):
@@ -122,7 +122,7 @@ def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
     for seed in range(total_sch):
         print('\nMaking schedule %s.' % seed)
         if seed >= len(schedules):
-            sch = make_schedule(team_counts, league, tries=sch_tries, seed=seed)
+            sch = make_schedule(team_counts, league, sch_tries=sch_tries, seed=seed)
             schedules.append(sch)
         else:
             sch = schedules[seed]
@@ -192,7 +192,8 @@ if __name__ == '__main__':
  #   make_regular_season([6,13,14,7], ndays=9, sch_tries=4, seed=5)
  #   make_regular_season([6,12,12,6], ndays=9, sch_tries=7000, seed=5)
  #   make_regular_season([6,14,14,6], ndays=9, sch_tries=400, seed=5)
-    make_regular_season([6,13,14,7], ndays=9, sch_tries=10000, seed=5)
+    schedule = make_regular_season([6,13,14,7], ndays=9,
+                                   sch_tries=10000, seed=5)
     os.system('say "schedule creation is complete"')
 
 #

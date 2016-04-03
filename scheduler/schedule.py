@@ -116,10 +116,7 @@ class Schedule(object):
             self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
         new_fitness = self.fitness(self.league.games_per_div)
-    #    print("old fitness was %s and new fitness is %s: "
-    #          % (origional_fitness, new_fitness), end="")
         if origional_fitness > new_fitness:
-    #        print("using OLD schedule")
             self.days = origional_days
             self.divisions = origional_division
             check_fitness = self.fitness(self.league.games_per_div)
@@ -143,10 +140,11 @@ class Schedule(object):
                     if old_day != None:
                         day.import_div_games(div_idx, old_day)
                         continue
-                day.schedule_div_ref_then_players(fac, div_idx, div)  # YOYO
-        #        day.draft_actual_play_then_ref(fac, div_idx, div)  # qwer
-         ###       day.schedule_div_play_then_ref(fac, div_idx, div)  # todo: need a perminent solution here
-                # probably an efficient hybrid methods for round robin and regular
+                day.schedule_div_ref_then_players(fac, div_idx, div)
+                # todo: these two options should be refactored into distinct
+                # mutate routines
+                #        day.draft_actual_play_then_ref(fac, div_idx, div)  # qwer
+                ###       day.schedule_div_play_then_ref(fac, div_idx, div)
             if False:
                 asd, sdf, dfg = self.make_audit_structures()
                 out = []
