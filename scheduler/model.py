@@ -70,7 +70,7 @@ class Day(object):
         team_count = len(divisions[div_idx].teams)
         played_at_time = [0] * len(divisions[div_idx].teams)
         div = divisions[div_idx]
-        new_games = [(sum(team.times_team_played)-1000) for team in div.teams]
+        new_games = [(sum(team.times_team_played) - 1000) for team in div.teams]
         for court in self.courts:
             for game in court:
                 if div_idx == game.div:
@@ -103,8 +103,8 @@ class Day(object):
         #                  % (div_idx, team_idx, use_count, time, self.num))
         return fitness
 
-    def team_shuffle(self):
-        # shuffle all non-reffing teams
+    def mutate_team_shuffle(self):
+        # perform one-to-one switching of teams to attempt enhancement
         pass # to work on later
 
     def csv_str(self):
