@@ -60,11 +60,12 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     sch = Schedule(league, team_counts, facilities)
     sch.seed = seed
     for mut_idx in range(sch_tries):
-        target1 = randrange(sch.daycount)
-        target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
-        target = [target1, target2]
-        sch.try_remake_days(target)
-        target = [randrange(9)]
+        if sch.daycount > 1:
+            target1 = randrange(sch.daycount)
+            target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
+            target = [target1, target2]
+            sch.try_remake_days(target)
+        target = [randrange(sch.daycount)]
         sch.try_remake_days(target)
         count = 1 # + randrange(4)
         fitness = sch.remake_worst_day(count)
@@ -187,7 +188,9 @@ if __name__ == '__main__':
  #   make_regular_season([6,13,14,7], ndays=9, sch_tries=4, seed=5)
  #   make_regular_season([6,12,12,6], ndays=9, sch_tries=7000, seed=5)
  #   make_regular_season([6,14,14,6], ndays=9, sch_tries=400, seed=5)
-    schedule = make_regular_season([6,13,14,7], ndays=7,
+ #   schedule = make_regular_season([6, 13, 14, 7], ndays=9,
+ #                                  sch_tries=10000, seed=5)
+    schedule = make_regular_season([6, 13, 14, 7], ndays=9,
                                    sch_tries=10000, seed=5)
     os.system('say "schedule creation is complete"')
 

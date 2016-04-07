@@ -60,7 +60,7 @@ class League(object):
         print('games need for team_counts = %s' % ','.join(
               [str(num * self.ndays) for num in self.team_counts]))
         for div_idx in range(self.ndivs):
-            print('Division %s ', end='')
+            print('Division %s ' % div_idx, end='')
             delta = self.div_missing_game_count(div_idx)
             if (delta < 0):
                 print('has %s too FEW games.' % delta)

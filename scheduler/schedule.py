@@ -261,7 +261,8 @@ class Schedule(object):
             div_fit += div_ref_actual_fitness
             fitness += div_fit
             div.current_fitness = div_fit
-        if total_bye_count < 9:
+        # todo: fix this bye count detection logic
+        if False and total_bye_count < 9:
             print('creating a file as this thing is Fed up')
             self.gen_audit('/Users/coulter/Desktop/life_notes/' +
                            '2016_q1/scvl/critical_error_debug.txt')
