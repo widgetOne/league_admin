@@ -20,7 +20,6 @@ Requirement:
 The following parameters should be as balanced as possible:
 a. Games played per team
 b. Early vs Late games played per team or division
-c.
 
 Goals (for optimization) - Not currently implimented:
 1. Minimize
