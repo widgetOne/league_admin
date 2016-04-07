@@ -131,23 +131,12 @@ class Schedule(object):
         if day_num == None:
             day_num = old_day.num
         day = Day(fac, day_num)
-        # first, complete minimum games
         for div_idx, div in enumerate(self.divisions):
             if div.current_fitness == 0:
                 if old_day != None:
                     day.import_div_games(div_idx, old_day)
                     continue
             day.schedule_div_ref_then_players(fac, div_idx, div)
-            # todo: these two options should be refactored into distinct
-            # mutate routines
-            #        day.draft_actual_play_then_ref(fac, div_idx, div)  # qwer
-            ###       day.schedule_div_play_then_ref(fac, div_idx, div)
-        if False:
-            asd, sdf, dfg = self.make_audit_structures()
-            out = []
-            out += day.audit_view(asd, sdf)
-            out += day.audit_total_use_view(dfg)
-            print('\n'.join(out))
 
         return day
 
@@ -276,6 +265,8 @@ class Schedule(object):
             print('creating a file as this thing is Fed up')
             self.gen_audit('/Users/coulter/Desktop/life_notes/' +
                            '2016_q1/scvl/critical_error_debug.txt')
+            raise(Exception('critical error in the bye ' +
+                            'count for this schedule'))
             fitness = 0
         return fitness
 

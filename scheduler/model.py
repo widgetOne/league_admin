@@ -99,13 +99,7 @@ class Day(object):
                 if use_count > 1:
                     double_use_penalty = 100
                     fitness -= double_use_penalty
-        #            print('div %s team %s is used %s at time %s on day %s'
-        #                  % (div_idx, team_idx, use_count, time, self.num))
         return fitness
-
-    def mutate_team_shuffle(self):
-        # perform one-to-one switching of teams to attempt enhancement
-        pass # to work on later
 
     def csv_str(self):
         out = []
@@ -123,7 +117,6 @@ class Day(object):
 
     def audit_view(self, rolling_sum_play, rolling_sum_ref):
         out = []
-    #    header = "," + ",".join('CT '+ str(idx + 1) + ',Ref' for idx in range(5))
         header = ",".join('CT '+ str(idx + 1) for idx in range(5))
         header += ",  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums"
         out += [header]
