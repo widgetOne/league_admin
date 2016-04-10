@@ -26,7 +26,7 @@ def import_teams():
                 # collecting team-wise data
                 if team_nums_cols:
                     for team_idx, column in team_nums_cols:
-                        if line[column] != '':
+                        if line[column].strip() != '':
                             division_teams[team_idx] += [line[column]]
     return divisions
 
@@ -66,6 +66,15 @@ def import_ratees():
         for line in ratee_data:
             line['name'] = line['PLAYER']
             ratees += [line]
+
+def member_debug_report(members):
+    print('There are {} divisions'.format(len(members)))
+    for div_idx, div_members in enumerate(members):
+        print('There are {} teams in division {}'.format(
+              len(div_members), div_idx))
+        for team_idx, team in enumerate(div_members):
+            print('There are {} members in team {} of division {}: {}'.format(
+                  len(team), team_idx, div_idx, ','.join(team)))
 
 
 if __name__ == '__main__':

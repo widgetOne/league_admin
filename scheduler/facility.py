@@ -132,6 +132,9 @@ class Facility_Day(object):
                     out.append((court,time))
         return out
 
+    def games_per_div(self):
+        pass
+
 class SCVL_Facility_Day(Facility_Day):
     def __init__(self, court_count, time_count, team_counts,
                  rec_first):

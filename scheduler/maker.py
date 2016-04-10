@@ -82,7 +82,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     # todo, change this to use print(datetime.datetime.now().date())
     tag = '2016-01-22a_'
     sch.gen_csv(path + tag + "simple.csv")
-    sch.gen_audit(path + tag + "audit_2016_spr.csv")
+    sch.write_audit_file(path + tag + "audit_2016_spr.csv")
     sch_py_obj = path + tag + 'python_file_obj.pickle'
     with open(sch_py_obj,'wb') as sch_file:
         pickle.dump(sch, sch_file)
@@ -179,7 +179,7 @@ def report_schedule(name, sch_idx, schedule):
           % (name, sch_idx, (schedule.sitting_fitness()[0] / 40 * 15), schedule.sitting_fitness()[1]))
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
     schedule.gen_csv(path + name + "-simple_2016_spr.csv")
-    schedule.gen_audit(path + name + "-audit_2016_spr.csv")
+    schedule.write_audit_file(path + name + "-audit_2016_spr.csv")
 
 
 if __name__ == '__main__':
@@ -190,8 +190,9 @@ if __name__ == '__main__':
  #   make_regular_season([6,14,14,6], ndays=9, sch_tries=400, seed=5)
  #   schedule = make_regular_season([6, 13, 14, 7], ndays=9,
  #                                  sch_tries=10000, seed=5)
-    schedule = make_regular_season([6, 13, 14, 7], ndays=9,
-                                   sch_tries=10000, seed=5)
+    schedule = make_regular_season([6, 13, 14, 7], ndays=2,
+                                   sch_tries=10, seed=5)
+    print('\n'.join(schedule.get_audit_text()))
     os.system('say "schedule creation is complete"')
 
 #

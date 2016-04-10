@@ -53,7 +53,12 @@ class Schedule(object):
             total_use.append(deepcopy(div_arr))
         return rolling_sum_play, rolling_sum_ref, total_use
 
-    def gen_audit(self, loc):
+    def write_audit_file(self, out_file_path):
+        audit_text = self.get_audit_text()
+        with open(out_file_path, "w") as csv_file:
+            print("\n".join(audit_text), file=csv_file)
+
+    def get_audit_text(self):
         from copy import deepcopy
         rolling_sum_play, rolling_sum_ref, total_use = self.make_audit_structures()
         out = ['audit of cumulative plays and refs by team']
@@ -93,8 +98,7 @@ class Schedule(object):
                 team = self.divisions[div_idx].teams[team_idx]
                 row = ",".join([str(num) for num in team.games_per_day])
                 out += [row]
-        with open(loc, "w") as csv_file:
-            print("\n".join(out), file=csv_file)
+        return out
 
     def remake_worst_day(self, count):
         days_fitness = [(idx, day.fitness(self.divisions)) for idx, day in enumerate(self.days)]
@@ -137,13 +141,13 @@ class Schedule(object):
                     day.import_div_games(div_idx, old_day)
                     continue
             day.schedule_div_ref_then_players(fac, div_idx, div)
-
         return day
 
     def fitness(self, total_games):
         from math import pow
         bye_worth = 75
         if self.max_fitness == 0:
+            # todo: max fitness should be calculated w the schedule
             self.div_max_fitness = []
             for div_idx, div_teams in enumerate(self.team_counts):
                 div_fitness = 0
@@ -176,14 +180,14 @@ class Schedule(object):
                                 pow(max_plays, 2) * max_count)
                 div_fitness -= loss_to_play
 
-                if div_idx == 1:
-                    teams_w_byes = 4
-                    bye_double_max_fitness = teams_w_byes * bye_worth
-                    div_fitness -= bye_double_max_fitness
-                if div_idx == 3:
-                    teams_w_byes = 5
-                    bye_double_max_fitness = teams_w_byes * bye_worth
-                    div_fitness -= bye_double_max_fitness
+                bye_count = 0
+                for day in self.days:
+                    games_per_division = len(day.facilities.div_games[div_idx])
+                    bye_count += max(self.team_counts[div_idx] -
+                                     games_per_division * 2, 0)
+                    # todo:integrate this dynamic bye calculation
+                bye_double_max_fitness = bye_count * bye_worth
+                div_fitness -= bye_double_max_fitness
 
             #    if div_idx in [1,3]: # todo, rectify this round robin hack with
             #                         # the regular season schedule logic
@@ -196,7 +200,8 @@ class Schedule(object):
         fitness = 0
         self.div_team_times = []
         for div_idx in range(4):
-            self.div_team_times.append([[0]*16 for _ in range(self.team_counts[div_idx])])
+            self.div_team_times.append([[0]*16 for _
+                                        in range(self.team_counts[div_idx])])
         for court in self.days[0].courts:
             for time, game in enumerate(court):
                 if game.div >= 0:
@@ -264,11 +269,10 @@ class Schedule(object):
         # todo: fix this bye count detection logic
         if False and total_bye_count < 9:
             print('creating a file as this thing is Fed up')
-            self.gen_audit('/Users/coulter/Desktop/life_notes/' +
+            self.write_audit_file('/Users/coulter/Desktop/life_notes/' +
                            '2016_q1/scvl/critical_error_debug.txt')
             raise(Exception('critical error in the bye ' +
                             'count for this schedule'))
-            fitness = 0
         return fitness
 
     def sitting_fitness(self):
@@ -350,7 +354,11 @@ def load_reg_schedule():
         schedule = pickle.load(sch_file)
         return schedule
 
+def load_playoff_schedule():
+    pass
+
 if __name__ == '__main__':
     sch = load_reg_schedule()
     json_sch = sch.create_json_schedule()
     print(json_sch)
+    sch2 = gen_schedule_from_json(json_sch)
