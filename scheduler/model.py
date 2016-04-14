@@ -53,6 +53,7 @@ def gen_day_from_dict(input_dict):
     out = Game(input_dict['team1'], input_dict['team2'],
                input_dict['ref'], input_dict['ref'])
 
+
 class Day(object):
     def __init__(self, facilities, day_num):
         from copy import deepcopy
@@ -64,6 +65,9 @@ class Day(object):
     def fitness(self, divisions):
         fitness = sum(self.div_fitness(divisions, div) for div in range(4))
         return fitness
+
+    def set_refs_in_div(self, history):
+        pass
 
     def div_fitness(self, divisions, div_idx):
         fitness = 0
@@ -407,6 +411,10 @@ class Day(object):
             count_team_in_time[team1_idx][time] += 1
             count_team_in_time[team2_idx][time] += 1
             self.courts[court][time].div = div_idx
+
+    def totals(self):
+        totals = {}
+        return totals
 
 class Division(object):
     def __init__(self, team_count, ndays):

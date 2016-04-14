@@ -9,8 +9,12 @@ def list_filter(primary, filter):
         return primary
 
 class Schedule(object):
-    time_string = ['6pm','7pm','8pm','9pm']
+    time_string = ['6pm', '7pm', '8pm', '9pm']
     rec_first = True
+    # [{'times': 4, 'courts': 5},
+    # {'time': 2, 'court': 1, 'team1': (1, 2), 'team2': (1, 12), 'ref': (1, 8)},
+    # {'time': 2, 'court': 1, 'team1': (1, 2), 'team2': (1, 12)},
+    # {...]
     def __init__(self, league, team_counts, facs):
         from model import Division
         self.team_counts = team_counts

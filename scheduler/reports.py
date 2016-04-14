@@ -21,6 +21,36 @@ def load_members_and_debug():
     check_schedule_vs_members(sch, members)
     member_debug_report(members)
 
+def debug_three_d(data):
+    print('len D1 = {}'.format(len(data)))
+    for idx_one, two_d in enumerate(data):
+        print('({}) len D2 = {}'.format(idx_one,len(two_d)))
+        for idx_two, one_d in enumerate(two_d):
+            print('({},{}) len D3 = {}: {}'.format(idx_one,idx_two,
+                                                   len(one_d),one_d))
+
+def load_all_substitute_bins():
+    import csv
+    import copy
+    import re
+    path = ('/Users/coulter/Desktop/life_notes/2016_q2/scvl/' +
+            'substitutes_2016_Spr.csv')
+    bins = [[], [], []]
+    sub_lists = [copy.deepcopy(bins) for _ in range(4)]
+    with open(path, 'r') as sub_list_file:
+        sub_reader = csv.DictReader(sub_list_file)
+        divisions = ['Rec', 'Inter', 'Comp', 'Power']
+        bin_names = ['Lower', 'Mid', 'Top']
+        for line in sub_reader:
+            for div_idx, div in enumerate(divisions):
+                for bin_idx, bin in enumerate(bin_names):
+                    for key, data in line.items():
+                        if data and div in key and bin in key:
+                            # need to filter out ratings info from names
+                            name = re.sub(' \(.*\)', '', data)
+                            sub_lists[div_idx][bin_idx].append(name)
+    return sub_lists
+
 def load_substitute_bins():
     import csv
     import copy
@@ -69,37 +99,50 @@ def teams_to_people(teams, specific_teams):
         people += teams[specific[0]][specific[1]-1]
     return people
 
-def find_subs_for_playoffs():
-    from members import import_teams, member_debug_report
-    people_missing = ['Amy Buzzard', 'Christine Chedwick']
-    sub_lists = load_substitute_bins()
+def find_subs_for_playoffs(people_missing):
+    from members import import_teams
+    sub_lists = load_all_substitute_bins()
     teams = import_teams()
     potential_subs = []
     for missing in people_missing:
-        for bin in sub_lists[1]:
-            if missing in bin:
-                potential_subs.append((missing,
-                                       [sub for sub in bin if sub != missing]))
-                break
-    busy_teams = [(1, 11), (1, 13), (1, 8), (1, 6), (1, 10), (1, 3), (1, 2)]
-    best_teams = [(1, 1), (1, 7), (1, 5), (1, 9)]
-    intermediate = three_d_to_one_d([teams[1]])
+        for div_subs in sub_lists:
+            for bin in div_subs:
+                if missing in bin:
+                    potential_subs.append((missing,
+                                           [sub for sub in bin
+                                            if sub != missing]))
+                    break
+    busy_teams = [(1, num) for num in [11, 13, 1, 7, 5, 9]]
+    best_teams = [(1, num) for num in [8, 6, 10, 3, 1]]
+
+    all_player = three_d_to_one_d(teams)
     busy = teams_to_people(teams, busy_teams)
     best = teams_to_people(teams, best_teams)
-    free = [sub for sub in intermediate if sub not in busy and sub not in best]
-
+    all_player.sort()
+    busy.sort()
+    best.sort()
+    free = [sub for sub in all_player if (sub not in busy) and (sub not in best)]
+    free.sort()
     subs = []
     for player, potentials in potential_subs:
         options = {}
+        busy_subs = [sub for sub in busy if sub in potentials]
         best_subs = [sub for sub in best if sub in potentials]
         free_subs = [sub for sub in free if sub in potentials]
         options['best'] = best_subs
         options['free'] = free_subs
         options['player'] = player
-        print('Player = {}'.format(player))
-        print('Best = {}'.format(best_subs))
-        print('Free = {}'.format(free_subs),end='\n\n')
         subs.append(options)
+    return subs
+
+def debug_options (subs):
+    for options in subs:
+        print('Player = {}'.format(options['player']))
+        print('Best = {}'.format(options['best']))
+        print('Free = {}'.format(options['free']),end='\n\n')
 
 if __name__ == '__main__':
-    find_subs_for_playoffs()
+    #people_missing = ['Amy Buzzard', 'Christine Chedwick']
+    people_missing = ['Ali Momeni']
+    find_subs_for_playoffs(people_missing)
+
