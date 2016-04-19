@@ -8,10 +8,10 @@ class TestMaker(TestCase):
     '''
     def test_high_level(self):
         expected_fitness = 0
-        fitness = make_schedule([6,14,14,6])
-        self.assertEqual(fitness, expected_fitness)
-    #   fitness = make_schedule([6,12,12,6])
-    #    self.assertEqual(fitness, expected_fitness)
+        value = make_schedule([6,14,14,6])
+        self.assertEqual(value, expected_fitness)
+    #   value = make_schedule([6,12,12,6])
+    #    self.assertEqual(value, expected_fitness)
       #  self.assertEqual(make_schedule([6,12,12,6]), expected_fitness)
       #  self.assertEqual(make_schedule([6,12,12,6]), expected_fitness)
       #  self.assertEqual(make_schedule([6,12,12,6]), expected_fitness)
@@ -23,9 +23,9 @@ class TestMaker(TestCase):
     too costly for rapid development
     def test_repeatability(self):
         number_of_tests = 10
-        fitness = make_schedule([6,12,12,6])
+        value = make_schedule([6,12,12,6])
         for _ in range(number_of_tests):
-            self.assertEqual(fitness, make_schedule([6,12,12,6]))
+            self.assertEqual(value, make_schedule([6,12,12,6]))
     '''
     '''
     # todo: I think the round robin did not survive the

@@ -69,9 +69,12 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
         sch.try_remake_days(target)
         count = 1 # + randrange(4)
         fitness = sch.remake_worst_day(count)
-        print("fitness = %s while on mutation step %s: " %
+        print("value = %s while on mutation step %s: " %
               (fitness, mut_idx), end="")
+        old = [sch.divisions[idx].current_fitness for idx in range(4)]
         pprint([sch.divisions[idx].current_fitness for idx in range(4)])
+        print(sch.new_fitness_div_list())
+        new = sch.new_fitness_div_list()
         if (fitness == 0):
             print("correct schedule found!!!!!")
             break
@@ -122,7 +125,7 @@ def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
             schedules.append(sch)
         else:
             sch = schedules[seed]
-        print("%s - Sitting fitness = %s. " % (seed, sch.sitting_fitness()[0]))
+        print("%s - Sitting value = %s. " % (seed, sch.sitting_fitness()[0]))
         print("%s - Min-Sit = %s and Min-long-sit = %s" % (seed, best_sit_idx,
                                                            best_long_sit_idx))
         print("%s\n%s" % (seed, seed))
@@ -144,7 +147,7 @@ def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
 
         print('min = %s, min-long = %s' % (best_sit_idx,
                                            best_long_sit_idx), end='')
-        print('The sitting fitness of schedule %s is %s. ' % (idx, sch.sitting_fitness()[0]), end="")
+        print('The sitting value of schedule %s is %s. ' % (idx, sch.sitting_fitness()[0]), end="")
         print('This is %s minutes of sitting per team.' % (sch.sitting_fitness()[0] / 40 * 15), end='')
         print('long sits = %s' % sch.sitting_fitness()[1])
     if best_sit_idx != None:
@@ -157,15 +160,18 @@ def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
 
 def save_schedules(schedules):
     import pickle
+    import datetime
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
-    round_r_schedules_path = path + 'new-round-robin-schedules-objects'
-    with open(round_r_schedules_path, 'wb') as pic_file:
-        pickle.dump(schedules, pic_file)
+    todays_date = print(datetime.datetime.now().date())
+    schedule_name = path + 'round_robin-schedules-from-{}'.format(todays_date)
+    with open(schedule_name, 'wb') as pickle_file:
+        pickle.dump(schedules, pickle_file)
 
 def get_schedules():
     import os
     import pickle
-    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
+    # todo: add logic here to grab the round robin object with the newest date
+    path = '/Users/coulter/Desktop/life_notes/2016_q2/scvl/'
     round_r_schedules_path = path + 'new-round-robin-schedules-objects'
     if os.path.isfile(round_r_schedules_path):
         with open(round_r_schedules_path, 'rb') as pic_file:
@@ -191,6 +197,6 @@ if __name__ == '__main__':
     #   schedule = make_regular_season([6, 13, 14, 7], ndays=9,
     #                                  sch_tries=10000, seed=5)
     schedule = make_regular_season([6, 13, 14, 7], ndays=9,
-                                   sch_tries=10, seed=5)
+                                   sch_tries=10000, seed=5)
     #print('\n'.join(schedule.get_audit_text()))
     os.system('say "schedule creation is complete"')

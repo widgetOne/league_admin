@@ -135,14 +135,72 @@ def find_subs_for_playoffs(people_missing):
         subs.append(options)
     return subs
 
+
 def debug_options (subs):
     for options in subs:
         print('Player = {}'.format(options['player']))
         print('Best = {}'.format(options['best']))
         print('Free = {}'.format(options['free']),end='\n\n')
 
-if __name__ == '__main__':
-    #people_missing = ['Amy Buzzard', 'Christine Chedwick']
-    people_missing = ['Ali Momeni']
-    find_subs_for_playoffs(people_missing)
 
+def make_league_df():
+    from pandas import DataFrame
+    from members import import_teams
+    div_teams = import_teams()
+    div_bins = load_all_substitute_bins()
+    bins = sum(div_bins, [])
+    targets = ['Jessica', 'Lexie']
+    results = {}
+    for target in targets:
+        for bin_num, bin in enumerate(bins):
+            #print(len(bin))
+            for person in bin:
+                if target in person:
+                    #print(bin_num, bin)
+                    break
+        if target in results:
+            break
+    from pprint import pprint
+    people = {}
+    def find_team (name, teams):
+        for team_idx, team in enumerate(teams):
+            for person in team:
+                if name in person:
+                    return team_idx
+        return -1
+        #raise(Exception('the name {} could not be found'.format(name)))
+    for div_idx, (bins, teams) in enumerate(zip(div_bins, div_teams)):
+        for bin_idx, bin in enumerate(bins):
+            for person in bin:
+                team_idx = find_team(person, teams)
+                people[person] = {'div': div_idx, 'bin': bin_idx,
+                                  'team': team_idx}
+    df = DataFrame(people)
+    df = df.transpose()
+
+    def filter_teams(df_loc):
+        busy_teams = [5, 7, 8]
+        for busy in busy_teams:
+            df_loc = df_loc.loc[df['team'] != (busy - 1)]
+        return df_loc
+    lexies = df.loc[df['bin']==1].loc[df['div']==2]
+    jeses = df.loc[df['bin']==0].loc[df['div']==2]
+    lexies = filter_teams(lexies)
+    jeses = filter_teams(jeses)
+
+    pprint(len(lexies))
+    pprint(len(jeses))
+    pprint(lexies)
+    pprint(jeses)
+    pprint(", ".join(lexies.index.values))
+    pprint(", ".join(jeses.index.values))
+    pprint(jeses.index.values)
+    #pprint(len(lexies), lexies)
+    #pprint(len(jeses), jeses)
+
+
+def pandas_sub_check():
+    make_league_df()
+
+if __name__ == '__main__':
+    pandas_sub_check()

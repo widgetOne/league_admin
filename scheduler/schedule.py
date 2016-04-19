@@ -45,6 +45,16 @@ class Schedule(object):
         with open(loc, "w") as csv_file:
             print("\n".join(out), file=csv_file)
 
+    def new_fitness(self):
+        return sum((day.fitness_str() for day in self.days)).value()
+
+    def new_fitness_div(self, div_idx):
+        return sum((day.fitness_str() for day in self.days)).div_value(div_idx)
+
+    def new_fitness_div_list(self):
+        sch_fitness = sum((day.fitness_str() for day in self.days))
+        return [sch_fitness.div_value(idx) for idx in range(4)]
+
     def make_audit_structures(self):
         from copy import deepcopy
         rolling_sum_play = []
@@ -64,6 +74,7 @@ class Schedule(object):
 
     def get_audit_text(self):
         from copy import deepcopy
+        # todo: this summation logic could be integrated with fitness.py's
         rolling_sum_play, rolling_sum_ref, total_use = self.make_audit_structures()
         out = ['audit of cumulative plays and refs by team']
         for day in self.days:
@@ -151,12 +162,12 @@ class Schedule(object):
         from math import pow
         bye_worth = 75
         if self.max_fitness == 0:
-            # todo: max fitness should be calculated w the schedule
+            # todo: max value should be calculated w the schedule
             self.div_max_fitness = []
             for div_idx, div_teams in enumerate(self.team_counts):
                 div_fitness = 0
                 if (self.days[0].facilities.refs == True):
-                    # adjust fitness to use total games
+                    # adjust value to use total games
                     total_reffings = total_games[div_idx]
                     max_ref_teams = total_reffings % div_teams
                     min_ref_teams = div_teams - max_ref_teams
@@ -251,8 +262,8 @@ class Schedule(object):
                 # checking for teams scheduled for two locations at once
                 for play_at_time in self.div_team_times[div_idx][team_idx]:
                     if play_at_time > 1:
-                        div_fit -= 50
-                # fitness for byes in division
+                        div_fit -= 100
+                # value for byes in division
                 if div_idx in [1,3]:
                     bye_count = 0
                     for games_on_day in team.games_per_day:

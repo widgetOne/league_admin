@@ -3,11 +3,14 @@ init_value = -999999
 
 class Game(object):
     def __init__(self, team1=init_value, team2=init_value,
-                 ref=init_value, div=init_value):
+                 ref=init_value, div=init_value,
+                 time=init_value, court=init_value):
         self.team1 = team1
         self.team2 = team2
         self.ref = ref
         self.div = div
+        self.time = time
+        self.court = court
 
     def small_str(self):
         div_char = "ricp "
@@ -42,25 +45,36 @@ class Game(object):
 
     def gen_dict(self):
         out = {
-                'team1' : self.team1,
-                'team2' : self.team2,
-                'ref' : self.ref,
-                'div' : self.div,
-               }
+                'team1': self.team1,
+                'team2': self.team2,
+                'ref': self.ref,
+                'div': self.div,
+                'time': self.time,
+                'court': self.court,
+        }
         return out
-
-def gen_day_from_dict(input_dict):
-    out = Game(input_dict['team1'], input_dict['team2'],
-               input_dict['ref'], input_dict['ref'])
 
 
 class Day(object):
     def __init__(self, facilities, day_num):
         from copy import deepcopy
-        court = [Game() for _ in range(4)]
-        self.courts = [deepcopy(court) for _ in range(5)]
+        self.courts = []
+        for court_idx in range(facilities.court_count):
+            self.courts.append([Game(time=idx, court=court_idx)
+                                for idx in range(facilities.time_count)])
         self.facilities = facilities
         self.num = day_num
+
+    def games(self):
+        all_games = []
+        for court in self.courts:
+            all_games += court
+        return all_games
+
+
+    def fitness_str(self):
+        from fitness import ScheduleFitness
+        return ScheduleFitness(self.facilities, self.games())
 
     def fitness(self, divisions):
         fitness = sum(self.div_fitness(divisions, div) for div in range(4))
@@ -84,7 +98,7 @@ class Day(object):
                     new_games[team2.team_idx] += 1
                     old_count1 = team1.times_team_played[team2.team_idx]
                     old_count2 = team2.times_team_played[team1.team_idx]
-            #        fitness -= (old_count1 + old_count2) * 2 + 2
+            #        value -= (old_count1 + old_count2) * 2 + 2
                     played_at_time[team1.team_idx] += 1
                     played_at_time[team2.team_idx] += 1
                     if team1 == team2:
@@ -122,7 +136,8 @@ class Day(object):
     def audit_view(self, rolling_sum_play, rolling_sum_ref):
         out = []
         header = ",".join('CT '+ str(idx + 1) for idx in range(5))
-        header += ",  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums"
+        header += ",  ||| Rec Inter Comp Power Playing" +\
+                  " sums followed by Reffing Sums"
         out += [header]
         time_count = len(self.courts[0])
         for time in range(len(self.courts[0])):

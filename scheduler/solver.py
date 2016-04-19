@@ -34,7 +34,7 @@ class Solver(metaclass=ABCMeta):
     def fitness(self, state=None):
         '''This function will return a non-positive value describing how
         far from being ACCEPTABLE the current schedule is. Only a object
-        with a fitness of 0 is acceptable in a final schedule'''
+        with a value of 0 is acceptable in a final schedule'''
         pass
 
     def optimality(self, state=None):

@@ -1,5 +1,4 @@
 from unittest import TestCase
-from maker import make_schedule
 import facility
 
 __author__ = 'coulter'
