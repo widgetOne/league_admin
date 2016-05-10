@@ -59,5 +59,7 @@ todo: Add generic back-end reporting logic for translation from times (0-4) to
     any format
 todo: add reporting tool to support mid-season rerating (basically player
     availability cross-referencing
-
+todo: rework reporting logic to generate one central data from containing
+    schedule, rating and bin information. This would increase upfront computing,
+    but greatly simplify all downstream reporting (playoff sub, ratings, etc)
 

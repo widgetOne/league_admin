@@ -168,33 +168,40 @@ def make_league_df():
                 if name in person:
                     return team_idx
         return -1
-        #raise(Exception('the name {} could not be found'.format(name)))
     for div_idx, (bins, teams) in enumerate(zip(div_bins, div_teams)):
         for bin_idx, bin in enumerate(bins):
             for person in bin:
                 team_idx = find_team(person, teams)
+                int_team = find_team(person, div_teams[1])
                 people[person] = {'div': div_idx, 'bin': bin_idx,
-                                  'team': team_idx}
+                                  'team': team_idx, 'int_team': int_team}
     df = DataFrame(people)
     df = df.transpose()
+    comp_busy = [4, 6, 7] # really, 5, 7, 8
+    int_busy = [11, 9, 1] # really, 12, 10, 2
 
-    def filter_teams(df_loc):
-        busy_teams = [5, 7, 8]
-        for busy in busy_teams:
-            df_loc = df_loc.loc[df['team'] != (busy - 1)]
-        return df_loc
-    lexies = df.loc[df['bin']==1].loc[df['div']==2]
-    jeses = df.loc[df['bin']==0].loc[df['div']==2]
-    lexies = filter_teams(lexies)
-    jeses = filter_teams(jeses)
-
-    pprint(len(lexies))
-    pprint(len(jeses))
-    pprint(lexies)
-    pprint(jeses)
+    print('\n\nbusy')
+    brian_int = df.loc[df['bin'] == 0].loc[df['div'] == 2].loc[
+        df['int_team'].isin(int_busy)]
+    lexies = df.loc[df['bin'] == 1].loc[df['div'] == 2].loc[
+        df['team'].isin(comp_busy)]
+    jeses = df.loc[df['bin'] == 0].loc[df['div'] == 2].loc[
+        df['team'].isin(comp_busy)]
+    pprint(", ".join(brian_int.index.values))
     pprint(", ".join(lexies.index.values))
     pprint(", ".join(jeses.index.values))
-    pprint(jeses.index.values)
+
+    print('\n\nyes')
+    brian_int = df.loc[df['bin']==0].loc[df['div']==2].loc[~df['int_team'].isin(int_busy)]
+    lexies = df.loc[df['bin']==1].loc[df['div']==2].loc[~df['team'].isin(comp_busy)]
+    jeses = df.loc[df['bin']==0].loc[df['div']==2].loc[~df['team'].isin(comp_busy)]
+    pprint(len(brian_int))
+    pprint(len(lexies))
+    pprint(len(jeses))
+    print(", ".join(brian_int.index.values))
+    print(", ".join(lexies.index.values))
+    print(", ".join(jeses.index.values))
+
     #pprint(len(lexies), lexies)
     #pprint(len(jeses), jeses)
 
