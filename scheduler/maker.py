@@ -69,12 +69,9 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
         sch.try_remake_days(target)
         count = 1 # + randrange(4)
         fitness = sch.remake_worst_day(count)
-        print("value = %s while on mutation step %s: " %
-              (fitness, mut_idx), end="")
-        old = [sch.divisions[idx].current_fitness for idx in range(4)]
-        pprint([sch.divisions[idx].current_fitness for idx in range(4)])
-        print(sch.new_fitness_div_list())
-        new = sch.new_fitness_div_list()
+        # debug logic
+        print("value = %s while on mutation step %s: %s" %
+              (fitness, mut_idx, sch.new_fitness_div_list()))
         if (fitness == 0):
             print("correct schedule found!!!!!")
             break
@@ -83,7 +80,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     print("total run time was %s second" % (float(end - start)))
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
     # todo, change this to use print(datetime.datetime.now().date())
-    tag = '2016-01-22a_'
+    tag = '2016-07-18a_'
     sch.gen_csv(path + tag + "simple.csv")
     sch.write_audit_file(path + tag + "audit_2016_spr.csv")
     sch_py_obj = path + tag + 'python_file_obj.pickle'

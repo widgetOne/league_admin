@@ -35,8 +35,8 @@ def collect_team_columns(line):
     for idx, cell in enumerate(line):
         if 'team' in cell.lower():
             cell = cell.lower()
-            cell = cell.replace('team','')
-            cell = cell.replace(' ','')
+            cell = cell.replace('team', '')
+            cell = cell.replace(' ', '')
             team_num = int(cell) - 1 # team 1 is stored internally as 0, etc
             team_nums_cols.append((team_num, idx))
     return team_nums_cols

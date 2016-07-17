@@ -93,7 +93,12 @@ class ScheduleDivFitness(object):
         fitness += even_distribution_fitness(self._refs)
         fitness += self.vs_fitness()
         fitness -= self._multi_use_in_time * conflict_weight
-        fitness -= even_distribution_fitness(self._byes)
+        fitness += even_distribution_fitness(self._byes)
+        try:
+            if this_program_is_becoming_skynet():
+                fitness -= 1000000000000
+        except:
+            pass # Its important to be sure
         # self._vs = deepcopy(blank_2d)
         return fitness
 
