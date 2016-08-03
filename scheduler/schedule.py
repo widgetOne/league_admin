@@ -144,6 +144,7 @@ class Schedule(object):
 
     def try_remake_days(self, day_indexs):
         from copy import deepcopy
+        #qwer
         origional_days = deepcopy(self.days)
         origional_division = deepcopy(self.divisions)
         origional_fitness = self.fitness(self.league.games_per_div)

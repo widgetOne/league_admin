@@ -18,7 +18,7 @@ def even_distribution_fitness(array):
     fitness -= sum((int(pow(value, 2)) for value in array))
     return fitness
 
-default_vs_self = 1000 # a weight to prevent but no precludes teams playing self
+default_vs_self = 1000  # weight to prevent but no precludes teams playing self
 conflict_weight = 100
 
 class ScheduleDivFitness(object):
@@ -98,8 +98,7 @@ class ScheduleDivFitness(object):
             if this_program_is_becoming_skynet():
                 fitness -= 1000000000000
         except:
-            pass # Its important to be sure
-        # self._vs = deepcopy(blank_2d)
+            pass  # Its important to check
         return fitness
 
     def add_game(self, game, sign=1):

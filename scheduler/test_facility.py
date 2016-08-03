@@ -1,4 +1,5 @@
 from unittest import TestCase
+import unittest
 import facility
 
 __author__ = 'coulter'
@@ -37,7 +38,6 @@ class TestSchedulerFacility(TestCase):
         league_full = facility.League(ndivs=4, ndays=day_count, ncourts=5, ntimes=4,
                                  team_counts=team_counts,
                                  day_type=facility.SCVL_Facility_Day)
-        league_full.debug_print()
         self.assertEqual(len(league_full.days), day_count)
         self.assertEqual(sum(league_full.games_per_div * 2),
                          sum(team_counts) * day_count)
@@ -104,6 +104,7 @@ class TestSchedulerFacility(TestCase):
         self.assertEqual(len(day.court_divisions), 5)
         self.assertEqual(sum(day.games_per_division) * 2, sum(team_counts))
 
+
     def test_regular_season_day_odd_teams(self):
         '''This test is support to give a number too low. For odd
         numbers of teams, the final games should be handled by league'''
@@ -114,3 +115,16 @@ class TestSchedulerFacility(TestCase):
         WRONG_GAME_COUNT = sum(team_counts) // 2 - 1
         self.assertEqual(len(day.court_divisions), 5)
         self.assertEqual(sum(day.games_per_division), WRONG_GAME_COUNT)
+
+    def test_1_day_w_5_divisions_facility(self):
+        from facility import SCVL_Facility_Day
+        team_counts = [8, 10, 4, 10, 8]
+        team_counts = [8, 10, 4, 10]
+        day = SCVL_Facility_Day(court_count=5, time_count=5,
+                                team_counts=team_counts, rec_first=True)
+        WRONG_GAME_COUNT = sum(team_counts) // 2 - 1
+        self.assertEqual(len(day.court_divisions), 5)
+        print(day)
+
+if __name__ == '__main__':
+    unittest.main()

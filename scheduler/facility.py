@@ -1,6 +1,12 @@
-
 from model import init_value
-
+#
+# Day Design:
+# The process will proceed in two waves:
+#    1. All days will be populated with As or Bs for the groups
+#           This will establish open play and the A/B dividers
+#    2. A second sweep will the change the letter blocks to league games slots
+#           This will ensure each league has the slots it needs for each div
+#
 class League(object):
     '''This is basically all the set characteristics of the problem'''
     def __init__(self, ndivs, ndays, ncourts, ntimes, team_counts, day_type):
@@ -13,7 +19,7 @@ class League(object):
         self.days = []
         if (ncourts * ntimes * 2 < sum(team_counts)):
             raise(ValueError("This schedule has too many teams for its courts"))
-        self.games_per_div = [0] * 4
+        self.games_per_div = [0] * len(self.team_counts)
         for day_idx in range(ndays):
             rec_first = day_idx % 2 == 1
             day = SCVL_Facility_Day(court_count=ncourts, time_count=ntimes,
@@ -90,12 +96,14 @@ class Facility_Day(object):
         self.court_divisions = [[init_value for _ in range(time_count)]
                        for __ in range(court_count)]
         self.div_times_locs = []
-        self.day_type = init_value # tool for distinguishing types for days during mutation
+        self.day_type = init_value  # tool for distinguishing
+                                    # types for days during mutation
         self.div_games = []
         self.set_division()
 
     def set_division(self):
-        raise(NotImplementedError("missing contrete implimentation of abstract set_division method"))
+        raise(NotImplementedError("missing contrete implimentation " +
+                                  "of abstract set_division method"))
         # logic will be need for how these divisions are set
 
     def debug_print(self):
@@ -104,6 +112,18 @@ class Facility_Day(object):
             for court in range(len(self.court_divisions)):
                 print(self.court_divisions[court][time], end='')
             print("")
+
+    def __repr__(self):
+        output = ""
+        output += "rec first = %s\n" % self.rec_first
+        for time in range(len(self.court_divisions[0])):
+            for court in range(len(self.court_divisions)):
+                team_num = self.court_divisions[court][time]
+                if team_num == -999999:
+                    team_num = "X"
+                output += str(team_num)
+            output += '\n'
+        return output
 
     def add_game(self, court, time, div_idx):
         self.court_divisions[court][time] = div_idx
@@ -129,7 +149,7 @@ class Facility_Day(object):
         for court, times in enumerate(self.court_divisions):
             for time, div_idx in enumerate(times):
                 if div_idx <= -1:
-                    out.append((court,time))
+                    out.append((court, time))
         return out
 
     def games_per_div(self):
@@ -145,7 +165,7 @@ class SCVL_Facility_Day(Facility_Day):
             self.day_type = 1
         self.team_counts = team_counts
         self.rec_first = rec_first
-        self.games_per_division = [0] * 4
+        self.games_per_division = [0] * len(team_counts)
         super(SCVL_Facility_Day, self).__init__(court_count, time_count)
         self.refs = True
 
@@ -170,8 +190,8 @@ class SCVL_Facility_Day(Facility_Day):
                             (outer, inter_power_times),
                              ]
         self.alternate_div_loc = [inner, outer, outer, inner]
-        self.div_games = [[] for _ in range(4)]
-        self.div_times_games = [[] for _ in range(4)]
+        self.div_games = [[] for _ in range(len(self.team_counts))]
+        self.div_times_games = [[] for _ in range(len(self.team_counts))]
         spares_rc_ip = [[] for _ in range(2)] # note rec and comp share slots, etc
         spare_slots = spares_rc_ip + spares_rc_ip
         spare_div = [2,3,0,1]
@@ -179,7 +199,7 @@ class SCVL_Facility_Day(Facility_Day):
         # eventually, odd numbers of teams will be dealt with here
 
         # first pass
-        for div_idx in range(4):
+        for div_idx in range(len(self.team_counts)):
             games = self.team_counts[div_idx] // 2
             locs, times = self.div_times_locs[div_idx]
             game_slots = [(x,y) for x in locs for y in times]
@@ -191,7 +211,7 @@ class SCVL_Facility_Day(Facility_Day):
                 self.add_game(court, time, div_idx)
         # filling in gaps
 
-        for div_idx in range(4):
+        for div_idx in range(len(self.team_counts)):
             locs, times = self.div_times_locs[div_idx]
             alternate_idx = spare_div[div_idx]
         #    ave_games = self.games_per_division[div_idx] / self.team_counts[div_idx]
@@ -207,7 +227,8 @@ class SCVL_Facility_Day(Facility_Day):
 
 
 class SCVL_Round_Robin(Facility_Day):
-    def __init__(self, court_count, time_count, team_counts, rec_first, games_per_div):
+    def __init__(self, court_count, time_count, team_counts,
+                 rec_first, games_per_div):
         if (rec_first):
             self.day_type = 0
         else:
@@ -236,8 +257,8 @@ class SCVL_Round_Robin(Facility_Day):
                             (outer, inter_power_times),
                              ]
         self.alternate_div_loc = [inner, outer, outer, inner]
-        self.div_times_games = [[] for _ in range(4)]
-        self.div_games = [[] for _ in range(4)]
+        self.div_times_games = [[] for _ in range(len(self.team_counts))]
+        self.div_games = [[] for _ in range(len(self.team_counts))]
 
         times = []
         gap = [init_value] * 5
@@ -246,17 +267,17 @@ class SCVL_Round_Robin(Facility_Day):
         rec_comp = [0,2,2,2,0]
         pow_int = [3,1,1,1,3]
         inter_p = [3,1,1,1,1]
-        int_gap = [1] + ([init_value] * 4)
+        int_gap = [1] + ([init_value] * len(self.team_counts))
         times += [gap for _ in range(1)]
         times += [comp for _ in range(1)]
         times += [comp_r for _ in range(1)]
-        times += [rec_comp for _ in range(4)]
+        times += [rec_comp for _ in range(len(self.team_counts))]
         times += [gap for _ in range(2)]
         times += [pow_int for _ in range(5)]
         times += [inter_p for _ in range(1)]
         times += [int_gap for _ in range(1)]
         ntime = len(times)
-        temp_div_games = [0] * 4
+        temp_div_games = [0] * len(self.team_counts)
         self.court_divisions = times
         for time, courts in enumerate(times):
             for court, div_idx in enumerate(courts):
