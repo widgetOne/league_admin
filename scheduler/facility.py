@@ -286,7 +286,31 @@ class SCVL_Round_Robin(Facility_Day):
                     slot = deepcopy((court, time))
                     self.div_times_games[div_idx].append(slot)
                     self.div_games[div_idx].append(slot)
-                ##    self.team_counts[times[time][court]] += 1
         from pprint import pprint
         print("games for each division")
         pprint(temp_div_games)
+
+class SCVL_Advanced_Regular_Day(Facility_Day):
+    def __init__(self, court_count, time_count, team_counts, rec_first):
+        self.team_type_counts[0:1] = [sum(team_counts[0::2]),
+                                      sum(team_counts[1::2])]
+
+        self.team_counts = team_counts
+        self.rec_first = True
+        super(SCVL_Advanced_Regular_Day, self).__init__(court_count, time_count)
+        self.refs = False
+
+    def set_division(self):
+        pass
+
+
+class Facility_Space(object):
+    def __init__(self, time_court_days=None, time_court_array_of_days=None):
+        self.time_court_
+        if time_court_array_of_days:
+            pass
+        elif time_court_days:
+            pass
+        else:
+            raise(Exception('unknown init method for {}'.format(type(self))))
+

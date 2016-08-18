@@ -117,14 +117,16 @@ class TestSchedulerFacility(TestCase):
         self.assertEqual(sum(day.games_per_division), WRONG_GAME_COUNT)
 
     def test_1_day_w_5_divisions_facility(self):
-        from facility import SCVL_Facility_Day
+        from facility import SCVL_Advanced_Regular_Day
         team_counts = [8, 10, 4, 10, 8]
-        team_counts = [8, 10, 4, 10]
-        day = SCVL_Facility_Day(court_count=5, time_count=5,
+        #team_counts = [8, 10, 4, 10]
+        day = SCVL_Advanced_Regular_Day(court_count=5, time_count=5,
                                 team_counts=team_counts, rec_first=True)
-        WRONG_GAME_COUNT = sum(team_counts) // 2 - 1
-        self.assertEqual(len(day.court_divisions), 5)
+        ##self.assertEqual(len(day.court_divisions), 5)
         print(day)
+
+    def test_new_fac_method(self):
+        new_fac_str = facility.Facility_Space([(4,5)])
 
 if __name__ == '__main__':
     unittest.main()
