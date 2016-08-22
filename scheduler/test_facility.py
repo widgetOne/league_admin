@@ -125,8 +125,13 @@ class TestSchedulerFacility(TestCase):
         ##self.assertEqual(len(day.court_divisions), 5)
         print(day)
 
-    def test_new_fac_method(self):
-        new_fac_str = facility.Facility_Space([(4,5)])
+    def test_new_fac_tools(self):
+        team_counts = [6,11,12,7]
+        count_court = 5
+        day_count = 2
+        league = facility.League(ndivs=4, ndays=day_count, ncourts=5, ntimes=4,
+                                 team_counts=team_counts,
+                                 day_type=facility.SCVL_Facility_Day)
 
 if __name__ == '__main__':
     unittest.main()

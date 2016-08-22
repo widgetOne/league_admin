@@ -46,6 +46,9 @@ class League(object):
 
         return
 
+    def game_count(self):
+        return sum((day.game_count() for day in self.days))
+
     def div_missing_game_count(self, div_idx):
         expected = self.ndays * self.team_counts[div_idx]
         if self.games_per_div == None:
@@ -105,6 +108,9 @@ class Facility_Day(object):
         raise(NotImplementedError("missing contrete implimentation " +
                                   "of abstract set_division method"))
         # logic will be need for how these divisions are set
+
+    def game_count(self):
+        return self.court_count * self.time_count
 
     def debug_print(self):
         print("rec first = %s" % self.rec_first)
@@ -303,7 +309,7 @@ class SCVL_Advanced_Regular_Day(Facility_Day):
     def set_division(self):
         pass
 
-
+'''
 class Facility_Space(object):
     def __init__(self, time_court_days=None, time_court_array_of_days=None):
         self.time_court_
@@ -313,4 +319,4 @@ class Facility_Space(object):
             pass
         else:
             raise(Exception('unknown init method for {}'.format(type(self))))
-
+'''
