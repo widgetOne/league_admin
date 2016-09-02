@@ -88,21 +88,49 @@ class League(object):
         print("day summary:")
         for day_idx, day in enumerate(self.days):
             print("summary of facility day %s" % day_idx)
-            day.debug_print()
+            print(day)
         self.debug_deltas()
 
+    def csv(self):
+        filler = ',' * self.ncourts + '\n'
+        return filler.join([day.csv() for day in self.days])
+
+    def __repr__(self):
+        return self.csv()
+
 class Facility_Day(object):
-    def __init__(self, court_count, time_count):
-        self.court_count = court_count
-        self.time_count = time_count
-        self.refs = False
-        self.court_divisions = [[init_value for _ in range(time_count)]
-                       for __ in range(court_count)]
-        self.div_times_locs = []
-        self.day_type = init_value  # tool for distinguishing
-                                    # types for days during mutation
-        self.div_games = []
-        self.set_division()
+    def __init__(self, court_count=None, time_count=None,
+                 csv_obj=None):
+        if csv_obj:
+            self.court_count = len(csv_obj[0])
+            self.time_count = len(csv_obj)
+            self.court_divisions = csv_obj
+            def str_to_game_dv(game):
+                if game == 'X':
+                    game = init_value
+                else:
+                    game = int(game)
+            for idx, row in enumerate(csv_obj):
+                self.court_divisions[idx] = [str_to_game_dv(s)
+                                             for s in csv_obj[idx]]
+            self.div_times_locs = []
+            self.div_games = []
+            self.add_game(court, time, div_idx)
+
+        elif court_count and time_count:
+            self.court_count = court_count
+            self.time_count = time_count
+            self.court_divisions = [[init_value for _ in range(time_count)]
+                           for __ in range(court_count)]
+            self.div_times_locs = []
+            self.day_type = init_value  # tool for distinguishing
+                                        # types for days during mutation
+            self.div_games = []
+            self.set_division()
+        else:
+            raise (ValueError("no arguements were passed to Facility_Day, " +
+                              "which expects at least one"))
+        #self.games_per_division = [0] * len(team_counts)
 
     def set_division(self):
         raise(NotImplementedError("missing contrete implimentation " +
@@ -112,24 +140,21 @@ class Facility_Day(object):
     def game_count(self):
         return self.court_count * self.time_count
 
-    def debug_print(self):
-        print("rec first = %s" % self.rec_first)
+    def csv(self):
+        output = ""
         for time in range(len(self.court_divisions[0])):
-            for court in range(len(self.court_divisions)):
-                print(self.court_divisions[court][time], end='')
-            print("")
+            def game_div_to_str(game):
+                if game == init_value:
+                    return 'X'
+                else:
+                    return str(game)
+            games = [game_div_to_str(self.court_divisions[court][time]) for
+                     court in range(len(self.court_divisions))]
+            output += ','.join(games) + ',\n'
+        return output
 
     def __repr__(self):
-        output = ""
-        output += "rec first = %s\n" % self.rec_first
-        for time in range(len(self.court_divisions[0])):
-            for court in range(len(self.court_divisions)):
-                team_num = self.court_divisions[court][time]
-                if team_num == -999999:
-                    team_num = "X"
-                output += str(team_num)
-            output += '\n'
-        return output
+        return self.csv()
 
     def add_game(self, court, time, div_idx):
         self.court_divisions[court][time] = div_idx
@@ -160,6 +185,7 @@ class Facility_Day(object):
 
     def games_per_div(self):
         pass
+
 
 class SCVL_Facility_Day(Facility_Day):
     def __init__(self, court_count, time_count, team_counts,

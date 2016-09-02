@@ -63,4 +63,6 @@ todo: add reporting tool to support mid-season rerating (basically player
 todo: rework reporting logic to generate one central data from containing
     schedule, rating and bin information. This would increase upfront computing,
     but greatly simplify all downstream reporting (playoff sub, ratings, etc)
-
+todo: refactor out the daytype concept. The div_games (time/courts when a
+    division is playing) should only matter to the facility. After that, the
+    optimizer should just be coloring within the lines of what is already done

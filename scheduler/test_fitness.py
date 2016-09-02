@@ -150,3 +150,6 @@ class TestFitness(TestCase):
         self.assertEqual(0, Fit(facilities, games).value())
         sch_fitness = sum([day.fitness_str() for day in sch.days])
         self.assertEqual(0, sch_fitness.value())
+
+if __name__ == '__main__':
+    unittest.main()
