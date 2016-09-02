@@ -120,11 +120,12 @@ class TestSchedulerFacility(TestCase):
         from facility import SCVL_Advanced_Regular_Day
         team_counts = [8, 10, 4, 10, 8]
         #team_counts = [8, 10, 4, 10]
+        '''
         day = SCVL_Advanced_Regular_Day(court_count=5, time_count=5,
                                 team_counts=team_counts, rec_first=True)
         ##self.assertEqual(len(day.court_divisions), 5)
         print(day)
-
+        '''
     def test_new_fac_tools(self):
         team_counts = [6,11,12,7]
         count_court = 5
