@@ -68,3 +68,7 @@ static/
 db.sqlite3
 manage.py
 
+# these files configure pycharm, and I use different interpreters in different
+# machines (all py3). Ignoring them will force location specific configs of
+# pycharm
+.idea/
