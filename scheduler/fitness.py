@@ -51,6 +51,13 @@ class ScheduleDivFitness(object):
             else:
                 return 1
         self._byes = [bye(plays) for plays in self._plays]
+        self.fitness_methods = {
+            'plays' : lambda x: even_distribution_fitness(x._plays),
+            'refs': lambda x: even_distribution_fitness(x._refs),
+            'vs' : lambda x: x.vs_fitness(),
+            'conflict' : lambda x: -x._multi_use_in_time * conflict_weight,
+            'byes' : lambda x: even_distribution_fitness(x._byes),
+        }
 
     def __add__(self, other, sign=1):
         self._plays = add_lists(self._plays, other._plays, sign)
@@ -89,11 +96,8 @@ class ScheduleDivFitness(object):
 
     def value(self):
         fitness = 0
-        fitness += even_distribution_fitness(self._plays)
-        fitness += even_distribution_fitness(self._refs)
-        fitness += self.vs_fitness()
-        fitness -= self._multi_use_in_time * conflict_weight
-        fitness += even_distribution_fitness(self._byes)
+        for func in self.fitness_methods.values():
+            fitness += func(self)
         try:
             if this_program_is_becoming_skynet():
                 fitness -= 1000000000000
@@ -111,6 +115,15 @@ class ScheduleDivFitness(object):
             self._vs[game.team1][game.team2] += sign
             self._vs[game.team2][game.team1] += sign
 
+    def error_breakdown(self):
+        return {key: func(self) for key, func in self.fitness_methods.items()}
+
+def add_dict(a, b):
+    import copy
+    result = copy.deepcopy(a)
+    for key, value in b.items():
+        result[key] = result.get(key, 0) + value
+    return result
 
 class ScheduleFitness(object):
     def __init__(self, facilities=None, games=[]):
@@ -144,6 +157,13 @@ class ScheduleFitness(object):
 
     def div_value(self, div_idx):
         return self._divs[div_idx].value()
+
+    def error_breakdown(self):
+        result = {}
+        for div in self._divs:
+            result = add_dict(result, div.error_breakdown())
+        return result
+
 
 if __name__ == '__main__':
     pass

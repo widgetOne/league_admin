@@ -55,6 +55,10 @@ class Schedule(object):
         sch_fitness = sum((day.fitness_str() for day in self.days))
         return [sch_fitness.div_value(idx) for idx in range(4)]
 
+    def new_fitness_error_breakdown(self):
+        sch_fitness = sum((day.fitness_str() for day in self.days))
+        return sch_fitness.error_breakdown()
+
     def make_audit_structures(self):
         from copy import deepcopy
         rolling_sum_play = []
