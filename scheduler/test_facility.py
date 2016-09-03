@@ -127,14 +127,18 @@ class TestSchedulerFacility(TestCase):
         print(day)
         '''
     def test_new_fac_read_write(self):
+        import random
+        random.seed(0)
         team_counts = [6,11,12,7]
-        count_court = 5
         day_count = 2
         league = facility.League(ndivs=4, ndays=day_count, ncourts=5, ntimes=4,
                                  team_counts=team_counts,
                                  day_type=facility.SCVL_Facility_Day)
-        print(league)
-        league.debug_print()
+        test_csv_str = league.days[0].csv()
+        test_arrays = facility.csv_str_to_fac_list_list(test_csv_str)
+        test_day = facility.Facility_Day(team_counts, csv_obj=test_arrays)
+        self.assertEqual(test_csv_str, test_day.csv())
+
 
 if __name__ == '__main__':
     unittest.main()

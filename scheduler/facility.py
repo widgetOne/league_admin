@@ -7,6 +7,9 @@ from model import init_value
 #    2. A second sweep will the change the letter blocks to league games slots
 #           This will ensure each league has the slots it needs for each div
 #
+def csv_file_to_list_list(csv_path):
+    pass
+
 class League(object):
     '''This is basically all the set characteristics of the problem'''
     def __init__(self, ndivs, ndays, ncourts, ntimes, team_counts, day_type):
@@ -92,45 +95,59 @@ class League(object):
         self.debug_deltas()
 
     def csv(self):
-        filler = ',' * self.ncourts + '\n'
+        filler = '\n' + ',' * self.ncourts + '\n'
         return filler.join([day.csv() for day in self.days])
 
     def __repr__(self):
         return self.csv()
 
+
+def csv_str_to_fac_list_list(csv_str):
+    rows = csv_str.split('\n')
+    rows = [row.split(',') for row in rows]
+    rows = list(map(list, zip(*rows)))
+    return rows
+
+
+def are_games_rec_first(csv_obj):
+    for court in csv_obj:
+        if 0 in court[0:1]:
+            return True
+    return False
+
 class Facility_Day(object):
-    def __init__(self, court_count=None, time_count=None,
+    def __init__(self, team_counts, court_count=None, time_count=None,
                  csv_obj=None):
+        self.team_counts = team_counts
+        self.games_per_division = [0] * len(team_counts)
+        self.div_times_games = [[] for _ in range(len(self.team_counts))]
+        self.div_games = [[] for _ in range(len(self.team_counts))]
         if csv_obj:
+            self.rec_first = are_games_rec_first(csv_obj)
+            self.set_div_times_locs()
             self.court_count = len(csv_obj[0])
             self.time_count = len(csv_obj)
-            self.court_divisions = csv_obj
-            def str_to_game_dv(game):
+            def str_to_game_div(game):
                 if game == 'X':
-                    game = init_value
+                    return init_value
                 else:
-                    game = int(game)
-            for idx, row in enumerate(csv_obj):
-                self.court_divisions[idx] = [str_to_game_dv(s)
-                                             for s in csv_obj[idx]]
-            self.div_times_locs = []
-            self.div_games = []
-            self.add_game(court, time, div_idx)
-
+                    return int(game)
+            self.court_divisions = csv_obj
+            for court, row in enumerate(csv_obj):
+                for time, game_str in enumerate(row):
+                    game_div = str_to_game_div(game_str)
+                    self.court_divisions[court][time] = game_div
+                if game_div != init_value:
+                    self.add_game(court, time, game_div)
         elif court_count and time_count:
             self.court_count = court_count
             self.time_count = time_count
             self.court_divisions = [[init_value for _ in range(time_count)]
                            for __ in range(court_count)]
-            self.div_times_locs = []
-            self.day_type = init_value  # tool for distinguishing
-                                        # types for days during mutation
-            self.div_games = []
             self.set_division()
         else:
             raise (ValueError("no arguements were passed to Facility_Day, " +
                               "which expects at least one"))
-        #self.games_per_division = [0] * len(team_counts)
 
     def set_division(self):
         raise(NotImplementedError("missing contrete implimentation " +
@@ -141,7 +158,7 @@ class Facility_Day(object):
         return self.court_count * self.time_count
 
     def csv(self):
-        output = ""
+        rows = []
         for time in range(len(self.court_divisions[0])):
             def game_div_to_str(game):
                 if game == init_value:
@@ -150,17 +167,18 @@ class Facility_Day(object):
                     return str(game)
             games = [game_div_to_str(self.court_divisions[court][time]) for
                      court in range(len(self.court_divisions))]
-            output += ','.join(games) + ',\n'
-        return output
+            rows += [','.join(games)]
+        return '\n'.join(rows)
 
     def __repr__(self):
         return self.csv()
 
     def add_game(self, court, time, div_idx):
-        self.court_divisions[court][time] = div_idx
-        self.div_times_games[div_idx].append((court, time))
-        self.games_per_division[div_idx] += 1
-        self.div_games[div_idx].append((court, time))
+        if not div_idx == init_value:
+            self.court_divisions[court][time] = div_idx
+            self.div_times_games[div_idx].append((court, time))
+            self.games_per_division[div_idx] += 1
+            self.div_games[div_idx].append((court, time))
 
     def add_odd_games(self, div_missing_games, games_per_div, days_to_add):
         for court, time in self.open_slots():
@@ -183,26 +201,7 @@ class Facility_Day(object):
                     out.append((court, time))
         return out
 
-    def games_per_div(self):
-        pass
-
-
-class SCVL_Facility_Day(Facility_Day):
-    def __init__(self, court_count, time_count, team_counts,
-                 rec_first):
-        self.rec_first = rec_first
-        if (rec_first):
-            self.day_type = 0
-        else:
-            self.day_type = 1
-        self.team_counts = team_counts
-        self.rec_first = rec_first
-        self.games_per_division = [0] * len(team_counts)
-        super(SCVL_Facility_Day, self).__init__(court_count, time_count)
-        self.refs = True
-
-    def set_division(self):
-        from random import choice
+    def set_div_times_locs(self):
         inner = [1,2,3]
         outer = [0,4]
         first_slots = [0,1]
@@ -214,16 +213,25 @@ class SCVL_Facility_Day(Facility_Day):
         else:
             rec_comp_times = later_slots
             inter_power_times = first_slots
-
         self.div_times_locs = [
-                            (outer, rec_comp_times),
-                            (inner, inter_power_times),
-                            (inner, rec_comp_times),
-                            (outer, inter_power_times),
-                             ]
+            (outer, rec_comp_times),
+            (inner, inter_power_times),
+            (inner, rec_comp_times),
+            (outer, inter_power_times),
+        ]
         self.alternate_div_loc = [inner, outer, outer, inner]
-        self.div_games = [[] for _ in range(len(self.team_counts))]
-        self.div_times_games = [[] for _ in range(len(self.team_counts))]
+
+class SCVL_Facility_Day(Facility_Day):
+    def __init__(self, court_count, time_count, team_counts, rec_first):
+        self.rec_first = rec_first
+        self.rec_first = rec_first
+        super(SCVL_Facility_Day, self).__init__(team_counts, court_count,
+                                                time_count)
+        self.refs = True
+
+    def set_division(self):
+        from random import choice
+        self.set_div_times_locs()
         spares_rc_ip = [[] for _ in range(2)] # note rec and comp share slots, etc
         spare_slots = spares_rc_ip + spares_rc_ip
         spare_div = [2,3,0,1]
@@ -245,10 +253,6 @@ class SCVL_Facility_Day(Facility_Day):
 
         for div_idx in range(len(self.team_counts)):
             locs, times = self.div_times_locs[div_idx]
-            alternate_idx = spare_div[div_idx]
-        #    ave_games = self.games_per_division[div_idx] / self.team_counts[div_idx]
-        #    ave_alt_games = self.games_per_division[alternate_idx] / self.team_counts[alternate_idx]
-        #    take_slot = ave_games <= ave_alt_games
             for idx in range(self.team_counts[div_idx] // 2 -
                                              len(locs) * len(times) ):
                 if len(spare_slots[div_idx]) < 1:
@@ -261,37 +265,14 @@ class SCVL_Facility_Day(Facility_Day):
 class SCVL_Round_Robin(Facility_Day):
     def __init__(self, court_count, time_count, team_counts,
                  rec_first, games_per_div):
-        if (rec_first):
-            self.day_type = 0
-        else:
-            self.day_type = 1
-        self.team_counts = team_counts
         self.rec_first = True
-        super(SCVL_Round_Robin, self).__init__(court_count, time_count)
+        super(SCVL_Round_Robin, self).__init__(team_counts, court_count,
+                                               time_count)
         self.refs = False
 
     def set_division(self):
         from copy import deepcopy
-        inner = [1,2,3]
-        outer = [0,4]
-        first_slots = [0,1]
-        later_slots = [2,3]
-        if self.rec_first:
-            rec_comp_times = first_slots
-            inter_power_times = later_slots
-        else:
-            rec_comp_times = first_slots
-            inter_power_times = later_slots
-        self.div_times_locs = [
-                            (outer, rec_comp_times),
-                            (inner, inter_power_times),
-                            (inner, rec_comp_times),
-                            (outer, inter_power_times),
-                             ]
-        self.alternate_div_loc = [inner, outer, outer, inner]
-        self.div_times_games = [[] for _ in range(len(self.team_counts))]
-        self.div_games = [[] for _ in range(len(self.team_counts))]
-
+        self.set_div_times_locs()
         times = []
         gap = [init_value] * 5
         comp = [2,2,2,2,2]
@@ -326,10 +307,9 @@ class SCVL_Advanced_Regular_Day(Facility_Day):
     def __init__(self, court_count, time_count, team_counts, rec_first):
         self.team_type_counts[0:1] = [sum(team_counts[0::2]),
                                       sum(team_counts[1::2])]
-
-        self.team_counts = team_counts
         self.rec_first = True
-        super(SCVL_Advanced_Regular_Day, self).__init__(court_count, time_count)
+        super(SCVL_Advanced_Regular_Day, self).__init__(team_counts,
+                                                        court_count, time_count)
         self.refs = False
 
     def set_division(self):
