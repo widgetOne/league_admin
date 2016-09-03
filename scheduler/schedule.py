@@ -324,7 +324,7 @@ class Schedule(object):
                            '2016_q1/scvl/critical_error_debug.txt')
             raise(Exception('critical error in the bye ' +
                             'count for this schedule'))
-        return fitness
+        return fitness  # qwer
 
     def sitting_fitness(self):
         '''returns the total number of games sat by all teams'''

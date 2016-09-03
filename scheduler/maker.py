@@ -60,15 +60,17 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     sch = Schedule(league, team_counts, facilities)
     sch.seed = seed
     for mut_idx in range(sch_tries):
-        if sch.daycount > 1:
-            target1 = randrange(sch.daycount)
-            target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
-            target = [target1, target2]
-            sch.try_remake_days(target)
-        target = [randrange(sch.daycount)]
-        sch.try_remake_days(target)
-        count = 1 # + randrange(4)
-        fitness = sch.remake_worst_day(count)
+        if True:
+            if sch.daycount > 1:
+                target1 = randrange(sch.daycount)
+                target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
+                target = [target1, target2]
+                sch.try_remake_days(target)
+            target = [randrange(sch.daycount)]
+            fitness = sch.try_remake_days(target)
+        if True:
+            count = 1  # randrange(2)
+            fitness = sch.remake_worst_day(count)
         # debug logic
         print("value = %s while on mutation step %s: %s" %
               (fitness, mut_idx, sch.new_fitness_div_list()))
