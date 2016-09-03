@@ -67,9 +67,9 @@ class League(object):
 
     def debug_deltas(self):
         print('deltas for each division')
-        print('games per div * 2 = %s' % ','.join(
+        print('games per div * 2 = %s' % ', '.join(
               [str(num * 2) for num in self.games_per_div]))
-        print('games need for team_counts = %s' % ','.join(
+        print('games need for team_counts = %s' % ', '.join(
               [str(num * self.ndays) for num in self.team_counts]))
         for div_idx in range(self.ndivs):
             print('Division %s ' % div_idx, end='')
@@ -111,7 +111,7 @@ def csv_str_to_fac_list_list(csv_str):
 
 def are_games_rec_first(csv_obj):
     for court in csv_obj:
-        if 0 in court[0:1]:
+        if '0' in court[0:1]:
             return True
     return False
 
@@ -125,8 +125,9 @@ class Facility_Day(object):
         if csv_obj:
             self.rec_first = are_games_rec_first(csv_obj)
             self.set_div_times_locs()
-            self.court_count = len(csv_obj[0])
-            self.time_count = len(csv_obj)
+            self.court_count = len(csv_obj)
+            self.time_count = len(csv_obj[0])
+            self.refs = True  # todo: HACK, remove once fitness class is used
             def str_to_game_div(game):
                 if game == 'X':
                     return init_value
@@ -137,8 +138,8 @@ class Facility_Day(object):
                 for time, game_str in enumerate(row):
                     game_div = str_to_game_div(game_str)
                     self.court_divisions[court][time] = game_div
-                if game_div != init_value:
-                    self.add_game(court, time, game_div)
+                    if game_div != init_value:
+                        self.add_game(court, time, game_div)
         elif court_count and time_count:
             self.court_count = court_count
             self.time_count = time_count
@@ -174,7 +175,7 @@ class Facility_Day(object):
         return self.csv()
 
     def add_game(self, court, time, div_idx):
-        if not div_idx == init_value:
+        if div_idx != init_value:
             self.court_divisions[court][time] = div_idx
             self.div_times_games[div_idx].append((court, time))
             self.games_per_division[div_idx] += 1
