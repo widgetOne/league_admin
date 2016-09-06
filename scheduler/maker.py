@@ -99,15 +99,6 @@ def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
     random.seed(seed)
     league = League(ndivs=4, ndays=ndays, ncourts=5, ntimes=4,
                     team_counts=team_counts, day_type=SCVL_Facility_Day)
-    if True:  # qwer  True   False
-        for idx, day in enumerate(league.days):
-            from facility import csv_str_to_fac_list_list, Facility_Day
-            csv_str = day.csv()
-            new_arrays = csv_str_to_fac_list_list(csv_str)
-            new_day = Facility_Day(team_counts, csv_obj=new_arrays)
-            league.days[idx] = new_day
-
-
     league.debug_print()
     sch = make_schedule(team_counts, league, sch_tries=sch_tries)
     return sch
