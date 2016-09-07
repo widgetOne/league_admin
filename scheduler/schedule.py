@@ -164,7 +164,6 @@ class Schedule(object):
                                     old_day=self.days[day_idx])
             self.days[day_idx] = new_day
         new_fitness = self.new_fitness()
-        print(self.new_fitness_error_breakdown())
         if origional_fitness > new_fitness:
             self.days = origional_days
             self.divisions = origional_division
@@ -343,7 +342,18 @@ class Schedule(object):
         '''returns the total number of games sat by all teams'''
         sit_fitness = 0
         long_sit = 0
-        for div_idx in range(4):
+
+        self.div_team_times = []
+        for div_idx in range(len(self.team_counts)):
+            self.div_team_times.append([[0] * 20 for _ in range(
+                    self.team_counts[div_idx])])
+        for court in self.days[0].courts:
+            for time, game in enumerate(court):
+                if game.div >= 0:
+                    self.div_team_times[game.div][game.team1][time] += 1
+                    self.div_team_times[game.div][game.team2][time] += 1
+
+        for div_idx in range(len(self.team_counts)):
             for team_idx in range(self.divisions[div_idx].team_count):
                 start = init_value
                 consecutive = 0

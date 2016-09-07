@@ -47,7 +47,7 @@ def compare_days(day1, day2):
             game2_sum += game2.small_str()
         print(game1_sum + "  " + game2_sum)
 
-def make_schedule(team_counts, league, sch_tries=500, seed=None):
+def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
     from schedule import Schedule
     from random import choice, randrange
     import random
@@ -73,8 +73,9 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
             fitness = sch.remake_worst_day(count)
         # debug logic
         breakdown = sch.new_fitness_error_breakdown()
-        print("value = %s while on mutation step %s: %s %s" %
-              (fitness, mut_idx, sch.new_fitness_div_list(), breakdown))
+        if debug:
+            print("value = %s while on mutation step %s: %s %s" %
+                  (fitness, mut_idx, sch.new_fitness_div_list(), breakdown))
         if (fitness == 0):
             print("correct schedule found!!!!!")
             break
@@ -123,7 +124,7 @@ def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
         print('\nMaking schedule %s.' % seed)
         if seed >= len(schedules):
             sch = make_schedule(team_counts, league,
-                                sch_tries=sch_tries, seed=seed)
+                                sch_tries=sch_tries, seed=seed, debug=False)
             schedules.append(sch)
         else:
             sch = schedules[seed]
@@ -160,12 +161,19 @@ def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
         save_schedules(schedules)
     return schedules[best_sit_idx]
 
-def save_schedules(schedules):
+def save_schedules(schedules, path='/Users/coulter/Desktop/life_notes/2016_q1/scvl/',
+                   file_name=None):
     import pickle
     import datetime
-    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
-    todays_date = print(datetime.datetime.now().date())
-    schedule_name = path + 'round_robin-schedules-from-{}'.format(todays_date)
+    if file_name == None:
+        todays_date = print(datetime.datetime.now().date())
+        file_name = 'round_robin-schedules-from-{}'.format(todays_date)
+    schedule_name = path + file_name
+    for sch in schedules:
+        try:
+            del sch.fitness_structure
+        except:
+            pass
     with open(schedule_name, 'wb') as pickle_file:
         pickle.dump(schedules, pickle_file)
 
@@ -175,10 +183,13 @@ def get_schedules(path='/Users/coulter/Desktop/life_notes/2016_q2/scvl/',
     import pickle
     # todo: add logic here to grab the round robin object with the newest date
     round_r_schedules_path = path + file_name
-    if os.path.isfile(round_r_schedules_path):
-        with open(round_r_schedules_path, 'rb') as pic_file:
-            schedules = pickle.load(pic_file)
-    else:
+    try:
+        if os.path.isfile(round_r_schedules_path):
+            with open(round_r_schedules_path, 'rb') as pic_file:
+                schedules = pickle.load(pic_file)
+        else:
+            schedules = []
+    except:
         schedules = []
     return schedules
 
@@ -198,14 +209,57 @@ def make_round_robin_from_csv_fall_2016():
         canned_str = canned.read()
     lists_sch = facility.csv_str_to_fac_list_list(canned_str)
     fac = facility.make_league_from_csv(team_counts, lists_sch)
-    schs = get_schedules(path='/Users/bcoulter/notes/2016_09_sep/schedule/',
-                         file_name='round_robin_schs_2016-09-06.pkl')
-    sch = make_schedule(team_counts, fac,
-                        sch_tries=50, seed=1)
-    print(fac)
-    print(sch)
-    print('\n'.join(sch.get_audit_text()))
+    path = '/Users/bcoulter/notes/2016_09_sep/schedule/'
+    file_name = 'round_robin_schs_2016-09-07.pkl'
+    schedules = get_schedules(path=path, file_name=file_name)
+    #sch = make_schedule(team_counts, fac,
+    #                    sch_tries=100, seed=1)
+    looked_at_already = len(schedules)
+    total_sch = 5000
+    sch_tries = 50
+    save_progress = True
+    for seed in range(looked_at_already, total_sch):
+        print('\nMaking schedule %s.' % seed)
+        sch = make_schedule(team_counts, fac,
+                            sch_tries=sch_tries, seed=seed, debug=False)
+        schedules.append(sch)
+        print("%s - Sitting value = %s. " % (seed, sch.sitting_fitness()[0]))
+        print("%s\n%s" % (seed, seed))
+        if save_progress and (seed % 20) == 0:
+            save_schedules(schedules, path=path, file_name=file_name)
+    report_on_schedules(schedules)
+
+def report_on_schedules(schedules):
+    best_sit_idx = None
+    best_long_sit_idx = None
+    for idx, sch in enumerate(schedules):
+        if best_sit_idx == None:
+            best_sit_idx = idx
+        elif (sch.sitting_fitness()[0] > schedules[best_sit_idx].sitting_fitness()[0]):
+            best_sit_idx = idx
+
+        if best_long_sit_idx == None:
+            best_long_sit_idx = idx
+        elif sch.sitting_fitness()[1] < schedules[best_long_sit_idx].sitting_fitness()[1]:
+            best_long_sit_idx = idx
+        elif sch.sitting_fitness()[1] == schedules[best_long_sit_idx].sitting_fitness()[1]:
+            if sch.sitting_fitness()[0] > schedules[best_long_sit_idx].sitting_fitness()[0]:
+                best_long_sit_idx = idx
+    print('min = %s, min-long = %s' % (best_sit_idx,
+                                       best_long_sit_idx))
+    print('The sitting value of schedule %s is %s. ' % (idx, sch.sitting_fitness()[0]), end="")
+    print('This is %s minutes of sitting per team.' % (sch.sitting_fitness()[0] / 40 * 15), end='')
+    print('long sits = %s' % sch.sitting_fitness()[1])
+    if False:
+        print(sch)
+        print('\n'.join(sch.get_audit_text()))
     #os.system('say "schedule creation is complete"')
+
+def summarize_canned_schedules():
+    path = '/Users/bcoulter/notes/2016_09_sep/schedule/'
+    file_name = 'round_robin_schs_2016-09-07.pkl'
+    schedules = get_schedules(path=path, file_name=file_name)
+    report_on_schedules(schedules)
 
 if __name__ == '__main__':
     import os
@@ -218,7 +272,9 @@ if __name__ == '__main__':
 
     #schedule = make_regular_season([6, 13, 14, 7], ndays=9,
     #                               sch_tries=10000, seed=5)
-    make_round_robin_from_csv_fall_2016()
+
+    summarize_canned_schedules()
+    #make_round_robin_from_csv_fall_2016()
 
     #print('\n'.join(schedule.get_audit_text()))
     #os.system('say "schedule creation is complete"')
