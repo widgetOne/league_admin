@@ -103,6 +103,8 @@ class ScheduleDivFitness(object):
                 fitness -= 1000000000000
         except:
             pass  # Its important to check
+        if sum(self._plays) == 0:
+            fitness -= 1000
         return fitness
 
     def add_game(self, game, sign=1):

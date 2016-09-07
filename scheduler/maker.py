@@ -60,7 +60,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
     sch = Schedule(league, team_counts, facilities)
     sch.seed = seed
     for mut_idx in range(sch_tries):
-        if True:
+        if False:
             if sch.daycount > 1:
                 target1 = randrange(sch.daycount)
                 target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
@@ -78,17 +78,19 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None):
         if (fitness == 0):
             print("correct schedule found!!!!!")
             break
-    fitness = sch.fitness(league.games_per_div)
+    fitness = sch.new_fitness()
     end = epoch_now()
     print("total run time was %s second" % (float(end - start)))
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
     # todo, change this to use print(datetime.datetime.now().date())
-    tag = '2016-07-18a_'
-    sch.gen_csv(path + tag + "simple.csv")
-    sch.write_audit_file(path + tag + "audit_2016_spr.csv")
-    sch_py_obj = path + tag + 'python_file_obj.pickle'
-    with open(sch_py_obj,'wb') as sch_file:
-        pickle.dump(sch, sch_file)
+    save_sch = False
+    if save_sch:
+        tag = '2016-09-06a_'
+        sch.gen_csv(path + tag + "simple.csv")
+        sch.write_audit_file(path + tag + "audit_2016_spr.csv")
+        sch_py_obj = path + tag + 'python_file_obj.pickle'
+        with open(sch_py_obj,'wb') as sch_file:
+            pickle.dump(sch, sch_file)
     return sch
 
 def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
@@ -167,12 +169,12 @@ def save_schedules(schedules):
     with open(schedule_name, 'wb') as pickle_file:
         pickle.dump(schedules, pickle_file)
 
-def get_schedules():
+def get_schedules(path='/Users/coulter/Desktop/life_notes/2016_q2/scvl/',
+                  file_name='new-round-robin-schedules-objects'):
     import os
     import pickle
     # todo: add logic here to grab the round robin object with the newest date
-    path = '/Users/coulter/Desktop/life_notes/2016_q2/scvl/'
-    round_r_schedules_path = path + 'new-round-robin-schedules-objects'
+    round_r_schedules_path = path + file_name
     if os.path.isfile(round_r_schedules_path):
         with open(round_r_schedules_path, 'rb') as pic_file:
             schedules = pickle.load(pic_file)
@@ -187,6 +189,21 @@ def report_schedule(name, sch_idx, schedule):
     schedule.gen_csv(path + name + "-simple_2016_spr.csv")
     schedule.write_audit_file(path + name + "-audit_2016_spr.csv")
 
+def make_round_robin_from_csv_fall_2016():
+    import facility
+    team_counts = [7, 10, 11, 10, 6]
+    canned_sch = 'test/Fall-2016-scrap-round_robin_csv.csv'
+    with open(canned_sch, 'r') as canned:
+        canned_str = canned.read()
+    lists_sch = facility.csv_str_to_fac_list_list(canned_str)
+    fac = facility.make_league_from_csv(team_counts, lists_sch)
+    schs = get_schedules(path='/Users/bcoulter/notes/2016_09_sep/schedule/',
+                         file_name='round_robin_schs_2016-09-06.pkl')
+    sch = make_schedule(team_counts, fac,
+                        sch_tries=5, seed=1)
+    print(fac)
+    print(sch)
+    #os.system('say "schedule creation is complete"')
 
 if __name__ == '__main__':
     import os
@@ -196,7 +213,10 @@ if __name__ == '__main__':
     #   make_regular_season([6,14,14,6], ndays=9, sch_tries=400, seed=5)
     #   schedule = make_regular_season([6, 13, 14, 7], ndays=9,
     #                                  sch_tries=10000, seed=5)
-    schedule = make_regular_season([6, 13, 14, 7], ndays=9,
-                                   sch_tries=10000, seed=5)
+
+    #schedule = make_regular_season([6, 13, 14, 7], ndays=9,
+    #                               sch_tries=10000, seed=5)
+    make_round_robin_from_csv_fall_2016()
+
     #print('\n'.join(schedule.get_audit_text()))
-    os.system('say "schedule creation is complete"')
+    #os.system('say "schedule creation is complete"')

@@ -71,7 +71,6 @@ class Day(object):
             all_games += court
         return all_games
 
-
     def fitness_str(self):
         from fitness import ScheduleFitness
         return ScheduleFitness(self.facilities, self.games())
@@ -112,7 +111,8 @@ class Day(object):
                 if game.div == div_idx:
                     teams_used[game.team1] += 1
                     teams_used[game.team2] += 1
-                    teams_used[game.ref] += 1
+                    if game.ref != init_value:
+                        teams_used[game.ref] += 1
             for team_idx, use_count in enumerate(teams_used):
                 if use_count > 1:
                     double_use_penalty = 100
@@ -258,6 +258,51 @@ class Day(object):
                 team2_idx = choice(best_list)
                 self.courts[court][time].team2 = team2_idx
                 del teams_to_play[teams_to_play.index(team2_idx)]
+
+
+    def schedule_div_players_then_refs(self, fac, div_idx, div):
+        from random import shuffle, choice
+        from schedule import list_filter
+        game_slots = fac.div_games[div_idx].copy()
+        games = len(game_slots)
+        shuffle(game_slots)
+        ref_slots = game_slots.copy()
+        teams_to_play = list(range(div.team_count))
+        day_idx = 0  # todo: make this dynamic
+        # fill in players
+        for game_idx in range(games):
+            court, time = game_slots[game_idx]
+            self.courts[court][time].div = div_idx
+            # place team 1
+            best_list = div.teams_w_least_play()
+            team1_idx = choice(best_list)
+            self.courts[court][time].team1 = team1_idx
+            div.add_play_for_team(team1_idx, day_idx)
+            # place team 2
+            team1 = div.teams[team1_idx]
+            best_opponent = team1.teams_least_played()
+            best_list = list_filter(best_list, div.teams_w_least_play())
+            team2_idx = choice(best_list)
+            self.courts[court][time].team2 = team2_idx
+            div.add_play_for_team(team2_idx, day_idx, team1_idx)
+
+        # add refs
+        there_are_refs = False
+        if there_are_refs:
+            for game_idx in range(games):
+                short_ref_teams = list_filter(teams_to_play, div.teams_w_least_ref())
+                current_team_num = choice(short_ref_teams)
+                court, ref_time = game_slots[game_idx]
+                self.courts[court][ref_time].ref = current_team_num
+                self.courts[court][ref_time].div = div_idx
+                #play_time = times[(times.index(ref_time) + 1) % len(times)]
+                if (court, play_time) in game_slots:
+                    self.courts[court][play_time].team1 = current_team_num
+                else:
+                    while (court, play_time) not in game_slots:
+                        court = (court + 1) % 5
+                    self.courts[court][play_time].team2 = current_team_num
+                del teams_to_play[teams_to_play.index(current_team_num)]
 
     def draft_actual_play_then_ref(self, fac, div_idx, div):
         from random import shuffle, choice
@@ -454,6 +499,18 @@ class Division(object):
         return [team_num for team_num, team in enumerate(self.teams)
                 if team.games == min_plays]
 
+    def add_play_for_team(self, team_num, day_idx, opponent_num=-1, sign=1):
+        self.teams[team_num].games += sign
+        self.teams[team_num].games_per_day[day_idx] += sign
+        if opponent_num > -1:
+            # Don't add opponent games as that was done previously
+            self.teams[team_num].times_team_played[opponent_num] += sign
+            self.teams[opponent_num].times_team_played[team_num] += sign
+            self.teams[opponent_num].games_per_day[day_idx] += sign
+
+    def add_ref_for_team(self, team_num, sign=1):
+        self.teams[team_num].refs += sign
+
     def fitness(self):
         fitness = 0
         for team in self.teams:
@@ -465,8 +522,8 @@ class Team(object):
         self.games = 0
         self.refs = 0
         self.team_idx = team_idx
-        self.days_comma_games = []
-        self.time_slot_count = [0 for _ in range(time_slots)]
+        ###  self.days_comma_games = []
+        ### self.time_slot_count = [0 for _ in range(time_slots)]
         self.games_per_day = [0] * ndays
         self.times_team_played = [0 for _ in range(teams_in_division)]
         self.times_team_played[team_idx] = 1000

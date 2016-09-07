@@ -126,6 +126,7 @@ class TestSchedulerFacility(TestCase):
         ##self.assertEqual(len(day.court_divisions), 5)
         print(day)
         '''
+
     def test_new_fac_read_write(self):
         import random
         random.seed(0)
@@ -139,6 +140,25 @@ class TestSchedulerFacility(TestCase):
         test_day = facility.Facility_Day(team_counts, csv_obj=test_arrays)
         self.assertEqual(test_csv_str, test_day.csv())
 
+    def test_read_5_div_day(self):
+        team_counts = [7, 10, 11, 10, 6]
+        canned_sch = 'test/Fall-2016-scrap-round_robin_csv.csv'
+        with open(canned_sch, 'r') as canned:
+            canned_str = canned.read()
+        lists_sch = facility.csv_str_to_fac_list_list(canned_str)
+        fac_day = facility.Facility_Day(team_counts, csv_obj=lists_sch[0])
+        print(fac_day)
+        self.assertEqual(1, 1)
+
+    def test_read_5_div_facility(self):
+        team_counts = [7, 10, 11, 10, 6]
+        canned_sch = 'test/Fall-2016-scrap-round_robin_csv.csv'
+        with open(canned_sch, 'r') as canned:
+            canned_str = canned.read()
+        lists_sch = facility.csv_str_to_fac_list_list(canned_str)
+        fac = facility.make_league_from_csv(team_counts, lists_sch)
+        print(fac)
+        self.assertEqual(1, 1)
 
 if __name__ == '__main__':
     unittest.main()

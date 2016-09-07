@@ -10,9 +10,18 @@ from model import init_value
 def csv_file_to_list_list(csv_path):
     pass
 
+def make_league_from_csv(team_counts, csv):
+    ndivs = len(team_counts)
+    ndays = len(csv)
+    ncourts = len(csv[0])
+    ntimes = len(csv[0][0])
+    day_type = Facility_Day
+    return League(ndivs, ndays, ncourts, ntimes, team_counts, day_type, csv)
+
 class League(object):
     '''This is basically all the set characteristics of the problem'''
-    def __init__(self, ndivs, ndays, ncourts, ntimes, team_counts, day_type):
+    def __init__(self, ndivs, ndays, ncourts, ntimes, team_counts, day_type,
+                 csv=None):
         self.ndivs = ndivs
         self.ndays = ndays
         self.ncourts = ncourts
@@ -23,29 +32,37 @@ class League(object):
         if (ncourts * ntimes * 2 < sum(team_counts)):
             raise(ValueError("This schedule has too many teams for its courts"))
         self.games_per_div = [0] * len(self.team_counts)
-        for day_idx in range(ndays):
-            rec_first = day_idx % 2 == 1
-            day = SCVL_Facility_Day(court_count=ncourts, time_count=ntimes,
-                                    team_counts=team_counts,
-                                    rec_first=rec_first)
-            self.days.append(day)
-            for div_idx in range(ndivs):
-                self.games_per_div[div_idx] += day.games_per_division[div_idx]
-        odd_division = [count % 2 == 1 for count in team_counts]
-        if (not any(odd_division)):
-            return
-            # handling odd divisions
-        div_missing_games = self.div_missing_games_list()
-        if len(div_missing_games) % 2 == 1:
-            raise(NotImplemented("This code not designed for a odd " +
-                                 "total number of teams, only odd teams " +
-                                 'per division.'))
-        self.odd_team_game_per_day = len(div_missing_games) // 2
-        for day in self.days:
+
+        if csv:
+            for day_csv in csv:
+                day = Facility_Day(team_counts, csv_obj=day_csv)
+                self.days.append(day)
+                for div_idx in range(ndivs):
+                    self.games_per_div[div_idx] += day.games_per_division[div_idx]
+        else:
+            for day_idx in range(ndays):
+                rec_first = day_idx % 2 == 1
+                day = SCVL_Facility_Day(court_count=ncourts, time_count=ntimes,
+                                        team_counts=team_counts,
+                                        rec_first=rec_first)
+                self.days.append(day)
+                for div_idx in range(ndivs):
+                    self.games_per_div[div_idx] += day.games_per_division[div_idx]
+            odd_division = [count % 2 == 1 for count in team_counts]
+            if (not any(odd_division)):
+                return
+                # handling odd divisions
             div_missing_games = self.div_missing_games_list()
-            self.games_per_div = day.add_odd_games(div_missing_games,
-                                                   self.games_per_div,
-                                                   self.odd_team_game_per_day)
+            if len(div_missing_games) % 2 == 1:
+                raise(NotImplemented("This code not designed for a odd " +
+                                     "total number of teams, only odd teams " +
+                                     'per division.'))
+            self.odd_team_game_per_day = len(div_missing_games) // 2
+            for day in self.days:
+                div_missing_games = self.div_missing_games_list()
+                self.games_per_div = day.add_odd_games(div_missing_games,
+                                                       self.games_per_div,
+                                                       self.odd_team_game_per_day)
 
         return
 
@@ -106,7 +123,7 @@ def csv_str_to_fac_list_list(csv_str):
     rows = csv_str.split('\n')
     rows = [row.split(',') for row in rows]
     rows = list(map(list, zip(*rows)))
-    return rows
+    return [rows]  # todo: this need fixed to handle multiple days in 1 csv
 
 
 def are_games_rec_first(csv_obj):

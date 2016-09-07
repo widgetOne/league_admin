@@ -38,12 +38,15 @@ class Schedule(object):
             self.add_day_to_division_history(day)
             self.days.append(day)
 
-    def gen_csv(self, loc):
+    def __repr__(self):
         out = []
         for day in self.days:
             out += day.csv_str()
+        return "\n".join(out)
+
+    def gen_csv(self, loc):
         with open(loc, "w") as csv_file:
-            print("\n".join(out), file=csv_file)
+            print(self.__repr__(), file=csv_file)
 
     def new_fitness(self):
         return sum((day.fitness_str() for day in self.days)).value()
@@ -151,7 +154,7 @@ class Schedule(object):
         #qwer
         origional_days = deepcopy(self.days)
         origional_division = deepcopy(self.divisions)
-        origional_fitness = self.fitness(self.league.games_per_div)
+        origional_fitness = self.new_fitness()
         for day_idx in day_indexs:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexs:
@@ -159,7 +162,7 @@ class Schedule(object):
                                     old_day=self.days[day_idx])
             self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
-        new_fitness = self.fitness(self.league.games_per_div)
+        new_fitness = self.new_fitness()
         if origional_fitness > new_fitness:
             self.days = origional_days
             self.divisions = origional_division
@@ -195,7 +198,7 @@ class Schedule(object):
                 if old_day != None:
                     day.import_div_games(div_idx, old_day)
                     continue
-            day.schedule_div_ref_then_players(fac, div_idx, div)
+            day.schedule_div_players_then_refs(fac, div_idx, div)
         return day
 
     def fitness(self, total_games):
@@ -366,7 +369,8 @@ class Schedule(object):
                     continue
                 self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
                 self.divisions[game.div].teams[game.team2].times_team_played[game.team1] += sign
-                self.divisions[game.div].teams[game.ref].refs += sign
+                if game.ref != init_value:
+                    self.divisions[game.div].teams[game.ref].refs += sign
                 self.divisions[game.div].teams[game.team1].games_per_day[day.num] += sign
                 self.divisions[game.div].teams[game.team2].games_per_day[day.num] += sign
 
