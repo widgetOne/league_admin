@@ -193,6 +193,7 @@ def make_round_robin_from_csv_fall_2016():
     import facility
     team_counts = [7, 10, 11, 10, 6]
     canned_sch = 'test/Fall-2016-scrap-round_robin_csv.csv'
+    canned_sch = 'test/Fall-2016-scrap-round_robin_csv_b.csv'
     with open(canned_sch, 'r') as canned:
         canned_str = canned.read()
     lists_sch = facility.csv_str_to_fac_list_list(canned_str)
@@ -200,9 +201,10 @@ def make_round_robin_from_csv_fall_2016():
     schs = get_schedules(path='/Users/bcoulter/notes/2016_09_sep/schedule/',
                          file_name='round_robin_schs_2016-09-06.pkl')
     sch = make_schedule(team_counts, fac,
-                        sch_tries=5, seed=1)
+                        sch_tries=50, seed=1)
     print(fac)
     print(sch)
+    print('\n'.join(sch.get_audit_text()))
     #os.system('say "schedule creation is complete"')
 
 if __name__ == '__main__':

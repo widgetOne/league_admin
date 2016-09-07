@@ -35,8 +35,9 @@ class Schedule(object):
 
         for day_idx in range(self.daycount):
             day = self.make_day(facs[day_idx], day_num=day_idx)
-            self.add_day_to_division_history(day)
+            #### self.add_day_to_division_history(day)
             self.days.append(day)
+        self.fitness_structure = sum((day.fitness_str() for day in self.days))
 
     def __repr__(self):
         out = []
@@ -49,14 +50,15 @@ class Schedule(object):
             print(self.__repr__(), file=csv_file)
 
     def new_fitness(self):
-        return sum((day.fitness_str() for day in self.days)).value()
+        self.fitness_structure = sum((day.fitness_str() for day in self.days))
+        return self.fitness_structure.value()
 
     def new_fitness_div(self, div_idx):
         return sum((day.fitness_str() for day in self.days)).div_value(div_idx)
 
     def new_fitness_div_list(self):
         sch_fitness = sum((day.fitness_str() for day in self.days))
-        return [sch_fitness.div_value(idx) for idx in range(4)]
+        return [sch_fitness.div_value(idx) for idx in range(self.division_count)]
 
     def new_fitness_error_breakdown(self):
         sch_fitness = sum((day.fitness_str() for day in self.days))
@@ -67,7 +69,7 @@ class Schedule(object):
         rolling_sum_play = []
         rolling_sum_ref = []
         total_use = []
-        for div_idx in range(4):
+        for div_idx in range(self.division_count):
             div_arr = [0] * self.team_counts[div_idx]
             rolling_sum_play.append(deepcopy(div_arr))
             rolling_sum_ref.append(deepcopy(div_arr))
@@ -93,14 +95,14 @@ class Schedule(object):
         out += ['final reports']
         play_str = ''
         ref_str = ''
-        for div_idx in range(4):
+        for div_idx in range(len(self.team_counts)):
             play_str += ",,PLAY DATA," + ",".join([(str(num)) for num in rolling_sum_play[div_idx]])
             ref_str += ",,REF DATA," + ",".join([(str(num)) for num in rolling_sum_ref[div_idx]])
         out += [play_str]
         out += [ref_str]
         out += []
-        out += ["Number of times a team has played another team: rec, In, Cmp, Pw"]
-        for div_idx in range(4):
+        out += ["Number of times a team has played another team: rec, In, Cmp, Pw, P+"]
+        for div_idx in range(len(self.team_counts)):
             for team_idx in range(self.team_counts[div_idx]):
                 team = self.divisions[div_idx].teams[team_idx]
                 row = ",".join([str(num) for num in team.times_team_played])
@@ -140,7 +142,7 @@ class Schedule(object):
         for day_idx in day_indexs:
             new_day = self.make_day(self.days[day_idx].facilities,
                                     old_day=self.days[day_idx])
-            self.add_day_to_division_history(new_day)
+            #self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
         new_fitness = self.fitness(self.league.games_per_div)
         if origional_fitness > new_fitness:
@@ -149,20 +151,20 @@ class Schedule(object):
             new_fitness = origional_fitness
         return new_fitness
 
-    def try_remake_days(self, day_indexs):
+    def try_remake_days(self, day_indexes):
         from copy import deepcopy
         #qwer
         origional_days = deepcopy(self.days)
         origional_division = deepcopy(self.divisions)
         origional_fitness = self.new_fitness()
-        for day_idx in day_indexs:
+        for day_idx in day_indexes:
             self.subtract_day_from_division_history(self.days[day_idx])
-        for day_idx in day_indexs:
+        for day_idx in day_indexes:
             new_day = self.make_day(self.days[day_idx].facilities,
                                     old_day=self.days[day_idx])
-            self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
         new_fitness = self.new_fitness()
+        print(self.new_fitness_error_breakdown())
         if origional_fitness > new_fitness:
             self.days = origional_days
             self.divisions = origional_division
@@ -194,10 +196,14 @@ class Schedule(object):
             day_num = old_day.num
         day = Day(fac, day_num)
         for div_idx, div in enumerate(self.divisions):
-            if div.current_fitness == 0:
-                if old_day != None:
-                    day.import_div_games(div_idx, old_day)
-                    continue
+            try:
+                if self.fitness_structure.div_value(div_idx) == 0:
+                    if old_day != None:
+                        day.import_div_games(div_idx, old_day)
+                        self.add_day_to_division_history(day, div_idx=div_idx)
+                        continue
+            except:
+                pass
             day.schedule_div_players_then_refs(fac, div_idx, div)
         return day
 
@@ -362,10 +368,12 @@ class Schedule(object):
                 sit_fitness -= float(end - start - count + 1)
         return round(sit_fitness, 1), long_sit
 
-    def add_day_to_division_history(self, day, sign=1):
+    def add_day_to_division_history(self, day, div_idx=None, sign=1):
         for court_idx, court in enumerate(day.courts):
             for game in court:
                 if (game.div == init_value):
+                    continue
+                if div_idx != None and div_idx!= game.div:
                     continue
                 self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
                 self.divisions[game.div].teams[game.team2].times_team_played[game.team1] += sign

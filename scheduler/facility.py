@@ -146,7 +146,7 @@ class Facility_Day(object):
             self.time_count = len(csv_obj[0])
             self.refs = True  # todo: HACK, remove once fitness class is used
             def str_to_game_div(game):
-                if game == 'X':
+                if game == 'X' or game == '-1':
                     return init_value
                 else:
                     return int(game)

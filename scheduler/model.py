@@ -36,11 +36,15 @@ class Game(object):
 #            return "SKILLS CLINIC,,"
             return "WARM UP,,"
 #        div_csv_str = "RICP "
-        div_csv_str = ['REC', 'INT', 'COM', 'POW', '']
+        div_csv_str = ['REC', 'INT', 'COM', 'POW', 'P+ ', '']
         out = ""
         out += div_csv_str[self.div] + " %s" % (self.team1 + 1)
         out += 'v' + "%s" % (self.team2 + 1)
-        out += ',' + div_csv_str[self.div] + " %s" % (self.ref + 1) + ", "
+        if self.ref > -1:
+            ref_str = self.ref + 1
+        else:
+            ref_str = 'X'
+        out += ',' + div_csv_str[self.div] + " %s" % (ref_str) + ", "
         return out
 
     def gen_dict(self):
@@ -76,7 +80,8 @@ class Day(object):
         return ScheduleFitness(self.facilities, self.games())
 
     def fitness(self, divisions):
-        fitness = sum(self.div_fitness(divisions, div) for div in range(4))
+        fix_this_team_num_to_be_dynamic = 5
+        fitness = sum(self.div_fitness(divisions, div) for div in range(fix_this_team_num_to_be_dynamic))
         return fitness
 
     def set_refs_in_div(self, history):
@@ -153,7 +158,7 @@ class Day(object):
                 row += game_str
             play_str = ""
             ref_str = ""
-            for div_idx in range(4):
+            for div_idx in range(5):
                 play_str += ",,PLAY DATA," + ",".join([(str(num)) for num in rolling_sum_play[div_idx]])
                 ref_str += ",,REF DATA," + ",".join([(str(num)) for num in rolling_sum_ref[div_idx]])
             out += [row + play_str + ref_str]
@@ -182,7 +187,7 @@ class Day(object):
                         total_use[game.div][game.team2] += 1
                 row += game_str
             use_str = ""
-            for div_idx in range(4):
+            for div_idx in range(5):
                 use_str += ",,Total Use," + ",".join([(str(num)) for num in total_use[div_idx]])
             out += [row + use_str]
         out += ["," * 2 * 5]
@@ -263,25 +268,29 @@ class Day(object):
     def schedule_div_players_then_refs(self, fac, div_idx, div):
         from random import shuffle, choice
         from schedule import list_filter
+        ### qwerqwerqwer
         game_slots = fac.div_games[div_idx].copy()
-        games = len(game_slots)
         shuffle(game_slots)
-        ref_slots = game_slots.copy()
-        teams_to_play = list(range(div.team_count))
         day_idx = 0  # todo: make this dynamic
         # fill in players
-        for game_idx in range(games):
-            court, time = game_slots[game_idx]
+        for court, time in game_slots:
             self.courts[court][time].div = div_idx
             # place team 1
-            best_list = div.teams_w_least_play()
+            free = self.teams_free_at_time(div_idx, time, div.team_count)
+            least_played = div.teams_w_least_play()
+            best_list = free
+            best_list = list_filter(best_list, least_played)
             team1_idx = choice(best_list)
             self.courts[court][time].team1 = team1_idx
             div.add_play_for_team(team1_idx, day_idx)
             # place team 2
+            free = self.teams_free_at_time(div_idx, time, div.team_count)
             team1 = div.teams[team1_idx]
             best_opponent = team1.teams_least_played()
-            best_list = list_filter(best_list, div.teams_w_least_play())
+            least_played = div.teams_w_least_play()
+            best_list = free
+            best_list = list_filter(best_list, least_played)
+            best_list = list_filter(best_list, best_opponent)
             team2_idx = choice(best_list)
             self.courts[court][time].team2 = team2_idx
             div.add_play_for_team(team2_idx, day_idx, team1_idx)
@@ -471,6 +480,16 @@ class Day(object):
             count_team_in_time[team1_idx][time] += 1
             count_team_in_time[team2_idx][time] += 1
             self.courts[court][time].div = div_idx
+
+    def teams_free_at_time(self, div_idx, time, team_count):
+        free = {idx : 0 for idx in range(team_count)}
+        for court in self.courts:
+            game = court[time]
+            if game.div == div_idx:
+                free.pop(game.team1, 0)
+                free.pop(game.team2, 0)
+                free.pop(game.ref, 0)
+        return list(free.keys())
 
     def totals(self):
         totals = {}
