@@ -273,11 +273,7 @@ if __name__ == '__main__':
     #schedule = make_regular_season([6, 13, 14, 7], ndays=9,
     #                               sch_tries=10000, seed=5)
 
-    making_new_teams = False
-    if making_new_teams:
-        summarize_canned_schedules()
-    else:
-        make_round_robin_from_csv_fall_2016()
+    make_round_robin_from_csv_fall_2016()
 
     #print('\n'.join(schedule.get_audit_text()))
     #os.system('say "schedule creation is complete"')

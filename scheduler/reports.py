@@ -205,13 +205,14 @@ def make_league_df():
     #pprint(len(lexies), lexies)
     #pprint(len(jeses), jeses)
 
-def import_main_ratings_list:
+def import_main_ratings_list():
     path = "/Users/coulter/Desktop/life_notes/2016_q2/scvl/master_take_2.csv"
     with open(path, "r") as ratings_file:
         for line in ratings_file:
+            pass
 
 def analyze_bin_accuracy():
-    //from members import import_teams
+    from members import import_teams
     sub_lists = load_all_substitute_bins()
     print(sub_lists)
 
@@ -219,6 +220,8 @@ def pandas_sub_check():
     make_league_df()
 
 if __name__ == '__main__':
-    analyze_bin_accuracy()
+    import maker
+    maker.summarize_canned_schedules()
+
 
 
