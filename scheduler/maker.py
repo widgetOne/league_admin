@@ -202,14 +202,14 @@ def report_schedule(name, sch_idx, schedule):
 
 def make_round_robin_from_csv_fall_2016():
     import facility
-    team_counts = [6, 10, 11, 10, 6]
-    canned_sch = 'test/Fall-2016-scrap-round_robin_csv.csv'
-    canned_sch = 'test/Fall-2016-scrap-round_robin_csv_e.csv'
+    team_counts = [6, 10, 10, 10, 6]
+    canned_sch = 'test/Fall-2016-scrap-round_robin_csv_f.csv'
     with open(canned_sch, 'r') as canned:
         canned_str = canned.read()
     lists_sch = facility.csv_str_to_fac_list_list(canned_str)
     fac = facility.make_league_from_csv(team_counts, lists_sch)
-    path = '/Users/bcoulter/notes/2016_09_sep/schedule/'
+    #path = '/Users/bcoulter/notes/2016_09_sep/schedule/'
+    path = 'test/scratch/'
     file_name = 'round_robin_schs_2016-09-07.pkl'
     schedules = get_schedules(path=path, file_name=file_name)
     #sch = make_schedule(team_counts, fac,
@@ -230,36 +230,35 @@ def make_round_robin_from_csv_fall_2016():
     report_on_schedules(schedules)
 
 def report_on_schedules(schedules):
-    best_sit_idx = None
-    best_long_sit_idx = None
+    summary = {}
     for idx, sch in enumerate(schedules):
-        if best_sit_idx == None:
-            best_sit_idx = idx
-        elif (sch.sitting_fitness()[0] > schedules[best_sit_idx].sitting_fitness()[0]):
-            best_sit_idx = idx
-
-        if best_long_sit_idx == None:
-            best_long_sit_idx = idx
-        elif sch.sitting_fitness()[1] < schedules[best_long_sit_idx].sitting_fitness()[1]:
-            best_long_sit_idx = idx
-        elif sch.sitting_fitness()[1] == schedules[best_long_sit_idx].sitting_fitness()[1]:
-            if sch.sitting_fitness()[0] > schedules[best_long_sit_idx].sitting_fitness()[0]:
-                best_long_sit_idx = idx
-    print('min = %s, min-long = %s' % (best_sit_idx,
-                                       best_long_sit_idx))
-    print('The sitting value of schedule %s is %s. ' % (idx, sch.sitting_fitness()[0]), end="")
-    print('This is %s minutes of sitting per team.' % (sch.sitting_fitness()[0] / 40 * 15), end='')
-    print('long sits = %s' % sch.sitting_fitness()[1])
+        results = sch.sitting_fitness()
+        for name, result in results.items():
+            if name in summary:
+                old_fitness = summary[name]['fitness']
+            else:
+                old_fitness = -999999
+            if result['fitness'] > old_fitness:
+                result['seed'] = idx
+                summary[name] = result
+    for name, result in summary.items():
+        result['name'] = name
+        print('{:22s}: sits={} ave={} func={} seed={}'.format(name,
+                                                       result['sits'],
+                                                       result['ave'],
+                                                       result['func'],
+                                                       result['seed']))
     if False:
         print(sch)
         print('\n'.join(sch.get_audit_text()))
     #os.system('say "schedule creation is complete"')
 
 def summarize_canned_schedules():
-    path = '/Users/bcoulter/notes/2016_09_sep/schedule/'
+    path = 'test/scratch/'
     file_name = 'round_robin_schs_2016-09-07.pkl'
     schedules = get_schedules(path=path, file_name=file_name)
-    report_on_schedules(schedules)
+    results = report_on_schedules(schedules)
+
 
 if __name__ == '__main__':
     import os
