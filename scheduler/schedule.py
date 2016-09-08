@@ -371,11 +371,27 @@ class Schedule(object):
         long_sit = 0
 
         sitting_counts = self.get_sitting_counts()
+        bad = -999999
+        fitness_func = [
+            ('sitting is sitting', [0, -15, -30, -45, -60, -75, -90]),
+            ('sitting is sitting <h', [0, -1, -2, -3, bad, bad, bad]),
+            ('sitting is sitting <45', [0, -1, -2, bad, bad, bad, bad]),
+            ('longer is worse quad', [0, -1, -4, -9, -16, -25, -36]),
+            ('long sits worse quad', [0, 0, -1, -4, -9, -16, -25]),
+            ('min 45 minutes', [0, 0, -2, -200, bad, bad, bad]),
+        ]
         count = sum(sitting_counts)
         sum_prod = sum(time * count for time, count in enumerate(sitting_counts))
         average = sum_prod / count * 4
         long_sit = sitting_counts[3]
-        return round(average, 1), long_sit
+        results = {}
+        for name, func in fitness_func:
+            fitness = sum((a * b for a, b in zip(func, sitting_counts)))
+            ave = fitness / sum(self.team_counts)
+            result = {'fitness': fitness, 'sits': sitting_counts, 'func': func,
+                      'ave': ave}
+            results[name] = result
+        return results
 
     def add_day_to_division_history(self, day, div_idx=None, sign=1):
         for court_idx, court in enumerate(day.courts):
