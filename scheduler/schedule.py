@@ -23,8 +23,8 @@ class Schedule(object):
         self.division_count = len(team_counts)
         self.max_fitness = 0
         self.league = league
-        self.courts = 5
-        self.times = 4
+        self.courts = 5  # todo make dynamic
+        self.times = 4  # todo make dynamic
         self.games_per_team = self.daycount
 
         self.div_max_fitness = [init_value for _ in range(4)]
@@ -338,14 +338,11 @@ class Schedule(object):
                             'count for this schedule'))
         return fitness  # qwer
 
-    def sitting_fitness(self):
-        '''returns the total number of games sat by all teams'''
-        sit_fitness = 0
-        long_sit = 0
-
+    def get_sitting_counts(self):
         self.div_team_times = []
         for div_idx in range(len(self.team_counts)):
-            self.div_team_times.append([[0] * 20 for _ in range(
+            self.div_team_times.append([[0] * self.league.ntimes
+                                        for _ in range(
                     self.team_counts[div_idx])])
         for court in self.days[0].courts:
             for time, game in enumerate(court):
@@ -353,30 +350,32 @@ class Schedule(object):
                     self.div_team_times[game.div][game.team1][time] += 1
                     self.div_team_times[game.div][game.team2][time] += 1
 
+        sitting_counts = [0] * 8
         for div_idx in range(len(self.team_counts)):
             for team_idx in range(self.divisions[div_idx].team_count):
-                start = init_value
-                consecutive = 0
-                count = 0
-                three_consec_found = False
+                last_play = init_value
                 play_v_time = self.div_team_times[div_idx][team_idx]
                 for time, plays in enumerate(play_v_time):
-                    if plays > 0:
-                        if start == init_value:
-                            start = time
-                        end = time
-                        count += 1
-                        consecutive = 0
-                        if three_consec_found:
-                            long_sit += 1
-                            three_consec_found = False
-                    else:
-                        if start >= 0:
-                            consecutive += 1
-                    if consecutive == 3:
-                        three_consec_found = True
-                sit_fitness -= float(end - start - count + 1)
-        return round(sit_fitness, 1), long_sit
+                    if plays:
+                        if last_play == init_value:
+                            last_play = time
+                        else:
+                            sit_time = time - last_play - 1
+                            sitting_counts[sit_time] += 1
+                            last_play = time
+        return sitting_counts
+
+    def sitting_fitness(self):
+        '''returns the total number of games sat by all teams'''
+        sit_fitness = 0
+        long_sit = 0
+
+        sitting_counts = self.get_sitting_counts()
+        count = sum(sitting_counts)
+        sum_prod = sum(time * count for time, count in enumerate(sitting_counts))
+        average = sum_prod / count * 4
+        long_sit = sitting_counts[3]
+        return round(average, 1), long_sit
 
     def add_day_to_division_history(self, day, div_idx=None, sign=1):
         for court_idx, court in enumerate(day.courts):

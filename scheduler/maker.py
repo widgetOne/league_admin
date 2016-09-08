@@ -202,9 +202,9 @@ def report_schedule(name, sch_idx, schedule):
 
 def make_round_robin_from_csv_fall_2016():
     import facility
-    team_counts = [7, 10, 11, 10, 6]
+    team_counts = [6, 10, 11, 10, 6]
     canned_sch = 'test/Fall-2016-scrap-round_robin_csv.csv'
-    canned_sch = 'test/Fall-2016-scrap-round_robin_csv_b.csv'
+    canned_sch = 'test/Fall-2016-scrap-round_robin_csv_e.csv'
     with open(canned_sch, 'r') as canned:
         canned_str = canned.read()
     lists_sch = facility.csv_str_to_fac_list_list(canned_str)
@@ -273,8 +273,11 @@ if __name__ == '__main__':
     #schedule = make_regular_season([6, 13, 14, 7], ndays=9,
     #                               sch_tries=10000, seed=5)
 
-    summarize_canned_schedules()
-    #make_round_robin_from_csv_fall_2016()
+    making_new_teams = False
+    if making_new_teams:
+        summarize_canned_schedules()
+    else:
+        make_round_robin_from_csv_fall_2016()
 
     #print('\n'.join(schedule.get_audit_text()))
     #os.system('say "schedule creation is complete"')
