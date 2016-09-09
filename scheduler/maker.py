@@ -77,7 +77,8 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
             print("value = %s while on mutation step %s: %s %s" %
                   (fitness, mut_idx, sch.new_fitness_div_list(), breakdown))
         if (fitness == 0):
-            print("correct schedule found!!!!!")
+            if debug:
+                print("correct schedule found!!!!!")
             break
     fitness = sch.new_fitness()
     end = epoch_now()
@@ -202,8 +203,8 @@ def report_schedule(name, sch_idx, schedule):
 
 def make_round_robin_from_csv_fall_2016():
     import facility
-    team_counts = [6, 10, 10, 10, 6]
-    canned_sch = 'test/Fall-2016-scrap-round_robin_csv_f.csv'
+    team_counts = [6, 10, 11, 10, 6]
+    canned_sch = 'test/Fall-2016-scrap-round_robin_csv_e.csv'
     with open(canned_sch, 'r') as canned:
         canned_str = canned.read()
     lists_sch = facility.csv_str_to_fac_list_list(canned_str)
@@ -215,7 +216,7 @@ def make_round_robin_from_csv_fall_2016():
     #sch = make_schedule(team_counts, fac,
     #                    sch_tries=100, seed=1)
     looked_at_already = len(schedules)
-    total_sch = 5000
+    total_sch = 30000
     sch_tries = 50
     save_progress = True
     for seed in range(looked_at_already, total_sch):
@@ -223,11 +224,8 @@ def make_round_robin_from_csv_fall_2016():
         sch = make_schedule(team_counts, fac,
                             sch_tries=sch_tries, seed=seed, debug=False)
         schedules.append(sch)
-        print("%s - Sitting value = %s. " % (seed, sch.sitting_fitness()[0]))
-        print("%s\n%s" % (seed, seed))
-        if save_progress and (seed % 20) == 0:
+        if save_progress and ((seed+1) % 40) == 0:
             save_schedules(schedules, path=path, file_name=file_name)
-    report_on_schedules(schedules)
 
 def report_on_schedules(schedules):
     summary = {}
@@ -240,14 +238,27 @@ def report_on_schedules(schedules):
                 old_fitness = -999999
             if result['fitness'] > old_fitness:
                 result['seed'] = idx
+                result['sch'] = sch
                 summary[name] = result
-    for name, result in summary.items():
+
+    for name, result in sorted(summary.items()):
         result['name'] = name
         print('{:22s}: sits={} ave={} func={} seed={}'.format(name,
                                                        result['sits'],
                                                        result['ave'],
                                                        result['func'],
                                                        result['seed']))
+        times = [15*x for x in range(8)]
+        team_scores = []
+        for sits in result['team_sits']:
+            sum_prod = sum((x*y for x,y in zip(times, sits)))
+            team_scores.append(sum_prod)
+        print(sorted(team_scores))
+    path = 'test/scratch/'
+    file_name = '2016-09-08b_round_robin_sch.csv'
+    file_path = path + file_name
+    #schedules[2047].gen_csv(file_path)
+
     if False:
         print(sch)
         print('\n'.join(sch.get_audit_text()))

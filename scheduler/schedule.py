@@ -29,7 +29,6 @@ class Schedule(object):
 
         self.div_max_fitness = [init_value for _ in range(4)]
         self.enhance_success = 0
-        self.skillz_clinic_count()
 
         self.days = []
 
@@ -339,57 +338,79 @@ class Schedule(object):
         return fitness  # qwer
 
     def get_sitting_counts(self):
+        from copy import deepcopy
+        from fitness import add_lists
         self.div_team_times = []
+        list_of_times = [0] * self.league.ntimes
+        total_sits = [0] * 8
         for div_idx in range(len(self.team_counts)):
-            self.div_team_times.append([[0] * self.league.ntimes
-                                        for _ in range(
-                    self.team_counts[div_idx])])
+            team_count = self.team_counts[div_idx]
+            div_times = [deepcopy(list_of_times) for _ in range(team_count)]
+            self.div_team_times.append(div_times)
         for court in self.days[0].courts:
             for time, game in enumerate(court):
                 if game.div >= 0:
                     self.div_team_times[game.div][game.team1][time] += 1
                     self.div_team_times[game.div][game.team2][time] += 1
-
-        sitting_counts = [0] * 8
+        #for div_idx in range(len(self.team_counts)):
+        #    div_sits = [sitting_counts for _ in range(len(self.team_counts[div_idx))]]
+        #league_sits = [div_sits for _ in range(len(self.team_counts))]
+        team_sits = []
         for div_idx in range(len(self.team_counts)):
             for team_idx in range(self.divisions[div_idx].team_count):
                 last_play = init_value
                 play_v_time = self.div_team_times[div_idx][team_idx]
+                temp_sits = [0] * 8
+                team_total_sit = 0
                 for time, plays in enumerate(play_v_time):
                     if plays:
                         if last_play == init_value:
                             last_play = time
                         else:
                             sit_time = time - last_play - 1
-                            sitting_counts[sit_time] += 1
+                            temp_sits[sit_time] += 1
                             last_play = time
-        return sitting_counts
+                            team_total_sit += sit_time * 15
+                team_sits.append(temp_sits)
+                total_sits = add_lists(total_sits, temp_sits)
+        return total_sits, team_sits
 
     def sitting_fitness(self):
         '''returns the total number of games sat by all teams'''
         sit_fitness = 0
         long_sit = 0
 
-        sitting_counts = self.get_sitting_counts()
+        sitting_counts, team_sits = self.get_sitting_counts()
         bad = -999999
         fitness_func = [
             ('sitting is sitting', [0, -15, -30, -45, -60, -75, -90]),
-            ('sitting is sitting <h', [0, -1, -2, -3, bad, bad, bad]),
+            ('sitting is sitting <h', [0, -15, -30, -45, bad, bad, bad]),
             ('sitting is sitting <45', [0, -1, -2, bad, bad, bad, bad]),
-            ('longer is worse quad', [0, -1, -4, -9, -16, -25, -36]),
+            ('longer is worse quad', [0, -5, -20, -45, -80, -125, -180]),
             ('long sits worse quad', [0, 0, -1, -4, -9, -16, -25]),
             ('min 45 minutes', [0, 0, -2, -200, bad, bad, bad]),
         ]
+        time_cypher = [0,15,30,45,   60,75,90,115,   130,145]
+        team_wise_penality = [-5000,0,0,0,   0,-10,bad,bad,   bad,bad]
         count = sum(sitting_counts)
         sum_prod = sum(time * count for time, count in enumerate(sitting_counts))
         average = sum_prod / count * 4
-        long_sit = sitting_counts[3]
         results = {}
+        # calc team-wise sitting function
+        team_penalty_total = 0
+        for team_sit in team_sits:
+            team_sit_total = sum((a * b for a, b in zip(team_sit, time_cypher)))
+            team_penalty_total += team_wise_penality[int(team_sit_total / 15)]
+        teamwise_fitness = team_penalty_total / len(team_sits)
+        # calc the total sit fitness for various functions
         for name, func in fitness_func:
-            fitness = sum((a * b for a, b in zip(func, sitting_counts)))
+            raw_fitness = sum((a * b for a, b in zip(func, sitting_counts)))
+            fitness = raw_fitness - teamwise_fitness
             ave = fitness / sum(self.team_counts)
             result = {'fitness': fitness, 'sits': sitting_counts, 'func': func,
-                      'ave': ave}
+                      'ave': ave, 'team_sits': team_sits,
+                      'teamwise_fitness': teamwise_fitness,
+                      'raw_fitness': raw_fitness}
             results[name] = result
         return results
 
