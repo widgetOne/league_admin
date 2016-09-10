@@ -112,61 +112,6 @@ def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
     sch = make_schedule(team_counts, league, sch_tries=sch_tries)
     return sch
 
-def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
-                     total_sch=2):
-    from facility import SCVL_Round_Robin, League
-    import random
-    import pickle
-    random.seed(seed)
-    rec_plays_first = False
-    league = League(ndivs=4, ndays=1, ncourts=5, ntimes=4,
-                    team_counts=team_counts, day_type=SCVL_Round_Robin)
-    best_sit_idx = None
-    best_long_sit_idx = None
-    schedules = get_schedules()
-    initial_seed_schedule_len = len(schedules)
-
-    for seed in range(total_sch):
-        print('\nMaking schedule %s.' % seed)
-        if seed >= len(schedules):
-            sch = make_schedule(team_counts, league,
-                                sch_tries=sch_tries, seed=seed, debug=False)
-            schedules.append(sch)
-        else:
-            sch = schedules[seed]
-        print("%s - Sitting value = %s. " % (seed, sch.sitting_fitness()[0]))
-        print("%s - Min-Sit = %s and Min-long-sit = %s" % (seed, best_sit_idx,
-                                                           best_long_sit_idx))
-        print("%s\n%s" % (seed, seed))
-        if save_progress and seed > initial_seed_schedule_len and (seed % 20) == 0:
-            save_schedules(schedules)
-    for idx, sch in enumerate(schedules):
-        if best_sit_idx == None:
-            best_sit_idx = idx
-        elif (sch.sitting_fitness()[0] > schedules[best_sit_idx].sitting_fitness()[0]):
-            best_sit_idx = idx
-
-        if best_long_sit_idx == None:
-            best_long_sit_idx = idx
-        elif sch.sitting_fitness()[1] < schedules[best_long_sit_idx].sitting_fitness()[1]:
-            best_long_sit_idx = idx
-        elif sch.sitting_fitness()[1] == schedules[best_long_sit_idx].sitting_fitness()[1]:
-            if sch.sitting_fitness()[0] > schedules[best_long_sit_idx].sitting_fitness()[0]:
-                best_long_sit_idx = idx
-
-        print('min = %s, min-long = %s' % (best_sit_idx,
-                                           best_long_sit_idx), end='')
-        print('The sitting value of schedule %s is %s. ' % (idx, sch.sitting_fitness()[0]), end="")
-        print('This is %s minutes of sitting per team.' % (sch.sitting_fitness()[0] / 40 * 15), end='')
-        print('long sits = %s' % sch.sitting_fitness()[1])
-    if best_sit_idx != None:
-        report_schedule('min-sit', best_sit_idx, schedules[best_sit_idx])
-    if best_long_sit_idx != None:
-        report_schedule('no-long-sit', best_long_sit_idx, schedules[best_long_sit_idx])
-    if save_progress:
-        save_schedules(schedules)
-    return schedules[best_sit_idx]
-
 def get_default_potential_sch_loc(date=None):
     import datetime
     if date == None:
@@ -227,29 +172,6 @@ def make_round_robin_game(team_counts, sch_template_path, total_schedules, canne
     summary = report_on_schedules(schedules)
     return summary, schedules
 
-def make_round_robin_from_csv_fall_2016():
-    import datetime
-    team_counts = [6, 10, 11, 10, 6]
-    sch_template_path = 'test/Fall-2016-scrap-round_robin_csv_e.csv'
-    canned_path = 'test/scratch/'
-    total_schedules = 9205
-    summary, schedules = make_round_robin_game(team_counts, sch_template_path, total_schedules)
-    choosing_a_winner = False
-    if choosing_a_winner:
-        # pick schedule and generate the csv reports
-        #sch = schedules[2047]
-        sch = summary['sitting is sitting <45']['sch']
-        audit_text = sch.get_audit_text()
-        print("\n".join(audit_text))
-        make_final_report = False
-        if make_final_report:
-            path = 'test/scratch/'
-            today = datetime.datetime.now().date()
-            file_name = '{}b_round_robin_sch.csv'.format(today)
-            file_path = path + file_name
-            sch.gen_csv(file_path)
-
-
 def report_on_schedules(schedules):
     summary = {}
     for idx, sch in enumerate(schedules):
@@ -287,19 +209,3 @@ def summarize_canned_schedules():
     results = report_on_schedules(schedules)
 
 
-if __name__ == '__main__':
-    import os
-    #   make_round_robin([6,14,14,6], tries=5, seed=5)
-    #   make_regular_season([6,13,14,7], ndays=9, sch_tries=4, seed=5)
-    #   make_regular_season([6,12,12,6], ndays=9, sch_tries=7000, seed=5)
-    #   make_regular_season([6,14,14,6], ndays=9, sch_tries=400, seed=5)
-    #   schedule = make_regular_season([6, 13, 14, 7], ndays=9,
-    #                                  sch_tries=10000, seed=5)
-
-    #schedule = make_regular_season([6, 13, 14, 7], ndays=9,
-    #                               sch_tries=10000, seed=5)
-
-    make_round_robin_from_csv_fall_2016()
-
-    #print('\n'.join(schedule.get_audit_text()))
-    #os.system('say "schedule creation is complete"')

@@ -1,10 +1,20 @@
 from unittest import TestCase
-from maker import make_schedule
+import optimizer
 __author__ = 'coulter'
 
 
-class TestMaker(TestCase):
+class TestOptimizer(TestCase):
 
+    def test_round_robin(self):
+        from optimizer import make_round_robin_game
+        team_counts = [6, 10, 11, 10, 6]
+        sch_template_path = 'test/Fall-2016-scrap-round_robin_csv_e.csv'
+        canned_path = 'test/scratch/'
+        total_schedules = 2
+        canned_path = 'test_' + optimizer.get_default_potential_sch_loc()
+        summary, schedules = make_round_robin_game(team_counts, sch_template_path, total_schedules,
+                                                   canned_path=canned_path)
+        self.assertEqual(len(schedules), total_schedules)
     '''
     def test_high_level(self):
         expected_fitness = 0
