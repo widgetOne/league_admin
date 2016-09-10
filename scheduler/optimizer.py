@@ -61,7 +61,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
     sch = Schedule(league, team_counts, facilities)
     sch.seed = seed
     for mut_idx in range(sch_tries):
-        if False:
+        if True:
             if sch.daycount > 1:
                 target1 = randrange(sch.daycount)
                 target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
@@ -70,7 +70,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
             target = [randrange(sch.daycount)]
             fitness = sch.try_remake_days(target)
         if True:
-            count = 1  # randrange(2)
+            count = randrange(2)
             fitness = sch.remake_worst_day(count)
         # debug logic
         breakdown = sch.new_fitness_error_breakdown()
@@ -168,6 +168,7 @@ def make_round_robin_game(team_counts, sch_template_path, total_schedules, canne
                             sch_tries=sch_tries, seed=seed, debug=False)
         schedules.append(sch)
         if (seed + 1) % 50 == 0: # save every 50th schedule
+            # todo: change this to be time based so round round and reg can use same logic
             # only save progress periodically, as each only takes a second and read/write can be mny
             save_schedules(schedules, file_path=canned_path)
     summary = report_on_schedules(schedules)
