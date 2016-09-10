@@ -26,7 +26,8 @@ Objects:
     where does games-per-team go?
 """
 
-from pprint import pprint
+class FailedToConverge(Exception):
+    pass
 
 def epoch_now():
     '''this is a simple utility for getting the current epoch'''
@@ -80,9 +81,13 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
             if debug:
                 print("correct schedule found!!!!!")
             break
+    else:
+        raise(FailedToConverge("main make_schedule routine failed to generate schedule in " +
+                               "{} tries.".format(sch_tries)))
     fitness = sch.new_fitness()
     end = epoch_now()
-    print("total run_emr_job time was %s second" % (float(end - start)))
+    print("total run_emr_job time was {} second and {} iterations".format(float(end - start),
+                                                                          mut_idx))
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
     # todo, change this to use print(datetime.datetime.now().date())
     save_sch = False
@@ -162,31 +167,34 @@ def make_round_robin(team_counts, sch_tries=500, seed=1, save_progress=False,
         save_schedules(schedules)
     return schedules[best_sit_idx]
 
-def save_schedules(schedules, path='/Users/coulter/Desktop/life_notes/2016_q1/scvl/',
-                   file_name=None):
-    import pickle
+def get_default_potential_sch_loc(date=None):
     import datetime
-    if file_name == None:
-        todays_date = print(datetime.datetime.now().date())
-        file_name = 'round_robin-schedules-from-{}'.format(todays_date)
-    schedule_name = path + file_name
+    if date == None:
+        date = str(datetime.datetime.now().date())
+    default_path = 'test/scratch/'
+    file_name = default_path + 'round_robin-schedules-from-{}'.format(date)
+    return file_name
+
+def save_schedules(schedules, file_path=None):
+    import pickle
+    if file_path == None:
+        file_path = get_default_potential_sch_loc()
     for sch in schedules:
         try:
             del sch.fitness_structure
         except:
             pass
-    with open(schedule_name, 'wb') as pickle_file:
+    with open(file_path, 'wb') as pickle_file:
         pickle.dump(schedules, pickle_file)
 
-def get_schedules(path='/Users/coulter/Desktop/life_notes/2016_q2/scvl/',
-                  file_name='new-round-robin-schedules-objects'):
+def get_schedules(file_path=None):
     import os
     import pickle
-    # todo: add logic here to grab the round robin object with the newest date
-    round_r_schedules_path = path + file_name
+    if file_path == None:
+        file_path = get_default_potential_sch_loc()
     try:
-        if os.path.isfile(round_r_schedules_path):
-            with open(round_r_schedules_path, 'rb') as pic_file:
+        if os.path.isfile(file_path):
+            with open(file_path, 'rb') as pic_file:
                 schedules = pickle.load(pic_file)
         else:
             schedules = []
@@ -202,14 +210,11 @@ def report_schedule(name, sch_idx, schedule):
     schedule.write_audit_file(path + name + "-audit_2016_spr.csv")
 
 
-def make_round_robin_game(team_counts, sch_template_path, total_schedules, canned_path,
-                                    canned_file_name):
+def make_round_robin_game(team_counts, sch_template_path, total_schedules, canned_path=None):
     import facility
-    sch_tries = 50 # at the moment we rarely need more than 4
-    # todo: at an exception if a schedule does not converge
+    sch_tries = 500  # at the moment we rarely need more than 4
     fac = facility.sch_template_path_to_fac(sch_template_path, team_counts)
-    schedules = get_schedules(path=canned_path, file_name=canned_file_name)
-    # todo: change get_schedules interface to have a single arguement
+    schedules = get_schedules(file_path=canned_path)
     already_created = len(schedules)
     for seed in range(already_created, total_schedules):
         print('\nMaking schedule %s.' % seed)
@@ -218,29 +223,31 @@ def make_round_robin_game(team_counts, sch_template_path, total_schedules, canne
         schedules.append(sch)
         if (seed + 1) % 50 == 0: # save every 50th schedule
             # only save progress periodically, as each only takes a second and read/write can be mny
-            save_schedules(schedules, path=path, file_name=file_name)
+            save_schedules(schedules, file_path=canned_path)
     summary = report_on_schedules(schedules)
-    return summary
+    return summary, schedules
 
 def make_round_robin_from_csv_fall_2016():
+    import datetime
     team_counts = [6, 10, 11, 10, 6]
     sch_template_path = 'test/Fall-2016-scrap-round_robin_csv_e.csv'
     canned_path = 'test/scratch/'
-    # todo: make canned schedule date dynamic
-    canned_file_name = 'round_robin_schs_2016-09-07.pkl'
     total_schedules = 9205
-    summary = make_round_robin_game(team_counts, sch_template_path, total_schedules, canned_path,
-                                    canned_file_name)
+    summary, schedules = make_round_robin_game(team_counts, sch_template_path, total_schedules)
     choosing_a_winner = False
     if choosing_a_winner:
         # pick schedule and generate the csv reports
+        #sch = schedules[2047]
         sch = summary['sitting is sitting <45']['sch']
         audit_text = sch.get_audit_text()
         print("\n".join(audit_text))
-        path = 'test/scratch/'
-        file_name = '2016-09-08b_round_robin_sch.csv' # todo: make date dynamic
-        file_path = path + file_name
-        sch.gen_csv(file_path)
+        make_final_report = False
+        if make_final_report:
+            path = 'test/scratch/'
+            today = datetime.datetime.now().date()
+            file_name = '{}b_round_robin_sch.csv'.format(today)
+            file_path = path + file_name
+            sch.gen_csv(file_path)
 
 
 def report_on_schedules(schedules):
@@ -276,7 +283,7 @@ def report_on_schedules(schedules):
 def summarize_canned_schedules():
     path = 'test/scratch/'
     file_name = 'round_robin_schs_2016-09-07.pkl'
-    schedules = get_schedules(path=path, file_name=file_name)
+    schedules = get_schedules(file_path=path+file_name)
     results = report_on_schedules(schedules)
 
 
