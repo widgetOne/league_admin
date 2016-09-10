@@ -66,3 +66,7 @@ todo: rework reporting logic to generate one central data from containing
 todo: refactor out the daytype concept. The div_games (time/courts when a
     division is playing) should only matter to the facility. After that, the
     optimizer should just be coloring within the lines of what is already done
+todo:
+Add a new precision mutation algorithm: When there is a single defect of one team +
+and another team- (may only work for plays and refs), start from the schedule and
+do a one-for-one replacement at each location, checking each time if fitness improves

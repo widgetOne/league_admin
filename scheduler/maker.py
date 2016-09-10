@@ -82,7 +82,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
             break
     fitness = sch.new_fitness()
     end = epoch_now()
-    print("total run time was %s second" % (float(end - start)))
+    print("total run_emr_job time was %s second" % (float(end - start)))
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
     # todo, change this to use print(datetime.datetime.now().date())
     save_sch = False
@@ -201,31 +201,47 @@ def report_schedule(name, sch_idx, schedule):
     schedule.gen_csv(path + name + "-simple_2016_spr.csv")
     schedule.write_audit_file(path + name + "-audit_2016_spr.csv")
 
-def make_round_robin_from_csv_fall_2016():
+
+def make_round_robin_game(team_counts, sch_template_path, total_schedules, canned_path,
+                                    canned_file_name):
     import facility
-    team_counts = [6, 10, 11, 10, 6]
-    canned_sch = 'test/Fall-2016-scrap-round_robin_csv_e.csv'
-    with open(canned_sch, 'r') as canned:
-        canned_str = canned.read()
-    lists_sch = facility.csv_str_to_fac_list_list(canned_str)
-    fac = facility.make_league_from_csv(team_counts, lists_sch)
-    #path = '/Users/bcoulter/notes/2016_09_sep/schedule/'
-    path = 'test/scratch/'
-    file_name = 'round_robin_schs_2016-09-07.pkl'
-    schedules = get_schedules(path=path, file_name=file_name)
-    #sch = make_schedule(team_counts, fac,
-    #                    sch_tries=100, seed=1)
-    looked_at_already = len(schedules)
-    total_sch = 30000
-    sch_tries = 50
-    save_progress = True
-    for seed in range(looked_at_already, total_sch):
+    sch_tries = 50 # at the moment we rarely need more than 4
+    # todo: at an exception if a schedule does not converge
+    fac = facility.sch_template_path_to_fac(sch_template_path, team_counts)
+    schedules = get_schedules(path=canned_path, file_name=canned_file_name)
+    # todo: change get_schedules interface to have a single arguement
+    already_created = len(schedules)
+    for seed in range(already_created, total_schedules):
         print('\nMaking schedule %s.' % seed)
         sch = make_schedule(team_counts, fac,
                             sch_tries=sch_tries, seed=seed, debug=False)
         schedules.append(sch)
-        if save_progress and ((seed+1) % 40) == 0:
+        if (seed + 1) % 50 == 0: # save every 50th schedule
+            # only save progress periodically, as each only takes a second and read/write can be mny
             save_schedules(schedules, path=path, file_name=file_name)
+    summary = report_on_schedules(schedules)
+    return summary
+
+def make_round_robin_from_csv_fall_2016():
+    team_counts = [6, 10, 11, 10, 6]
+    sch_template_path = 'test/Fall-2016-scrap-round_robin_csv_e.csv'
+    canned_path = 'test/scratch/'
+    # todo: make canned schedule date dynamic
+    canned_file_name = 'round_robin_schs_2016-09-07.pkl'
+    total_schedules = 9205
+    summary = make_round_robin_game(team_counts, sch_template_path, total_schedules, canned_path,
+                                    canned_file_name)
+    choosing_a_winner = False
+    if choosing_a_winner:
+        # pick schedule and generate the csv reports
+        sch = summary['sitting is sitting <45']['sch']
+        audit_text = sch.get_audit_text()
+        print("\n".join(audit_text))
+        path = 'test/scratch/'
+        file_name = '2016-09-08b_round_robin_sch.csv' # todo: make date dynamic
+        file_path = path + file_name
+        sch.gen_csv(file_path)
+
 
 def report_on_schedules(schedules):
     summary = {}
@@ -254,15 +270,8 @@ def report_on_schedules(schedules):
             sum_prod = sum((x*y for x,y in zip(times, sits)))
             team_scores.append(sum_prod)
         print(sorted(team_scores))
-    path = 'test/scratch/'
-    file_name = '2016-09-08b_round_robin_sch.csv'
-    file_path = path + file_name
-    #schedules[2047].gen_csv(file_path)
+    return summary
 
-    if False:
-        print(sch)
-        print('\n'.join(sch.get_audit_text()))
-    #os.system('say "schedule creation is complete"')
 
 def summarize_canned_schedules():
     path = 'test/scratch/'

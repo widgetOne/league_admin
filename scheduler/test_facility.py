@@ -137,7 +137,7 @@ class TestSchedulerFacility(TestCase):
                                  day_type=facility.SCVL_Facility_Day)
         test_csv_str = league.days[0].csv()
         test_arrays = facility.csv_str_to_fac_list_list(test_csv_str)
-        test_day = facility.Facility_Day(team_counts, csv_obj=test_arrays)
+        test_day = facility.Facility_Day(team_counts, csv_obj=test_arrays[0])
         self.assertEqual(test_csv_str, test_day.csv())
 
     def test_read_5_div_day(self):
@@ -147,7 +147,6 @@ class TestSchedulerFacility(TestCase):
             canned_str = canned.read()
         lists_sch = facility.csv_str_to_fac_list_list(canned_str)
         fac_day = facility.Facility_Day(team_counts, csv_obj=lists_sch[0])
-        print(fac_day)
         self.assertEqual(1, 1)
 
     def test_read_5_div_facility(self):
@@ -157,7 +156,6 @@ class TestSchedulerFacility(TestCase):
             canned_str = canned.read()
         lists_sch = facility.csv_str_to_fac_list_list(canned_str)
         fac = facility.make_league_from_csv(team_counts, lists_sch)
-        print(fac)
         self.assertEqual(1, 1)
 
 if __name__ == '__main__':

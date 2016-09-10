@@ -382,6 +382,10 @@ class Schedule(object):
 
         sitting_counts, team_sits = self.get_sitting_counts()
         bad = -999999
+        # todo: refactor to a team centric fitness
+        # todo: calculation a division-wise fitness
+        # todo: have the selection logic pick the best divisional schedule,
+        #       not the best schedules that co-enside.
         fitness_func = [
             ('sitting is sitting', [0, -15, -30, -45, -60, -75, -90]),
             ('sitting is sitting <h', [0, -15, -30, -45, bad, bad, bad]),

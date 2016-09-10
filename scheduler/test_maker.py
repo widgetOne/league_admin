@@ -42,7 +42,7 @@ class TestMaker(TestCase):
     #   def make_round_robin(team_counts, sch_tries=500, seed=1,
     #                        save_progress=False,
     #                        total_sch=2):
-
+    '''
     def test_regular_season_scvl_integration(self):
         from maker import make_regular_season
         sch = make_regular_season([6, 13, 14, 7], ndays=9,
@@ -51,3 +51,6 @@ class TestMaker(TestCase):
     #    self.assertEqual(sch.sitting_fitness()[0], -62.0)
     #    self.assertEqual(sch.sitting_fitness()[1], 3)
         self.assertEqual(1, 1)
+    '''
+
+    #make_round_robin_from_csv_fall_2016()

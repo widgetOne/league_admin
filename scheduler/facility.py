@@ -118,6 +118,12 @@ class League(object):
     def __repr__(self):
         return self.csv()
 
+def sch_template_path_to_fac(template_path, team_counts):
+    with open(template_path, 'r') as template_file:
+        sch_template_csv = template_file.read()
+    sch_template_lists = csv_str_to_fac_list_list(sch_template_csv)
+    fac = make_league_from_csv(team_counts, sch_template_lists)
+    return fac
 
 def csv_str_to_fac_list_list(csv_str):
     rows = csv_str.split('\n')
