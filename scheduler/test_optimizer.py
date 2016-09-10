@@ -64,3 +64,6 @@ class TestOptimizer(TestCase):
     '''
 
     #make_round_robin_from_csv_fall_2016()
+
+if __name__ == '__main__':
+    unittest.main()

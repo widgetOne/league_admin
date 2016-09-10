@@ -271,7 +271,7 @@ class Day(object):
         ### qwerqwerqwer
         game_slots = fac.div_games[div_idx].copy()
         shuffle(game_slots)
-        day_idx = 0  # todo: make this dynamic
+        day_idx = fac.day_idx
         # fill in players
         for court, time in game_slots:
             self.courts[court][time].div = div_idx

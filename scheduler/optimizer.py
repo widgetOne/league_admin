@@ -82,6 +82,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
                 print("correct schedule found!!!!!")
             break
     else:
+        print('\n'.join(sch.get_audit_text()))
         raise(FailedToConverge("main make_schedule routine failed to generate schedule in " +
                                "{} tries.".format(sch_tries)))
     fitness = sch.new_fitness()

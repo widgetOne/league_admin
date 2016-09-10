@@ -16,9 +16,9 @@ def make_league_from_csv(team_counts, csv):
     ncourts = len(csv[0])
     ntimes = len(csv[0][0])
     day_type = Facility_Day
-    return League(ndivs, ndays, ncourts, ntimes, team_counts, day_type, csv)
+    return Facility(ndivs, ndays, ncourts, ntimes, team_counts, day_type, csv)
 
-class League(object):
+class Facility(object):
     '''This is basically all the set characteristics of the problem'''
     def __init__(self, ndivs, ndays, ncourts, ntimes, team_counts, day_type,
                  csv=None):
@@ -34,8 +34,8 @@ class League(object):
         self.games_per_div = [0] * len(self.team_counts)
 
         if csv:
-            for day_csv in csv:
-                day = Facility_Day(team_counts, csv_obj=day_csv)
+            for day_idx, day_csv in enumerate(csv):
+                day = Facility_Day(team_counts, day_idx, csv_obj=day_csv)
                 self.days.append(day)
                 for div_idx in range(ndivs):
                     self.games_per_div[div_idx] += day.games_per_division[div_idx]
@@ -44,7 +44,7 @@ class League(object):
                 rec_first = day_idx % 2 == 1
                 day = SCVL_Facility_Day(court_count=ncourts, time_count=ntimes,
                                         team_counts=team_counts,
-                                        rec_first=rec_first)
+                                        rec_first=rec_first, day_idx=day_idx)
                 self.days.append(day)
                 for div_idx in range(ndivs):
                     self.games_per_div[div_idx] += day.games_per_division[div_idx]
@@ -125,11 +125,25 @@ def sch_template_path_to_fac(template_path, team_counts):
     fac = make_league_from_csv(team_counts, sch_template_lists)
     return fac
 
+def transpose_2d_list_of_lists(list_of_lists):
+    return list(map(list, zip(*list_of_lists)))
+
 def csv_str_to_fac_list_list(csv_str):
+    '''this takes in a string for a csv file and returns an object of the
+    the followings structure: list days[courts[times[]]] '''
     rows = csv_str.split('\n')
     rows = [row.split(',') for row in rows]
-    rows = list(map(list, zip(*rows)))
-    return [rows]  # todo: this need fixed to handle multiple days in 1 csv
+    day = []
+    days = []
+    for row in rows:
+        if not(any(row)):
+            days += [day]
+            day = []
+            continue
+        day += [row]
+    if day:
+        days += [day]
+    return [transpose_2d_list_of_lists(day) for day in days]
 
 
 def are_games_rec_first(csv_obj):
@@ -139,8 +153,9 @@ def are_games_rec_first(csv_obj):
     return False
 
 class Facility_Day(object):
-    def __init__(self, team_counts, court_count=None, time_count=None,
+    def __init__(self, team_counts, day_idx, court_count=None, time_count=None,
                  csv_obj=None):
+        self.day_idx = day_idx
         self.team_counts = team_counts
         self.games_per_division = [0] * len(team_counts)
         self.div_times_games = [[] for _ in range(len(self.team_counts))]
@@ -246,10 +261,10 @@ class Facility_Day(object):
         self.alternate_div_loc = [inner, outer, outer, inner]
 
 class SCVL_Facility_Day(Facility_Day):
-    def __init__(self, court_count, time_count, team_counts, rec_first):
+    def __init__(self, court_count, time_count, team_counts, rec_first, day_idx):
         self.rec_first = rec_first
         self.rec_first = rec_first
-        super(SCVL_Facility_Day, self).__init__(team_counts, court_count,
+        super(SCVL_Facility_Day, self).__init__(team_counts, day_idx, court_count,
                                                 time_count)
         self.refs = True
 
@@ -294,39 +309,6 @@ class SCVL_Round_Robin(Facility_Day):
                                                time_count)
         self.refs = False
 
-    def set_division(self):
-        from copy import deepcopy
-        self.set_div_times_locs()
-        times = []
-        gap = [init_value] * 5
-        comp = [2,2,2,2,2]
-        comp_r = [0,2,2,2,2]
-        rec_comp = [0,2,2,2,0]
-        pow_int = [3,1,1,1,3]
-        inter_p = [3,1,1,1,1]
-        int_gap = [1] + ([init_value] * len(self.team_counts))
-        times += [gap for _ in range(1)]
-        times += [comp for _ in range(1)]
-        times += [comp_r for _ in range(1)]
-        times += [rec_comp for _ in range(len(self.team_counts))]
-        times += [gap for _ in range(2)]
-        times += [pow_int for _ in range(5)]
-        times += [inter_p for _ in range(1)]
-        times += [int_gap for _ in range(1)]
-        ntime = len(times)
-        temp_div_games = [0] * len(self.team_counts)
-        self.court_divisions = times
-        for time, courts in enumerate(times):
-            for court, div_idx in enumerate(courts):
-                if times[time][court] >= 0:
-                    temp_div_games[div_idx] += 1
-                    slot = deepcopy((court, time))
-                    self.div_times_games[div_idx].append(slot)
-                    self.div_games[div_idx].append(slot)
-        from pprint import pprint
-        print("games for each division")
-        pprint(temp_div_games)
-
 class SCVL_Advanced_Regular_Day(Facility_Day):
     def __init__(self, court_count, time_count, team_counts, rec_first):
         self.team_type_counts[0:1] = [sum(team_counts[0::2]),
@@ -349,4 +331,5 @@ class Facility_Space(object):
             pass
         else:
             raise(Exception('unknown init method for {}'.format(type(self))))
+
 '''

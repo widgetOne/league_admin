@@ -106,13 +106,6 @@ class Schedule(object):
                 team = self.divisions[div_idx].teams[team_idx]
                 row = ",".join([str(num) for num in team.times_team_played])
                 out += [row]
-    #    out += ["team play w time"]
-    #    for div_idx in range(4):
-    #        out += ["team schedules for division %s" % (div_idx + 1)]
-    #        for team in self.divisions[div_idx].teams:
-    #        ###    history = ','.join(team.times_team_played) qwer
-    #            hist = ','.join([str(num) for num in self.div_team_times[div_idx][team.team_idx]])
-    #            out += ['team %s games w time = %s' % (int(team.team_idx), hist)]
         out += []
         out += ['bye view']
         for div_idx in range(4):
