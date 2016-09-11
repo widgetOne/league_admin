@@ -220,8 +220,10 @@ def pandas_sub_check():
     make_league_df()
 
 if __name__ == '__main__':
-    import maker
-    maker.summarize_canned_schedules()
+    from optimizer import get_default_potential_sch_loc, get_schedules
+    canned_path = get_default_potential_sch_loc('2016-09-10')
+    schedules = get_schedules(canned_path)
+    #maker.summarize_canned_schedules()
 
 
 
