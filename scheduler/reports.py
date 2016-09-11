@@ -223,6 +223,8 @@ if __name__ == '__main__':
     from optimizer import get_default_potential_sch_loc, get_schedules
     canned_path = get_default_potential_sch_loc('2016-09-10')
     schedules = get_schedules(canned_path)
+    audit_text = schedules[0].get_audit_text()
+    print("\n".join(audit_text))
     #maker.summarize_canned_schedules()
 
 

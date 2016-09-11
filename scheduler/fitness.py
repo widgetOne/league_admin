@@ -52,11 +52,11 @@ class ScheduleDivFitness(object):
                 return 1
         self._byes = [bye(plays) for plays in self._plays]
         self.fitness_methods = {
-            'plays' : lambda x: even_distribution_fitness(x._plays),
+            'plays': lambda x: even_distribution_fitness(x._plays),
             'refs': lambda x: even_distribution_fitness(x._refs),
-            'vs' : lambda x: x.vs_fitness(),
-            'conflict' : lambda x: -x._multi_use_in_time * conflict_weight,
-            'byes' : lambda x: even_distribution_fitness(x._byes),
+            'vs': lambda x: x.vs_fitness(),
+            'conflict': lambda x: -x._multi_use_in_time * conflict_weight,
+            'byes': lambda x: even_distribution_fitness(x._byes),
         }
 
     def __add__(self, other, sign=1):
