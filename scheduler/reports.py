@@ -202,8 +202,6 @@ def make_league_df():
     print(", ".join(lexies.index.values))
     print(", ".join(jeses.index.values))
 
-    #pprint(len(lexies), lexies)
-    #pprint(len(jeses), jeses)
 
 def import_main_ratings_list():
     path = "/Users/coulter/Desktop/life_notes/2016_q2/scvl/master_take_2.csv"
@@ -223,8 +221,13 @@ if __name__ == '__main__':
     from optimizer import get_default_potential_sch_loc, get_schedules
     canned_path = get_default_potential_sch_loc('2016-09-10')
     schedules = get_schedules(canned_path)
-    audit_text = schedules[0].get_audit_text()
-    print("\n".join(audit_text))
+    schedules[0].add_reffing()
+    schedules[0].switch_teams(div_idx=2, team1=0, team2=6)
+
+
+
+    audit_text = schedules[0].gen_csv('test/reg_season/2016-Fall-a.csv')
+    #print("\n".join(audit_text))
     #maker.summarize_canned_schedules()
 
 

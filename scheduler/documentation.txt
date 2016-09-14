@@ -48,6 +48,7 @@ reports.py
 Back-end post-processors to report the schedule as needed.
 
 Future Development:
+todo: add fitness for reffing vs time -> suppress double reffing days for people
 todo: pip install nose to more efficiently automate running all tests
 todo: Expand low-level unit test coverage to ease refactoring
 todo: Simplify interface for core use cases

@@ -108,7 +108,7 @@ class Schedule(object):
                 out += [row]
         out += []
         out += ['bye view']
-        for div_idx in range(4):
+        for div_idx in range(len(self.team_counts)):
             out += ["division %s" % div_idx]
             for team_idx in range(self.team_counts[div_idx]):
                 team = self.divisions[div_idx].teams[team_idx]
@@ -418,12 +418,14 @@ class Schedule(object):
                     continue
                 if div_idx != None and div_idx!= game.div:
                     continue
-                self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
-                self.divisions[game.div].teams[game.team2].times_team_played[game.team1] += sign
-                if game.ref != init_value:
-                    self.divisions[game.div].teams[game.ref].refs += sign
-                self.divisions[game.div].teams[game.team1].games_per_day[day.num] += sign
-                self.divisions[game.div].teams[game.team2].games_per_day[day.num] += sign
+                fake_values = [init_value, -1]
+                if game.team1 not in fake_values and game.team2 not in fake_values:
+                    self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
+                    self.divisions[game.div].teams[game.team2].times_team_played[game.team1] += sign
+                    if game.ref != init_value:
+                        self.divisions[game.div].teams[game.ref].refs += sign
+                    self.divisions[game.div].teams[game.team1].games_per_day[day.num] += sign
+                    self.divisions[game.div].teams[game.team2].games_per_day[day.num] += sign
 
     def subtract_day_from_division_history(self, day):
         self.add_day_to_division_history(day, sign=-1)
@@ -450,6 +452,52 @@ class Schedule(object):
             sch_obj.append(court_list)
         out = json.dumps(sch_obj)
         return out
+
+    def add_reffing_to_day(self, day_idx):
+        for div_idx, div in enumerate(self.divisions):
+            self.days[day_idx].add_reffing(div_idx, div)
+
+    def clear_all_reffing(self):
+        for day in self.days:
+            court_list = day.courts
+            for court in court_list:
+                for game in court:
+                    game.ref = init_value
+        for div in self.divisions:
+            for team in div.teams:
+                team.refs = 0
+
+    def add_reffing(self):
+        first_time_through = True
+        while (self.new_fitness() != 0 or first_time_through):
+            first_time_through = False
+            self.clear_all_reffing()
+            for day_idx in range(len(self.days)):
+                self.add_reffing_to_day(day_idx)
+            print(self.new_fitness())
+
+    def switch_teams(self, div_idx, team1, team2):
+        teams = [team1, team2]
+        otherer = create_get_other(teams)
+        for day_idx, day in enumerate(self.days):
+            for court_idx, court in enumerate(day.courts):
+                for time_idx, game in enumerate(court):
+                    if game.div == div_idx:
+                        if game.team1 in teams:
+                            game.team1 = otherer(game.team1)
+                        if game.team2 in teams:
+                            game.team2 = otherer(game.team2)
+                        if game.ref in teams:
+                            game.ref = otherer(game.ref)
+                    self.days[day_idx].courts[court_idx][time_idx] = game
+
+def create_get_other(list):
+    def other(current):
+        if list[0] == current:
+            return list[1]
+        else:
+            return list[0]
+    return other
 
 def gen_schedule_from_json(json_input):
     import json

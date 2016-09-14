@@ -23,7 +23,7 @@ def make_regular_season_fall_2016():
     team_counts = [6, 10, 11, 10, 6]
     canned_path = get_default_potential_sch_loc('2016-09-10')
     sch_template_path = 'test/reg_season/draft_fac_a.csv'
-    sch_tries = 5000  # at the moment we rarely need more than 4
+    sch_tries = 5000
     fac = facility.sch_template_path_to_fac(sch_template_path, team_counts)
     seed = 1
     print('\nMaking schedule %s.' % seed)

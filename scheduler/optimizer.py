@@ -53,13 +53,13 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
     from random import choice, randrange
     import random
     import pickle
-    import datetime
     facilities = league.days
     if seed != None:
         random.seed(seed)
     start = epoch_now()
     sch = Schedule(league, team_counts, facilities)
     sch.seed = seed
+    # add play schedule
     for mut_idx in range(sch_tries):
         if True:
             if sch.daycount > 1:
@@ -85,6 +85,10 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
         print('\n'.join(sch.get_audit_text()))
         raise(FailedToConverge("main make_schedule routine failed to generate schedule in " +
                                "{} tries.".format(sch_tries)))
+    # add reffing duties
+    for mut_idx in range(sch_tries):
+        for day_idx in range(len(days)):
+            sch.add_reffing_to_day(day_idx)
     fitness = sch.new_fitness()
     end = epoch_now()
     print("total run_emr_job time was {} second and {} iterations".format(float(end - start),

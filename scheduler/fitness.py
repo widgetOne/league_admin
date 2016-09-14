@@ -109,7 +109,8 @@ class ScheduleDivFitness(object):
 
     def add_game(self, game, sign=1):
         from model import init_value
-        if game.team1 != init_value and game.team2 != init_value:
+        fake_values = [init_value, -1]
+        if game.team1 not in fake_values and game.team2 not in fake_values:
             self._plays[game.team1] += sign
             self._plays[game.team2] += sign
             if game.ref != init_value:

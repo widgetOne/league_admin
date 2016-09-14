@@ -316,7 +316,6 @@ class Day(object):
     def draft_actual_play_then_ref(self, fac, div_idx, div):
         from random import shuffle, choice
         from schedule import list_filter
-        #print('new method', end='') qwer
         locs, times = fac.div_times_locs[div_idx]
         game_slots = fac.div_games[div_idx].copy()
         games = len(game_slots)
@@ -495,6 +494,44 @@ class Day(object):
         totals = {}
         return totals
 
+    def get_free_to_ref(self, div_idx, time):
+        potential_refs = set([])
+        for delta in [-1, 1]:
+            source_time = time + delta
+            if 0 <= source_time < self.facilities.time_count:
+                for court_idx in range(self.facilities.court_count):
+                    game = self.courts[court_idx][source_time]
+                    if game.div == div_idx:
+                        potential_refs.add(game.team1)
+                        potential_refs.add(game.team2)
+        for court_idx in range(self.facilities.court_count):
+            game = self.courts[court_idx][time]
+            if game.div == div_idx:
+                potential_refs.discard(game.team1)
+                potential_refs.discard(game.team2)
+                if game.ref > -1:
+                    potential_refs.discard(game.ref)
+        return list(potential_refs)
+
+    def add_reffing(self, div_idx, div):
+        from random import shuffle, choice
+        from schedule import list_filter
+        fac = self.facilities
+        game_slots = fac.div_games[div_idx].copy()
+        shuffle(game_slots)
+        day_idx = fac.day_idx
+        for court, time in game_slots:
+            game = self.courts[court][time]
+            ref_options = self.get_free_to_ref(div_idx, time)
+            if len(ref_options) == 0:
+                raise(Exception('we can\'t seem to find a ref for ' +
+                                'time = {}, court = {}, day = {}'.format(court, time, day_idx)))
+            best_ref_list = list_filter(ref_options, div.teams_w_least_ref())
+            reffing_team = choice(best_ref_list)
+            game.ref = reffing_team
+            div.teams[reffing_team].refs += 1
+
+
 class Division(object):
     def __init__(self, team_count, ndays):
         self.teams = []
@@ -504,9 +541,9 @@ class Division(object):
             self.teams.append(Team(team_idx, team_count, ndays))
 
     def teams_w_least_ref(self):
-        min_plays = min([team.refs for team in self.teams])
+        min_refs = min([team.refs for team in self.teams])
         return [team_num for team_num, team in enumerate(self.teams)
-                if team.refs == min_plays]
+                if team.refs == min_refs]
 
     def teams_w_most_play(self):
         max_plays = max([team.games for team in self.teams])
@@ -525,7 +562,6 @@ class Division(object):
             # Don't add opponent games as that was done previously
             self.teams[team_num].times_team_played[opponent_num] += sign
             self.teams[opponent_num].times_team_played[team_num] += sign
-            self.teams[opponent_num].games_per_day[day_idx] += sign
 
     def add_ref_for_team(self, team_num, sign=1):
         self.teams[team_num].refs += sign
@@ -534,6 +570,7 @@ class Division(object):
         fitness = 0
         for team in self.teams:
             pass
+
 
 class Team(object):
     def __init__(self, team_idx, teams_in_division, ndays):
