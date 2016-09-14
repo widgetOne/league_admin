@@ -34,7 +34,6 @@ class Schedule(object):
 
         for day_idx in range(self.daycount):
             day = self.make_day(facs[day_idx], day_num=day_idx)
-            #### self.add_day_to_division_history(day)
             self.days.append(day)
         self.fitness_structure = sum((day.fitness_str() for day in self.days))
 
@@ -126,29 +125,27 @@ class Schedule(object):
     ### not currently used
     def try_remake_div_days(self, div_idx, day_indexs):
         from copy import deepcopy
-        origional_days = deepcopy(self.days)
-        origional_division = deepcopy(self.divisions)
-        origional_fitness = self.fitness(self.league.games_per_div)
+        original_days = deepcopy(self.days)
+        original_division = deepcopy(self.divisions)
+        original_fitness = self.fitness(self.league.games_per_div)
         for day_idx in day_indexs:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexs:
             new_day = self.make_day(self.days[day_idx].facilities,
                                     old_day=self.days[day_idx])
-            #self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
         new_fitness = self.fitness(self.league.games_per_div)
-        if origional_fitness > new_fitness:
-            self.days = origional_days
-            self.divisions = origional_division
-            new_fitness = origional_fitness
+        if original_fitness > new_fitness:
+            self.days = original_days
+            self.divisions = original_division
+            new_fitness = original_fitness
         return new_fitness
 
     def try_remake_days(self, day_indexes):
         from copy import deepcopy
-        #qwer
-        origional_days = deepcopy(self.days)
-        origional_division = deepcopy(self.divisions)
-        origional_fitness = self.new_fitness()
+        original_days = deepcopy(self.days)
+        original_division = deepcopy(self.divisions)
+        original_fitness = self.new_fitness()
         for day_idx in day_indexes:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexes:
@@ -156,17 +153,17 @@ class Schedule(object):
                                     old_day=self.days[day_idx])
             self.days[day_idx] = new_day
         new_fitness = self.new_fitness()
-        if origional_fitness > new_fitness:
-            self.days = origional_days
-            self.divisions = origional_division
-            new_fitness = origional_fitness
+        if original_fitness > new_fitness:
+            self.days = original_days
+            self.divisions = original_division
+            new_fitness = original_fitness
         return new_fitness
 
     def try_remake_days_new_method(self, day_indexs):
         from copy import deepcopy
-        origional_days = deepcopy(self.days)
-        origional_division = deepcopy(self.divisions)
-        origional_fitness = self.fitness(self.league.games_per_div)
+        original_days = deepcopy(self.days)
+        original_division = deepcopy(self.divisions)
+        original_fitness = self.fitness(self.league.games_per_div)
         for day_idx in day_indexs:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexs:
@@ -175,10 +172,10 @@ class Schedule(object):
             self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
         new_fitness = self.fitness(self.league.games_per_div)
-        if origional_fitness > new_fitness:
-            self.days = origional_days
-            self.divisions = origional_division
-            new_fitness = origional_fitness
+        if original_fitness > new_fitness:
+            self.days = original_days
+            self.divisions = original_division
+            new_fitness = original_fitness
         return new_fitness
 
     def make_day(self, fac, day_num=None, old_day=None):

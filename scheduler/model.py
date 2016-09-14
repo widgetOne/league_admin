@@ -34,7 +34,7 @@ class Game(object):
     def csv_str_w_ref(self):
         if self.div == init_value:
 #            return "SKILLS CLINIC,,"
-            return "WARM UP,,"
+            return "WARM UP  ,,"
 #        div_csv_str = "RICP "
         div_csv_str = ['REC', 'INT', 'COM', 'POW', 'P+ ', '']
         out = ""

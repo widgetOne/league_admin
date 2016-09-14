@@ -153,10 +153,8 @@ def make_league_df():
     results = {}
     for target in targets:
         for bin_num, bin in enumerate(bins):
-            #print(len(bin))
             for person in bin:
                 if target in person:
-                    #print(bin_num, bin)
                     break
         if target in results:
             break
@@ -225,6 +223,7 @@ if __name__ == '__main__':
     schedules = get_schedules(canned_path)
     audit_text = schedules[0].get_audit_text()
     print("\n".join(audit_text))
+    print(schedules[0].new_fitness())
     #maker.summarize_canned_schedules()
 
 
