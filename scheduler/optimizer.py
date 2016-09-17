@@ -44,11 +44,11 @@ def compare_days(day1, day2):
         for court in range(len(day1.courts)):
             game1 = day1.courts[court][time]
             game2 = day2.courts[court][time]
-            game1_sum += game1.small_str()
-            game2_sum += game2.small_str()
+            game1_sum += game1.csv_str()
+            game2_sum += game2.csv_str()
         print(game1_sum + "  " + game2_sum)
 
-def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
+def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, reffing=True):
     from schedule import Schedule
     from random import choice, randrange
     import random
@@ -86,10 +86,8 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True):
         raise(FailedToConverge("main make_schedule routine failed to generate schedule in " +
                                "{} tries.".format(sch_tries)))
     # add reffing duties
-    for mut_idx in range(sch_tries):
-        for day_idx in range(len(days)):
-            sch.add_reffing_to_day(day_idx)
-    fitness = sch.new_fitness()
+    if reffing:
+        sch.add_reffing()
     end = epoch_now()
     print("total run_emr_job time was {} second and {} iterations".format(float(end - start),
                                                                           mut_idx))
@@ -169,7 +167,7 @@ def make_round_robin_game(team_counts, sch_template_path, total_schedules, canne
     for seed in range(already_created, total_schedules):
         print('\nMaking schedule %s.' % seed)
         sch = make_schedule(team_counts, fac,
-                            sch_tries=sch_tries, seed=seed, debug=False)
+                            sch_tries=sch_tries, seed=seed, debug=False, reffing=False)
         schedules.append(sch)
         if (seed + 1) % 50 == 0: # save every 50th schedule
             # todo: change this to be time based so round round and reg can use same logic

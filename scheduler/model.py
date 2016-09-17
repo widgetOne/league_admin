@@ -22,20 +22,7 @@ class Game(object):
 
     def csv_str(self):
         if self.div == init_value:
-#            return "SKILLS CLINIC,,"
-            return "WARM UP,"
-        div_csv_str = ['REC', 'INT', 'COM', 'POW', '']
-        out = ""
-        out += div_csv_str[self.div] + " %s" % (self.team1 + 1)
-        out += 'v' + "%s" % (self.team2 + 1)
-        out += ','
-        return out
-
-    def csv_str_w_ref(self):
-        if self.div == init_value:
-#            return "SKILLS CLINIC,,"
-            return "WARM UP,,"
-#        div_csv_str = "RICP "
+            return "WARM UP  ,,"
         div_csv_str = ['REC', 'INT', 'COM', 'POW', 'P+ ', '']
         out = ""
         out += div_csv_str[self.div] + " %s" % (self.team1 + 1)
@@ -132,7 +119,7 @@ class Day(object):
         for time in range(len(self.courts[0])):
             row = ""
             for court in range(len(self.courts)):
-                game_str = self.courts[court][time].csv_str_w_ref()
+                game_str = self.courts[court][time].csv_str()
                 row += game_str
             out += [row]
         out += ["," * 2 * 5]
@@ -149,7 +136,7 @@ class Day(object):
             row = ""
             for court in range(len(self.courts)):
                 game = self.courts[court][time]
-                game_str = game.csv_str_w_ref()
+                game_str = game.csv_str()
                 if (game.div >= 0):
                     if (game.ref >= 0):
                         rolling_sum_ref[game.div][game.ref] += 1
@@ -179,7 +166,7 @@ class Day(object):
             row = ""
             for court in range(len(self.courts)):
                 game = self.courts[court][time]
-                game_str = game.csv_str_w_ref()
+                game_str = game.csv_str()
                 if (game.div >= 0):
                     if (game.ref >= 0):
                         total_use[game.div][game.ref] += 1
@@ -268,7 +255,6 @@ class Day(object):
     def schedule_div_players_then_refs(self, fac, div_idx, div):
         from random import shuffle, choice
         from schedule import list_filter
-        ### qwerqwerqwer
         game_slots = fac.div_games[div_idx].copy()
         shuffle(game_slots)
         day_idx = fac.day_idx

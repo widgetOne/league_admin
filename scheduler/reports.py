@@ -153,10 +153,8 @@ def make_league_df():
     results = {}
     for target in targets:
         for bin_num, bin in enumerate(bins):
-            #print(len(bin))
             for person in bin:
                 if target in person:
-                    #print(bin_num, bin)
                     break
         if target in results:
             break
@@ -224,11 +222,9 @@ if __name__ == '__main__':
     schedules[0].add_reffing()
     schedules[0].switch_teams(div_idx=2, team1=0, team2=6)
 
+    audit_text = schedules[0].get_audit_text()
+    print("\n".join(audit_text))
 
-
-    audit_text = schedules[0].gen_csv('test/reg_season/2016-Fall-a.csv')
-    #print("\n".join(audit_text))
-    #maker.summarize_canned_schedules()
-
+    #audit_text = schedules[0].gen_csv('test/reg_season/2016-Fall-a.csv')
 
 
