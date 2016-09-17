@@ -15,6 +15,28 @@ class TestOptimizer(TestCase):
         summary, schedules = make_round_robin_game(team_counts, sch_template_path, total_schedules,
                                                    canned_path=canned_path)
         self.assertEqual(len(schedules), total_schedules)
+
+    def test_regular_season(self):
+        import facility
+        from optimizer import make_schedule, save_schedules, get_default_potential_sch_loc
+        team_counts = [6, 10, 11, 10, 6]
+        canned_path = get_default_potential_sch_loc('2016-09-10')
+        sch_template_path = 'test/reg_season/draft_fac_a.csv'
+        sch_tries = 4
+        fac = facility.sch_template_path_to_fac(sch_template_path, team_counts)
+        seed = 1
+        print('\nMaking schedule %s.' % seed)
+        try:
+            sch = make_schedule(team_counts, fac,
+                                sch_tries=sch_tries, seed=seed, debug=True)
+        except optimizer.FailedToConverge:
+            assert (True)
+        except:
+            assert (False)
+        #self.assertRaises(optimizer.FailedToConverge, make_schedule, [],
+        #                  {'team_counts': team_counts, 'league': fac,
+        #                      'sch_tries': sch_tries, 'seed': seed, 'debug': True})
+
     '''
     def test_high_level(self):
         expected_fitness = 0
