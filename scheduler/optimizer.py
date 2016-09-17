@@ -73,10 +73,10 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, ref
             count = randrange(2)
             fitness = sch.remake_worst_day(count)
         # debug logic
-        breakdown = sch.new_fitness_error_breakdown()
+        breakdown = sch.fitness_error_breakdown()
         if debug:
             print("value = %s while on mutation step %s: %s %s" %
-                  (fitness, mut_idx, sch.new_fitness_div_list(), breakdown))
+                  (fitness, mut_idx, sch.fitness_div_list(), breakdown))
         if (fitness == 0):
             if debug:
                 print("correct schedule found!!!!!")

@@ -175,8 +175,8 @@ def make_league_df():
                                   'team': team_idx, 'int_team': int_team}
     df = DataFrame(people)
     df = df.transpose()
-    comp_busy = [4, 6, 7] # really, 5, 7, 8
-    int_busy = [11, 9, 1] # really, 12, 10, 2
+    comp_busy = [4, 6, 7]  # really, 5, 7, 8
+    int_busy = [11, 9, 1]  # really, 12, 10, 2
 
     print('\n\nbusy')
     brian_int = df.loc[df['bin'] == 0].loc[df['div'] == 2].loc[
@@ -221,9 +221,13 @@ if __name__ == '__main__':
     schedules = get_schedules(canned_path)
     schedules[0].add_reffing()
     schedules[0].switch_teams(div_idx=2, team1=0, team2=6)
-
-    audit_text = schedules[0].get_audit_text()
-    print("\n".join(audit_text))
+    if False:
+        audit_text = schedules[0].get_audit_text()
+        print("\n".join(audit_text))
+    print('asdf')
+    print(schedules[0].fitness())
+    for day in schedules[0].days:
+        print(day.fitness_str().value())
 
     #audit_text = schedules[0].gen_csv('test/reg_season/2016-Fall-a.csv')
 
