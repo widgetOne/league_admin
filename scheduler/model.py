@@ -20,19 +20,20 @@ class Game(object):
         out += 'r' + "%2i" % self.ref + "  "
         return out
 
+
     def csv_str(self):
         if self.div == init_value:
             return "WARM UP  ,,"
         div_csv_str = ['REC', 'INT', 'COM', 'POW', 'P+ ', '']
-        out = ""
-        out += div_csv_str[self.div] + " %s" % (self.team1 + 1)
-        out += 'v' + "%s" % (self.team2 + 1)
+        teams = [self.team1 + 1, self.team2 + 1]
+        out = "{} {}v{}".format(div_csv_str[self.div], min(teams), max(teams))
         if self.ref > -1:
             ref_str = self.ref + 1
         else:
             ref_str = 'X'
         out += ',' + div_csv_str[self.div] + " %s" % (ref_str) + ", "
         return out
+
 
     def gen_dict(self):
         out = {

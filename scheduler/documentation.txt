@@ -71,3 +71,9 @@ todo:
 Add a new precision mutation algorithm: When there is a single defect of one team +
 and another team- (may only work for plays and refs), start from the schedule and
 do a one-for-one replacement at each location, checking each time if fitness improves
+
+after feedback from fall 2016
+todo: add logic to make sure to spread out repeat vs matches (maybe goal instead of req)
+todo: speed up convergence so we can search on more criteria in reg season
+todo: disareticulate day and div day searching in solution
+todo: add logic to prevent teams reffing multiple times on the same day
