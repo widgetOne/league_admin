@@ -9,7 +9,6 @@ import datetime
 from facility import SCVL_Facility_Day
 from facility import Facility
 
-
 def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
     days = []
     import random

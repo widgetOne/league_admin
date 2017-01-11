@@ -47,18 +47,18 @@ class Schedule(object):
         with open(loc, "w") as csv_file:
             print(self.__repr__(), file=csv_file)
 
-    def new_fitness(self):
+    def fitness(self):
         self.fitness_structure = sum((day.fitness_str() for day in self.days))
         return self.fitness_structure.value()
 
-    def new_fitness_div(self, div_idx):
+    def fitness_div(self, div_idx):
         return sum((day.fitness_str() for day in self.days)).div_value(div_idx)
 
-    def new_fitness_div_list(self):
+    def fitness_div_list(self):
         sch_fitness = sum((day.fitness_str() for day in self.days))
         return [sch_fitness.div_value(idx) for idx in range(self.division_count)]
 
-    def new_fitness_error_breakdown(self):
+    def fitness_error_breakdown(self):
         sch_fitness = sum((day.fitness_str() for day in self.days))
         return sch_fitness.error_breakdown()
 
@@ -134,30 +134,30 @@ class Schedule(object):
             new_day = self.make_day(self.days[day_idx].facilities,
                                     old_day=self.days[day_idx])
             self.days[day_idx] = new_day
-        new_fitness = self.fitness(self.league.games_per_div)
-        if original_fitness > new_fitness:
+        fitness = self.fitness(self.league.games_per_div)
+        if original_fitness > fitness:
             self.days = original_days
             self.divisions = original_division
-            new_fitness = original_fitness
-        return new_fitness
+            fitness = original_fitness
+        return fitness
 
     def try_remake_days(self, day_indexes):
         from copy import deepcopy
         original_days = deepcopy(self.days)
         original_division = deepcopy(self.divisions)
-        original_fitness = self.new_fitness()
+        original_fitness = self.fitness()
         for day_idx in day_indexes:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexes:
             new_day = self.make_day(self.days[day_idx].facilities,
                                     old_day=self.days[day_idx])
             self.days[day_idx] = new_day
-        new_fitness = self.new_fitness()
-        if original_fitness > new_fitness:
+        fitness = self.fitness()
+        if original_fitness > fitness:
             self.days = original_days
             self.divisions = original_division
-            new_fitness = original_fitness
-        return new_fitness
+            fitness = original_fitness
+        return fitness
 
     def try_remake_days_new_method(self, day_indexs):
         from copy import deepcopy
@@ -171,12 +171,12 @@ class Schedule(object):
                                     old_day=self.days[day_idx])
             self.add_day_to_division_history(new_day)
             self.days[day_idx] = new_day
-        new_fitness = self.fitness(self.league.games_per_div)
-        if original_fitness > new_fitness:
+        fitness = self.fitness(self.league.games_per_div)
+        if original_fitness > fitness:
             self.days = original_days
             self.divisions = original_division
-            new_fitness = original_fitness
-        return new_fitness
+            fitness = original_fitness
+        return fitness
 
     def make_day(self, fac, day_num=None, old_day=None):
         from model import Day
@@ -194,138 +194,6 @@ class Schedule(object):
                 pass
             day.schedule_div_players_then_refs(fac, div_idx, div)
         return day
-
-    def fitness(self, total_games):
-        from math import pow
-        bye_worth = 75
-        if self.max_fitness == 0:
-            # todo: max value should be calculated w the schedule
-            self.div_max_fitness = []
-            for div_idx, div_teams in enumerate(self.team_counts):
-                div_fitness = 0
-                if (self.days[0].facilities.refs == True):
-                    # adjust value to use total games
-                    total_reffings = total_games[div_idx]
-                    max_ref_teams = total_reffings % div_teams
-                    min_ref_teams = div_teams - max_ref_teams
-                    min_ref = total_reffings // div_teams
-                    max_ref = min_ref + 1
-                    div_ref_max_fitness = min_ref_teams * pow(min_ref, 2) + \
-                                          max_ref_teams * pow(max_ref, 2)
-                    div_fitness -= div_ref_max_fitness
-                total_plays = total_games[div_idx]
-                total_combinations = div_teams * (div_teams - 1) / 2
-                min_plays = total_plays // total_combinations
-                max_plays = min_plays + 1
-                max_count = total_plays % total_combinations
-                min_count = total_combinations - max_count
-                loss_to_play_team_v_team = (pow(min_plays, 2) * min_count +
-                                pow(max_plays, 2) * max_count) * 2
-                div_fitness -= loss_to_play_team_v_team
-
-                total_plays = total_games[div_idx] * 2
-                min_plays = total_plays // div_teams
-                max_plays = min_plays + 1
-                max_count = total_plays % div_teams
-                min_count = div_teams - max_count
-                loss_to_play = (pow(min_plays, 2) * min_count +
-                                pow(max_plays, 2) * max_count)
-                div_fitness -= loss_to_play
-
-                bye_count = 0
-                for day in self.days:
-                    games_per_division = len(day.facilities.div_games[div_idx])
-                    bye_count += max(self.team_counts[div_idx] -
-                                     games_per_division * 2, 0)
-                    # todo:integrate this dynamic bye calculation
-                bye_double_max_fitness = bye_count * bye_worth
-                div_fitness -= bye_double_max_fitness
-
-            #    if div_idx in [1,3]: # todo, rectify this round robin hack with
-            #                         # the regular season schedule logic
-            #        ## Add something here about summing up fac games
-            #        div_fitness -= 1 # for their extra game
-            #        self.max_fitness -= 1 # for their extra game
-            #        # todo, make this more unit testible
-                self.div_max_fitness.append(div_fitness)
-                self.max_fitness += div_fitness
-        fitness = 0
-        self.div_team_times = []
-        for div_idx in range(4):
-            self.div_team_times.append([[0]*16 for _
-                                        in range(self.team_counts[div_idx])])
-        for court in self.days[0].courts:
-            for time, game in enumerate(court):
-                if game.div >= 0:
-                    self.div_team_times[game.div][game.team1][time] += 1
-                    self.div_team_times[game.div][game.team2][time] += 1
-        total_bye_count = 0
-        for div_idx, div in enumerate(self.divisions):
-            games_played = 0
-            div_ref_actual_fitness = 0
-            div_plays_vs_fitness = 0
-            div_total_team_play_fitness = 0
-            bye_fitness = 0
-            ref_debug = ''
-            div_fit = -self.div_max_fitness[div_idx]
-            team_count = len(div.teams)
-            # double book penalty
-            double_use_penalty = 0
-            for day in self.days:
-                for time in range(len(day.courts[0])):
-                    teams_used = [0] * team_count
-                    for court in range(len(day.courts)):
-                        game = day.courts[court][time]
-                        if game.div == div_idx:
-                            teams_used[game.team1] += 1
-                            teams_used[game.team2] += 1
-                            teams_used[game.ref] += 1
-                    for team_idx, use_count in enumerate(teams_used):
-                        if use_count > 1:
-                            double_use_penalty -= 100
-        #                    print('div %s team %s is used %s'
-        #                          % (div_idx, team_idx, use_count))
-            for team_idx, team in enumerate(div.teams):
-                if (self.days[0].facilities.refs == True):
-                    div_ref_actual_fitness -= pow(team.refs, 2)
-                    ref_debug += str(team.refs) + ','
-                div_total_team_play_fitness -= pow(sum(team.times_team_played) - 1000, 2)
-                for plays in team.times_team_played:
-                    if plays < 1000:
-                        div_plays_vs_fitness -= pow(plays, 2)
-                        games_played += plays
-                    else:
-                        div_plays_vs_fitness -= 100 * (plays - 1000) # penalty for team v self
-                # checking for teams scheduled for two locations at once
-                for play_at_time in self.div_team_times[div_idx][team_idx]:
-                    if play_at_time > 1:
-                        div_fit -= 100
-                # value for byes in division
-                if div_idx in [1,3]:
-                    bye_count = 0
-                    for games_on_day in team.games_per_day:
-                        if games_on_day == 0:
-                            bye_count += 1
-                            total_bye_count += 1
-                        elif games_on_day < 0:
-                            bye_fitness -= 100 * bye_worth
-                            total_bye_count += 1
-                    bye_fitness -= pow(bye_count, 2) * bye_worth
-            div_fit += double_use_penalty
-            div_fit += bye_fitness
-            div_fit += div_total_team_play_fitness
-            div_fit += div_plays_vs_fitness
-            div_fit += div_ref_actual_fitness
-            fitness += div_fit
-            div.current_fitness = div_fit
-        # todo: fix this bye count detection logic
-        if False and total_bye_count < 9:
-            print('creating a file as this thing is Fed up')
-            self.write_audit_file('/Users/coulter/Desktop/life_notes/' +
-                           '2016_q1/scvl/critical_error_debug.txt')
-            raise(Exception('critical error in the bye ' +
-                            'count for this schedule'))
-        return fitness
 
     def get_sitting_counts(self):
         from copy import deepcopy
@@ -470,8 +338,8 @@ class Schedule(object):
             self.clear_all_reffing()
             for day_idx in range(len(self.days)):
                 self.add_reffing_to_day(day_idx)
-            print(self.new_fitness())
-            if self.new_fitness() == 0:
+            print(self.fitness())
+            if self.fitness() == 0:
                 break
 
     def switch_teams(self, div_idx, team1, team2):
@@ -509,9 +377,6 @@ def load_reg_schedule():
     with open(sch_py_obj,'rb') as sch_file:
         schedule = pickle.load(sch_file)
         return schedule
-
-def load_playoff_schedule():
-    pass
 
 if __name__ == '__main__':
     sch = load_reg_schedule()

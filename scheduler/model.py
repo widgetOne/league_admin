@@ -67,6 +67,9 @@ class Day(object):
         from fitness import ScheduleFitness
         return ScheduleFitness(self.facilities, self.games())
 
+    def isolated_new_fitness(self):
+        return self.fitness_str().value()
+
     def fitness(self, divisions):
         fix_this_team_num_to_be_dynamic = 5
         fitness = sum(self.div_fitness(divisions, div) for div in range(fix_this_team_num_to_be_dynamic))
@@ -189,70 +192,6 @@ class Day(object):
                 if old_day.courts[court_idx][time_idx].div == div_idx:
                     self.courts[court_idx][time_idx] = deepcopy(game)
 
-    def schedule_div_ref_then_players(self, fac, div_idx, div):
-        from random import shuffle, choice
-        from schedule import list_filter
-        locs, times = fac.div_times_locs[div_idx]
-        game_slots = fac.div_games[div_idx].copy()
-        games = len(game_slots)
-        shuffle(game_slots)
-        ref_slots = game_slots.copy()
-        teams_to_play = list(range(div.team_count))
-        if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
-            teams_to_play.append(choice(div.teams_w_least_play()))
-        if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
-            raise(ValueError('Something unexpected happened in scheduling\n' +
-                             'it is assumed that all days only have 1 team ' +
-                             'that gets a bye.'))
-        # add refs
-        for game_idx in range(games):
-            short_ref_teams = list_filter(teams_to_play, div.teams_w_least_ref())
-            current_team_num = choice(short_ref_teams)
-            court, ref_time = game_slots[game_idx]
-            self.courts[court][ref_time].ref = current_team_num
-            self.courts[court][ref_time].div = div_idx
-            play_time = times[(times.index(ref_time) + 1) % len(times)]
-            if (court, play_time) in game_slots:
-                self.courts[court][play_time].team1 = current_team_num
-            else:
-                while (court, play_time) not in game_slots:
-                    court = (court + 1) % 5
-                self.courts[court][play_time].team2 = current_team_num
-            del teams_to_play[teams_to_play.index(current_team_num)]
-
-        # fill in players
-        for game_idx in range(games):
-            court, time = game_slots[game_idx]
-            # place team 1
-            if self.courts[court][time].team1 < 0:
-                if self.courts[court][time].team2 < 0:
-                    temp_team_2 = -1
-                else:
-                    temp_team_2 = self.courts[court][time].team2
-                team2_obj = div.teams[temp_team_2]
-                best_opponent = team2_obj.teams_least_played()
-                # todo, this teams_w_least_play is not getting updated within this routine
-                best_list = list_filter(teams_to_play, div.teams_w_least_play())
-                best_list = list_filter(best_list, best_opponent)
-                team1_idx = choice(best_list)
-                self.courts[court][time].team1 = team1_idx
-                del teams_to_play[teams_to_play.index(team1_idx)]
-            # place team 2
-            if self.courts[court][time].team2 < 0:
-                if self.courts[court][time].team1 < 0:
-                    temp_team_1 = -1
-                else:
-                    temp_team_1 = self.courts[court][time].team1
-                team1 = div.teams[temp_team_1]
-                best_opponent = team1.teams_least_played()
-                # todo, this teams_w_least_play is not getting updated within this routine
-                best_list = list_filter(teams_to_play, div.teams_w_least_play())
-                best_list = list_filter(best_list, best_opponent)
-                team2_idx = choice(best_list)
-                self.courts[court][time].team2 = team2_idx
-                del teams_to_play[teams_to_play.index(team2_idx)]
-
-
     def schedule_div_players_then_refs(self, fac, div_idx, div):
         from random import shuffle, choice
         from schedule import list_filter
@@ -281,191 +220,6 @@ class Day(object):
             team2_idx = choice(best_list)
             self.courts[court][time].team2 = team2_idx
             div.add_play_for_team(team2_idx, day_idx, team1_idx)
-
-        # add refs
-        there_are_refs = False
-        if there_are_refs:
-            for game_idx in range(games):
-                short_ref_teams = list_filter(teams_to_play, div.teams_w_least_ref())
-                current_team_num = choice(short_ref_teams)
-                court, ref_time = game_slots[game_idx]
-                self.courts[court][ref_time].ref = current_team_num
-                self.courts[court][ref_time].div = div_idx
-                #play_time = times[(times.index(ref_time) + 1) % len(times)]
-                if (court, play_time) in game_slots:
-                    self.courts[court][play_time].team1 = current_team_num
-                else:
-                    while (court, play_time) not in game_slots:
-                        court = (court + 1) % 5
-                    self.courts[court][play_time].team2 = current_team_num
-                del teams_to_play[teams_to_play.index(current_team_num)]
-
-    def draft_actual_play_then_ref(self, fac, div_idx, div):
-        from random import shuffle, choice
-        from schedule import list_filter
-        locs, times = fac.div_times_locs[div_idx]
-        game_slots = fac.div_games[div_idx].copy()
-        games = len(game_slots)
-        shuffle(game_slots)
-        ref_slots = game_slots.copy()
-        extra_player = False
-        teams_to_play = list(range(div.team_count))
-        shuffle(teams_to_play)
-        if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
-            extra_player = True
-            teams_to_play.append(choice(div.teams_w_least_play()))
-        if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
-            raise(ValueError('Something unexpected happened in scheduling\n' +
-                             'it is assumed that all days only have 1 team ' +
-                             'that gets a bye.'))
-        ##################################
-        done = False
-        ## new logic
-        # add refs
-        teams_playing_w_time = [[],[],[],[]]
-        for play_time in times:
-            for court, time in game_slots:
-                if play_time == time:
-                    game = self.courts[court][time]
-                    # team 1
-                    if extra_player:
-                        next_team1 = teams_to_play[-1]
-                        game.team1 = next_team1
-                        del teams_to_play[-1]
-                        extra_player = False
-                    else:
-                        best_list = [idx for idx in teams_to_play
-                                     if idx not in teams_playing_w_time[time]]
-                        best_list = list_filter(best_list, div.teams_w_least_play())
-                        next_team1 = choice(best_list)
-                        game.team1 = next_team1
-                        teams_playing_w_time[time].append(next_team1)
-                        teams_to_play = [idx for idx in teams_to_play
-                                         if idx != next_team1]
-                    # team 2
-                    best_list = [idx for idx in teams_to_play
-                                 if idx not in teams_playing_w_time[time]]
-                    best_opponent = div.teams[next_team1].teams_least_played()
-                    best_list = list_filter(best_list, best_opponent)
-                    best_list = list_filter(best_list, div.teams_w_least_play())
-                    next_team2 = choice(best_list)
-                    game.team2 = next_team2
-                    teams_playing_w_time[time].append(next_team2)
-                    teams_to_play = [idx for idx in teams_to_play
-                                     if idx != next_team2]
-                    self.courts[court][time] = game
-        # place refs
-        teams_reffing_w_time = [[],[],[],[]]
-        for court, ref_time in game_slots:
-            play_time = times[(times.index(ref_time) + 1) % len(times)]
-            pot_refs = teams_playing_w_time[play_time]
-            pot_refs = [ref for ref in pot_refs
-                        if ref not in teams_reffing_w_time[ref_time]]
-            pot_refs = [ref for ref in pot_refs
-                        if ref not in teams_playing_w_time[ref_time]]
-            ref = choice(pot_refs)
-            self.courts[court][ref_time].ref = ref
-            self.courts[court][ref_time].div = div_idx
-            teams_reffing_w_time[ref_time].append(ref)
-           ## end new logic
-            ##################################
-
-    def schedule_div_ref_then_play(self, fac, div_idx, div):
-        from random import shuffle, choice
-        from schedule import list_filter
-        locs, times = fac.div_times_locs[div_idx]
-        games = div.team_count // 2
-        game_slots = fac.div_games[div_idx].copy()
-        shuffle(game_slots)
-        ref_slots = game_slots.copy()
-        teams_to_play = list(range(div.team_count))
-        if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
-            teams_w_least_play = div.teams_w_least_play()
-            teams_to_play.append(choice(teams_w_least_play))
-        if (len(teams_to_play) < 2 * fac.games_per_division[div_idx]):
-            raise(ValueError('Something unexpected happened in scheduling\n' +
-                             'it is assumed that all days only have 1 team ' +
-                             'that gets a bye.'))
-        # add refs
-        for game_idx in range(games):
-            short_ref_teams = list_filter(teams_to_play, div.teams_w_least_ref())
-            current_team_num = choice(short_ref_teams)
-            court, ref_time = game_slots[game_idx]
-            self.courts[court][ref_time].ref = current_team_num
-            self.courts[court][ref_time].div = div_idx
-            play_time = times[(times.index(ref_time) + 1) % len(times)]
-            if (court, play_time) in game_slots:
-                self.courts[court][play_time].team1 = current_team_num
-            else:
-                while (court, play_time) not in game_slots:
-                    court = (court + 1) % 5
-                self.courts[court][play_time].team2 = current_team_num
-            del teams_to_play[teams_to_play.index(current_team_num)]
-
-        # fill in players
-        for game_idx in range(games):
-            court, time = game_slots[game_idx]
-            if self.courts[court][time].team2 < 0:
-                team1 = div.teams[self.courts[court][time].team1]
-                best_opponent = team1.teams_least_played()
-                best_list = list_filter(teams_to_play, best_opponent)
-                best_list = list_filter(best_list, div.teams_w_least_play())
-                team2_idx = choice(best_list)
-                self.courts[court][time].team2 = team2_idx
-                del teams_to_play[teams_to_play.index(team2_idx)]
-            if self.courts[court][time].team1 < 0:
-                team2_obj = div.teams[self.courts[court][time].team1]
-                best_opponent = team2_obj.teams_least_played()
-                best_list = list_filter(teams_to_play, best_opponent)
-                best_list = list_filter(best_list, div.teams_w_least_play())
-                team1_idx = choice(best_list)
-                self.courts[court][time].team1 = team1_idx
-                del teams_to_play[teams_to_play.index(team1_idx)]
-
-    def schedule_div_round_robin(self, fac, div_idx, div):
-        from random import shuffle, choice
-        from schedule import list_filter
-        locs, times = fac.div_times_locs[div_idx]
-        game_slots = fac.div_games[div_idx].copy()
-        games = len(game_slots)
-        shuffle(game_slots)
-        teams_to_play = list(range(div.team_count))
-        teams_to_play = teams_to_play * 3
-        if div_idx == 1:
-            teams_to_play += [1]
-        elif div_idx == 3:
-            teams_to_play += [choice(range(div.team_count))]
-
-        if len(teams_to_play) // 2 != games:
-            print("Model.py Error: in division %s there are %s teams and %s games" %
-                  (div_idx, div.team_count, games))
-            print("There should br %s games" % (div.team_count * 2))
-        # fill in players
-        count_team_in_time = [[0] * 16 for _ in range(div.team_count)]
-        for game_idx in range(games):
-            # team 1
-            court, time = game_slots[game_idx]
-
-            for attempts in range(10):
-                team1_idx = choice(teams_to_play)
-                if count_team_in_time[team1_idx][time] == 0:
-                    break
-            team1_obj = div.teams[team1_idx]
-            self.courts[court][time].team1 = team1_obj.team_idx
-            del teams_to_play[teams_to_play.index(team1_idx)]
-            # team 2
-            best_opponent = team1_obj.teams_least_played()
-            best_list = list_filter(teams_to_play, best_opponent)
-            for attempts in range(10):
-                team2_idx = choice(teams_to_play)
-                if (team2_idx != team1_idx and
-                    count_team_in_time[team2_idx][time] == 0):
-                    break
-            self.courts[court][time].team2 = team2_idx
-            del teams_to_play[teams_to_play.index(team2_idx)]
-            count_team_in_time[team1_idx][time] += 1
-            count_team_in_time[team2_idx][time] += 1
-            self.courts[court][time].div = div_idx
 
     def teams_free_at_time(self, div_idx, time, team_count):
         free = {idx : 0 for idx in range(team_count)}
@@ -552,11 +306,6 @@ class Division(object):
 
     def add_ref_for_team(self, team_num, sign=1):
         self.teams[team_num].refs += sign
-
-    def fitness(self):
-        fitness = 0
-        for team in self.teams:
-            pass
 
 
 class Team(object):
