@@ -2,8 +2,7 @@
 init_value = -999999
 
 class Game(object):
-    def __init__(self, team1=init_value, team2=init_value,
-                 ref=init_value, div=init_value,
+    def __init__(self, team1=init_value, team2=init_value, ref=init_value, div=init_value,
                  time=init_value, court=init_value):
         self.team1 = team1
         self.team2 = team2
