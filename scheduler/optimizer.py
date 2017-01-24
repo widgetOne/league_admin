@@ -1,3 +1,7 @@
+import random
+import traceback
+import datetime
+import os
 #!/anaconda/bin/python
 
 """
@@ -48,59 +52,69 @@ def compare_days(day1, day2):
             game2_sum += game2.csv_str()
         print(game1_sum + "  " + game2_sum)
 
-def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, reffing=True):
+
+def play_schedule_pkl_path():
+    return 'scratch/play_schedule_{}.pkl'.format(datetime.date.today())
+
+def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, reffing=True,
+                  save_play_schedule=False):
     from schedule import Schedule
     from random import choice, randrange
     import random
     import pickle
-    facilities = league.days
-    if seed != None:
-        random.seed(seed)
     start = epoch_now()
-    sch = Schedule(league, team_counts, facilities)
-    sch.seed = seed
-    # add play schedule
-    for mut_idx in range(sch_tries):
-        if True:
-            if sch.daycount > 1:
-                target1 = randrange(sch.daycount)
-                target2 = (target1 + randrange(sch.daycount-1)) % sch.daycount
-                target = [target1, target2]
-                sch.try_remake_days(target)
-            target = [randrange(sch.daycount)]
-            fitness = sch.try_remake_days(target)
-        if True:
-            count = randrange(2)
-            fitness = sch.remake_worst_day(count)
-        # debug logic
-        breakdown = sch.fitness_error_breakdown()
+    try:
+        if save_play_schedule and os.path.isfile(play_schedule_pkl_path()):
+            sch = get_schedules(play_schedule_pkl_path())[0]
+            mut_idx = 0
+        else:
+            facilities = league.days
+            if seed != None:
+                random.seed(seed)
+            sch = Schedule(league, team_counts, facilities)
+            print(league.get_bye_target())
+            #print([num / 4.0 for num in sch.get_game_div_count_list()])
+            # add play schedule
+            for div_idx in range(5):  # todo: if kept, make this dynamic
+                for mut_idx in range(sch_tries):
+                    if True:
+                        sch.try_remake_a_few_random_days(div_idx, 1)
+                        sch.try_remake_a_few_random_days(div_idx, randrange(1, sch.daycount))
+                    if debug:
+                        print(sch.solution_debug_data(mut_idx))
+                    if (sch.fitness_div_list()[div_idx] == 0):
+                        if debug:
+                            print("correct schedule found for division {}!!!!!".format(div_idx))
+                        break
+                else:
+                    print(sch.solution_debug_data(1))
+                    print(sch.get_audit_text())
+                    raise(FailedToConverge("main make_schedule routine failed to generate schedule in " +
+                                           "{} tries.".format(sch_tries)))
+            if save_play_schedule and not os.path.isfile(play_schedule_pkl_path()):
+                save_schedules([sch], play_schedule_pkl_path())
+        # add reffing duties
+        if reffing:
+            sch.add_reffing(debug=debug)
         if debug:
-            print("value = %s while on mutation step %s: %s %s" %
-                  (fitness, mut_idx, sch.fitness_div_list(), breakdown))
-        if (fitness == 0):
-            if debug:
-                print("correct schedule found!!!!!")
-            break
-    else:
-        print('\n'.join(sch.get_audit_text()))
-        raise(FailedToConverge("main make_schedule routine failed to generate schedule in " +
-                               "{} tries.".format(sch_tries)))
-    # add reffing duties
-    if reffing:
-        sch.add_reffing()
-    end = epoch_now()
-    print("total run_emr_job time was {} second and {} iterations".format(float(end - start),
-                                                                          mut_idx))
-    path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
-    # todo, change this to use print(datetime.datetime.now().date())
-    save_sch = False
-    if save_sch:
-        tag = '2016-09-06a_'
-        sch.gen_csv(path + tag + "simple.csv")
-        sch.write_audit_file(path + tag + "audit_2016_spr.csv")
-        sch_py_obj = path + tag + 'python_file_obj.pickle'
-        with open(sch_py_obj,'wb') as sch_file:
-            pickle.dump(sch, sch_file)
+            print(sch.solution_debug_data(mut_idx))
+        end = epoch_now()
+        print("total run_emr_job time was {} second and {} iterations".format(float(end - start),
+                                                                              mut_idx))
+        path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
+        # todo, change this to use print(datetime.datetime.now().date())
+        save_sch = False
+        if save_sch:
+            tag = '2016-09-06a_'
+            sch.gen_csv(path + tag + "simple.csv")
+            sch.write_audit_file(path + tag + "audit_2016_spr.csv")
+            sch_py_obj = path + tag + 'python_file_obj.pickle'
+            with open(sch_py_obj,'wb') as sch_file:
+                pickle.dump(sch, sch_file)
+    except (Exception, KeyboardInterrupt) as e:
+        print(sch.get_audit_text())
+        print('Initial traceback was:\n{}'.format(traceback.format_exc()))
+        raise (e)
     return sch
 
 def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
@@ -112,7 +126,14 @@ def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
     league = League(ndivs=4, ndays=ndays, ncourts=5, ntimes=4,
                     team_counts=team_counts, day_type=SCVL_Facility_Day)
     league.debug_print()
-    sch = make_schedule(team_counts, league, sch_tries=sch_tries)
+
+
+    try:
+        sch = make_schedule(team_counts, league, sch_tries=sch_tries)
+    except (Exception, KeyboardInterrupt) as e:
+        print(sch)
+        print('Initial traceback was:\n{}'.format(traceback.format_exc()))
+        raise (e)
     return sch
 
 def get_default_potential_sch_loc(date=None):
@@ -120,7 +141,7 @@ def get_default_potential_sch_loc(date=None):
     if date == None:
         date = str(datetime.datetime.now().date())
     default_path = 'test/scratch/'
-    file_name = default_path + 'round_robin-schedules-from-{}'.format(date)
+    file_name = default_path + 'round_robin-schedules-from-{}.pkl'.format(date)
     return file_name
 
 def save_schedules(schedules, file_path=None):
@@ -192,10 +213,8 @@ def report_on_schedules(schedules):
 
     for name, result in sorted(summary.items()):
         result['name'] = name
-        print('{:22s}: sits={} ave={} func={} seed={}'.format(name,
-                                                       result['sits'],
-                                                       result['ave'],
-                                                       result['func'],
+        print('{:22s}: sits={}          ave={} func={} seed={}'.format(name, result['sits'],
+                                                       result['ave'], result['func'],
                                                        result['seed']))
         times = [15*x for x in range(8)]
         team_scores = []
