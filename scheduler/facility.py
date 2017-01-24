@@ -29,8 +29,6 @@ class Facility(object):
         self.team_counts = team_counts
         self.day_type = day_type
         self.days = []
-        if (ncourts * ntimes * 2 < sum(team_counts)):
-            raise(ValueError("This schedule has too many teams for its courts"))
         self.games_per_div = [0] * len(self.team_counts)
 
         if csv:
@@ -63,7 +61,6 @@ class Facility(object):
                 self.games_per_div = day.add_odd_games(div_missing_games,
                                                        self.games_per_div,
                                                        self.odd_team_game_per_day)
-
         return
 
     def game_count(self):
@@ -118,6 +115,15 @@ class Facility(object):
     def __repr__(self):
         return self.csv()
 
+    def get_bye_target(self):
+        bye_targets = [0] * len(self.team_counts)
+        for day in self.days:
+            games_per_division = day.get_games_per_division()
+            for div_idx, (games, teams) in enumerate(zip(games_per_division, self.team_counts)):
+                byes_needed = max(teams - games * 2, 0)
+                bye_targets[div_idx] += byes_needed
+        return bye_targets
+
 def sch_template_path_to_fac(template_path, team_counts):
     with open(template_path, 'r') as template_file:
         sch_template_csv = template_file.read()
@@ -136,9 +142,11 @@ def csv_str_to_fac_list_list(csv_str):
     day = []
     days = []
     for row in rows:
-        if not(any(row)):
-            days += [day]
-            day = []
+        there_are_no_games_in_row = not(any(row)) or all((div == '-1' for div in row))
+        if there_are_no_games_in_row:
+            if day:
+                days += [day]
+                day = []
             continue
         day += [row]
     if day:
@@ -260,9 +268,16 @@ class Facility_Day(object):
         ]
         self.alternate_div_loc = [inner, outer, outer, inner]
 
+    def get_games_per_division(self):
+        games_per_division = [0] * len(self.team_counts)
+        for court in self.court_divisions:
+            for game_div in court:
+                if game_div > -1:
+                    games_per_division[game_div] += 1
+        return games_per_division
+
 class SCVL_Facility_Day(Facility_Day):
     def __init__(self, court_count, time_count, team_counts, rec_first, day_idx):
-        self.rec_first = rec_first
         self.rec_first = rec_first
         super(SCVL_Facility_Day, self).__init__(team_counts, day_idx, court_count,
                                                 time_count)
