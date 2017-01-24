@@ -1,5 +1,6 @@
 from model import init_value
-
+import random
+from pprint import pprint
 
 def list_filter(primary, filter):
     both = [team for team in primary if team in filter]
@@ -62,6 +63,9 @@ class Schedule(object):
         sch_fitness = sum((day.fitness_str() for day in self.days))
         return sch_fitness.error_breakdown()
 
+    def fitness_by_day(self):
+        return [day.fitness_str().value() for day in self.days]
+
     def make_audit_structures(self):
         from copy import deepcopy
         rolling_sum_play = []
@@ -78,6 +82,18 @@ class Schedule(object):
         audit_text = self.get_audit_text()
         with open(out_file_path, "w") as csv_file:
             print("\n".join(audit_text), file=csv_file)
+
+    def get_game_div_count_list(self):
+        div_totals = {}
+        for day in self.days:
+            for court in day.courts:
+                for game in court:
+                    if game.div > -1:
+                        div_totals[game.div] = div_totals.get(game.div, 0) + 1
+        output = [0] * (max(div_totals.keys()) + 1)
+        for key, value in div_totals.items():
+            output[key] = value
+        return output
 
     def get_audit_text(self):
         from copy import deepcopy
@@ -111,9 +127,41 @@ class Schedule(object):
             out += ["division %s" % div_idx]
             for team_idx in range(self.team_counts[div_idx]):
                 team = self.divisions[div_idx].teams[team_idx]
-                row = ",".join([str(num) for num in team.games_per_day])
+                row = ",".join([str(num) for num in team.games_per_day]) + \
+                      '  total: {}'.format(sum((1 for num in team.games_per_day if num == 0)))
                 out += [row]
-        return out
+        out += ['\nrepeated_play_view\n']
+        out += [self.get_sequencial_vs_play_report()]
+        return '\n'.join(out)
+
+
+    def get_sequencial_vs_play_report(self):
+        """Collection all the vs games in order and assess how much they repeat.
+        This is only really an issue for the smaller leagues (rec and P+)"""
+        vs_play = [[[] for _ in range(count)] for count in self.team_counts]
+        for day in self.days:
+            for court in day.courts:
+                for game in court:
+                    if game.div not in (init_value, -1):
+                        vs_play[game.div][game.team1].append(game.team2)
+                        vs_play[game.div][game.team2].append(game.team1)
+        vs_repeat_period = [[[] for _ in range(count)] for count in self.team_counts]
+        output = ''
+        for div_idx, div_vs_play in enumerate(vs_play):
+            output += '\nOutput for division:  {}\n'.format(div_idx)
+            for team_idx, team_vs_play in enumerate(div_vs_play):
+                for idx1 in range(len(team_vs_play)):
+                    for idx2 in range(idx1 + 1, len(team_vs_play)):
+                        # print('idx = {} team {} and idx = {} team {}'.format(idx1, team_vs_play[idx1], idx2, team_vs_play[idx2]))
+                        if team_vs_play[idx1] == team_vs_play[idx2]:
+                            vs_repeat_period[div_idx][team_idx].append(idx2 - idx1)
+                            break
+                    else:
+                        vs_repeat_period[div_idx][team_idx].append(0)
+                output += ','.join([str(num) for num in vs_repeat_period[div_idx][team_idx]]) + '\n'
+        return output
+
+
 
     def remake_worst_day(self, count):
         days_fitness = [(idx, day.fitness(self.divisions)) for idx, day in enumerate(self.days)]
@@ -122,20 +170,29 @@ class Schedule(object):
         fitness = self.try_remake_days(worst_days)
         return fitness
 
-    ### not currently used
-    def try_remake_div_days(self, div_idx, day_indexs):
+
+    def try_remake_a_few_random_days(self, div_idx, day_remake_count):
+        all_day_indexes = range(len(self.days))
+        days_to_remake = random.sample(all_day_indexes, day_remake_count)
+        self.try_remake_div_days(div_idx, days_to_remake)
+
+    ### not currently used qwer
+    def try_remake_div_days(self, div_idx, day_indexes):
         from copy import deepcopy
         original_days = deepcopy(self.days)
         original_division = deepcopy(self.divisions)
-        original_fitness = self.fitness(self.league.games_per_div)
-        for day_idx in day_indexs:
+        original_fitness = self.fitness()
+        for day_idx in day_indexes:
             self.subtract_day_from_division_history(self.days[day_idx])
-        for day_idx in day_indexs:
+        for day_idx in day_indexes:
             new_day = self.make_day(self.days[day_idx].facilities,
-                                    old_day=self.days[day_idx])
+                                    old_day=self.days[day_idx], target_div_idx=div_idx)
             self.days[day_idx] = new_day
-        fitness = self.fitness(self.league.games_per_div)
-        if original_fitness > fitness:
+        fitness = self.fitness()
+        print('Old fitness is {} and new fitness is {}'.format(original_fitness, fitness))
+        # fudge factor to allow more drift in solution, to avoid local stability issues
+        local_stability_avoidance_fudge_factor = 0
+        if original_fitness > fitness + local_stability_avoidance_fudge_factor:
             self.days = original_days
             self.divisions = original_division
             fitness = original_fitness
@@ -159,6 +216,7 @@ class Schedule(object):
             fitness = original_fitness
         return fitness
 
+    # todo: not currently used. use or delete
     def try_remake_days_new_method(self, day_indexs):
         from copy import deepcopy
         original_days = deepcopy(self.days)
@@ -178,21 +236,25 @@ class Schedule(object):
             fitness = original_fitness
         return fitness
 
-    def make_day(self, fac, day_num=None, old_day=None):
+    def make_day(self, fac, day_num=None, old_day=None, target_div_idx=None):
         from model import Day
         if day_num == None:
             day_num = old_day.num
         day = Day(fac, day_num)
+        if target_div_idx is not None:
+            division_list = [(target_div_idx, self.divisions[target_div_idx])]
+        else:
+            division_list = list(enumerate(self.divisions))  # todo: use or delete this code. Woudl probably need a deep copy up above
         for div_idx, div in enumerate(self.divisions):
             try:
-                if self.fitness_structure.div_value(div_idx) == 0:
+                if self.fitness_structure.div_value(div_idx) == 0 or (target_div_idx is not None and target_div_idx != div_idx):
                     if old_day != None:
                         day.import_div_games(div_idx, old_day)
                         self.add_day_to_division_history(day, div_idx=div_idx)
                         continue
             except:
                 pass
-            day.schedule_div_players_then_refs(fac, div_idx, div)
+            day.schedule_div_players_without_refs(fac, div_idx, div)
         return day
 
     def get_sitting_counts(self):
@@ -251,6 +313,8 @@ class Schedule(object):
             ('longer is worse quad', [0, -5, -20, -45, -80, -125, -180]),
             ('long sits worse quad', [0, 0, -1, -4, -9, -16, -25]),
             ('min 45 minutes', [0, 0, -2, -200, bad, bad, bad]),
+            ('min hour and no-sit', [-200, 0, -5, -200, bad, bad, bad]),
+            ('min hour and small-sit', [-200, 0, 0, -200, bad, bad, bad]),
         ]
         time_cypher = [0,15,30,45,   60,75,90,115,   130,145]
         team_wise_penality = [-5000,0,0,0,   0,-10,bad,bad,   bad,bad]
@@ -287,13 +351,16 @@ class Schedule(object):
                 if game.team1 not in fake_values and game.team2 not in fake_values:
                     self.divisions[game.div].teams[game.team1].times_team_played[game.team2] += sign
                     self.divisions[game.div].teams[game.team2].times_team_played[game.team1] += sign
+                    if (self.divisions[game.div].teams[game.team2].times_team_played[game.team1] < 0 or
+                       self.divisions[game.div].teams[game.team2].times_team_played[game.team1] < 0):
+                        raise(Exception('there is something wrong going on'))
                     if game.ref != init_value:
                         self.divisions[game.div].teams[game.ref].refs += sign
                     self.divisions[game.div].teams[game.team1].games_per_day[day.num] += sign
                     self.divisions[game.div].teams[game.team2].games_per_day[day.num] += sign
 
-    def subtract_day_from_division_history(self, day):
-        self.add_day_to_division_history(day, sign=-1)
+    def subtract_day_from_division_history(self, day, div_idx=None):
+        self.add_day_to_division_history(day, div_idx=div_idx, sign=-1)
 
     def skillz_clinic_count(self):
         # The number of skillz clinics is the number of open game slots
@@ -318,29 +385,61 @@ class Schedule(object):
         out = json.dumps(sch_obj)
         return out
 
-    def add_reffing_to_day(self, day_idx):
-        for div_idx, div in enumerate(self.divisions):
-            self.days[day_idx].add_reffing(div_idx, div)
 
-    def clear_all_reffing(self):
+    def clear_all_reffing_for_division(self, division_idx):
         for day in self.days:
             court_list = day.courts
             for court in court_list:
                 for game in court:
-                    game.ref = init_value
-        for div in self.divisions:
-            for team in div.teams:
-                team.refs = 0
+                    if game.div == division_idx:
+                        game.ref = init_value
+        for team in self.divisions[division_idx].teams:
+            team.refs = 0
 
-    def add_reffing(self):
-        max_number_of_attempts = 500  # not expected to happen
-        for _ in range(max_number_of_attempts):
-            self.clear_all_reffing()
-            for day_idx in range(len(self.days)):
-                self.add_reffing_to_day(day_idx)
-            print(self.fitness())
-            if self.fitness() == 0:
+    def try_transfer_reffing(self, div, div_idx):
+        """
+        The purpose of this method is to transfer ref responsibilities from a team with too
+        many to a team w too few. This routine ends once either list is empty
+        :param from_list: List of teams w the most reffings
+        :param to_list: List of teams w the least
+        :return: the division structure with the revised reffing history
+        """
+        reffings = [team.refs for team in div.teams]
+        from_list = [idx for idx, ref_count in enumerate(reffings) if ref_count == max(reffings)]
+        to_list = [idx for idx, ref_count in enumerate(reffings) if ref_count == min(reffings)]
+        for day in self.days:
+            from_list, to_list, div = day.try_transfer_reffing(from_list, to_list, div, div_idx)
+            if not (from_list and to_list):
                 break
+        return div
+
+
+    def ref_transfering_is_neeeded(self, div):
+        reffings = [team.refs for team in div.teams]
+        if max(reffings) - min(reffings) > 1:
+            return True
+        else:
+            return False
+
+    def add_reffing(self, debug=False):
+        max_number_of_attempts = 10000  # not expected to happen
+        for div_idx, div in enumerate(self.divisions):
+            print('Adding Reffing for division {}'.format(div_idx))
+            for idx in range(max_number_of_attempts):
+                self.clear_all_reffing_for_division(div_idx)
+                for day_idx in range(len(self.days)):
+                    self.days[day_idx].add_reffing(div_idx, self.divisions[div_idx])
+                if self.ref_transfering_is_neeeded(div):
+                    div = self.try_transfer_reffing(div, div_idx)
+                if debug:
+                    print(self.solution_debug_data(idx))
+                if self.fitness() == 0:
+                    break
+            else:
+                print(self.solution_debug_data(1))
+                print('\n'.join(self.get_audit_text()))
+                raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
+
 
     def switch_teams(self, div_idx, team1, team2):
         teams = [team1, team2]
@@ -356,6 +455,33 @@ class Schedule(object):
                         if game.ref in teams:
                             game.ref = otherer(game.ref)
                     self.days[day_idx].courts[court_idx][time_idx] = game
+
+    def solution_debug_data(self, mut_idx):
+        fitness = self.fitness()
+        breakdown = self.fitness_error_breakdown()
+        by_day = self.fitness_by_day()
+        print("value = %s while on mutation step %s: %s %s %s" %
+              (fitness, mut_idx, self.fitness_div_list(), breakdown, by_day))
+        # could add back in [div._double_refs for div in self.fitness_structure._divs]
+
+
+    def try_move_game_from_court(self, day_idx, target_court_idx, time):
+        div_idx = self.days[day_idx].courts[target_court_idx][time].div
+        for alternate_court_idx in range(len(self.days[day_idx].courts)):
+            alternate_game = self.days[day_idx].courts[alternate_court_idx][time]
+            if alternate_court_idx != target_court_idx and div_idx == alternate_game.div:
+                (self.days[day_idx].courts[target_court_idx][time],
+                 self.days[day_idx].courts[alternate_court_idx][time]) = \
+                    (self.days[day_idx].courts[alternate_court_idx][time],
+                    self.days[day_idx].courts[target_court_idx][time])
+                break
+
+    def try_shift_team_out_of_court(self, div_teams, court_idx_to_avoid):
+        for div_idx, team_idx in div_teams:
+            for day_idx, day in enumerate(self.days):
+                for time, game in enumerate(day.courts[court_idx_to_avoid]):
+                    if game.div == div_idx and team_idx in [game.team1, game.team2]:
+                        self.try_move_game_from_court(day_idx, court_idx_to_avoid, time)
 
 def create_get_other(list):
     def other(current):
