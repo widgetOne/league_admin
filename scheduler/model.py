@@ -25,7 +25,7 @@ class Game(object):
     def csv_str(self, there_is_reffing=True):
         if self.div == init_value:
             if there_is_reffing:
-                return "WARM UP  ,   ,"
+                return "    TBD  ,   ,"
             else:
                 return "WARM UP  ,"
         div_csv_str = ['REC', 'INT', 'COM', 'POW', 'P+ ', '']
@@ -48,15 +48,18 @@ class Game(object):
         }
         return out
 
+    def __repr__(self):
+        return self.csv_str()
+
 
 class Day(object):
-    def __init__(self, facilities, day_num):
+    def __init__(self, facility_day, day_num):
         from copy import deepcopy
         self.courts = []
-        for court_idx in range(facilities.court_count):
+        for court_idx in range(facility_day.court_count):
             self.courts.append([Game(time=idx, court=court_idx)
-                                for idx in range(facilities.time_count)])
-        self.facilities = facilities
+                                for idx in range(facility_day.time_count)])
+        self.facility_day = facility_day
         self.num = day_num
 
     def games(self):
@@ -65,8 +68,9 @@ class Day(object):
             all_games += court
         return all_games
 
-    def fitness_str(self):
-        return ScheduleFitness(self.num, self.facilities, self.games())
+    def fitness_str(self, div_idx=None):
+        return ScheduleFitness(self.num, self.facility_day.bye_requirements, self.facility_day,
+                               self.games(), div_idx=div_idx)
 
     def isolated_new_fitness(self):
         return self.fitness_str().value()
@@ -291,7 +295,7 @@ class Day(object):
     def add_reffing(self, div_idx, div):
         from random import shuffle, choice
         from schedule import list_filter
-        fac = self.facilities
+        fac = self.facility_day
         game_slots = fac.div_games[div_idx].copy()
         shuffle(game_slots)
         day_idx = fac.day_idx
