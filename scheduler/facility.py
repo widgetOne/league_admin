@@ -61,7 +61,8 @@ class Facility(object):
                 self.games_per_div = day.add_odd_games(div_missing_games,
                                                        self.games_per_div,
                                                        self.odd_team_game_per_day)
-        return
+        for day_idx in range(len(self.days)):
+            self.days[day_idx].set_bye_requirements(self.get_bye_target())
 
     def game_count(self):
         return sum((day.game_count() for day in self.days))
@@ -168,6 +169,7 @@ class Facility_Day(object):
         self.games_per_division = [0] * len(team_counts)
         self.div_times_games = [[] for _ in range(len(self.team_counts))]
         self.div_games = [[] for _ in range(len(self.team_counts))]
+        self.bye_requirements = [0 for _ in self.team_counts]
         if csv_obj:
             self.rec_first = are_games_rec_first(csv_obj)
             self.set_div_times_locs()
@@ -195,6 +197,9 @@ class Facility_Day(object):
         else:
             raise (ValueError("no arguements were passed to Facility_Day, " +
                               "which expects at least one"))
+
+    def set_bye_requirements(self, bye_requirements):
+        self.bye_requirements = bye_requirements
 
     def set_division(self):
         raise(NotImplementedError("missing contrete implimentation " +
