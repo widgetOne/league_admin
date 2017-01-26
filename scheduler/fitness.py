@@ -67,6 +67,7 @@ class ScheduleDivFitness(object):
         self._refs = deepcopy(blank_1d)
         self._vs = deepcopy(blank_vs)
         self._vs_by_day = [[[] for _ in range(count)] for _ in range(count)]
+        self._play_over_time = [{} for _ in range(count)]
         self.bye_requirement = bye_requirement
         usage_w_time = {}
         for game in games:  # There may be no games
@@ -84,7 +85,8 @@ class ScheduleDivFitness(object):
                 return 0
             else:
                 return 1
-        self._byes = [bye(plays) for plays in self._plays]
+        self._byes = [bye(play_num) for play_num in self._plays]
+        self.successive_byes = sum((a and b for a,b in zip(self._byes[:-1], self._byes[1:])))
         def double_ref(ref):
             if ref > 1:
                 return 1
@@ -97,9 +99,9 @@ class ScheduleDivFitness(object):
             'vs': lambda x: x.vs_fitness(),
             'no_vs_repeats': lambda x: x.vs_repeat_fitness(),
             'conflict': lambda x: -conflict_weight * x._multi_use_in_time,
-            #'byes': lambda x: division_specific_bye_fitness(x._byes),
-            'byes': lambda x: (self.bye_requirement - sum(x._byes)) * 3,
+            'byes_total': lambda x: (x.bye_requirement - sum(x._byes)) * 3,
             'bye_evenness': lambda x: even_distribution_fitness(x._byes),
+            'successive_byes': lambda x: x.successive_byes_fitness(),
             'double_refs': lambda x: -conflict_weight * x._double_refs,
         }
 
@@ -111,9 +113,11 @@ class ScheduleDivFitness(object):
             # we don't want these default_vs_self values accumulating
             self._vs[idx][idx] -= default_vs_self
         self._multi_use_in_time += other._multi_use_in_time
-        self._byes = add_lists(self._byes, other._byes)
-        self._double_refs += other._double_refs
+        self._byes = add_lists(self._byes, other._byes, sign)
+        self._double_refs += other._double_refs * sign
         self._vs_by_day = add_list_of_lists(self._vs_by_day, other._vs_by_day, sign)
+        self.successive_byes += other.successive_byes * sign
+        self._play_over_time = [add_dict(a, b) for a,b in zip(self._play_over_time, other._play_over_time)]
         return self
 
     def __radd__(self, other):
@@ -181,6 +185,8 @@ class ScheduleDivFitness(object):
                 self._refs[game.ref] += sign
             self._vs[game.team1][game.team2] += sign
             self._vs[game.team2][game.team1] += sign
+            self._play_over_time[game.team1][day_num] = self._play_over_time[game.team1].get(day_num, 0) + sign
+            self._play_over_time[game.team2][day_num] = self._play_over_time[game.team2].get(day_num, 0) + sign
             if sign == 1:
                 self._vs_by_day[game.team1][game.team2].append(day_num)
                 self._vs_by_day[game.team2][game.team1].append(day_num)
@@ -188,8 +194,27 @@ class ScheduleDivFitness(object):
                 self._vs_by_day[game.team1][game.team2].remove(day_num)
                 self._vs_by_day[game.team2][game.team1].remove(day_num)
 
+
     def error_breakdown(self):
         return {key: func(self) for key, func in self.fitness_methods.items()}
+
+    def successive_byes_fitness(self):
+        fitness = 0
+        for team_play_w_time_dict in self._play_over_time:
+            team_play_w_time_list = dict_to_list(team_play_w_time_dict)
+            for day_idx in range(len(team_play_w_time_list)-1):
+                if team_play_w_time_list[day_idx] == 0 and team_play_w_time_list[day_idx+1] == 0:
+                    fitness -= 1
+        return fitness
+
+def dict_to_list(dictionary):
+    max_key = max(dictionary.keys())
+    def try_get_number_from_dict(loc_dict, num):
+        if num in loc_dict:
+            return num
+        else:
+            return num
+    return [try_get_number_from_dict(dictionary, num) for num in range(max_key)]
 
 def add_dict(a, b):
     import copy
@@ -199,10 +224,13 @@ def add_dict(a, b):
     return result
 
 class ScheduleFitness(object):
-    def __init__(self, day_num, facilities=None, games=[]):
+    def __init__(self, day_num, bye_requirements, facilities=None, games=[], div_idx=None):
         self._divs = []  # first, we create the blank slates for the sums
-        bye_requirements = [6, 12, 14, 10, 6]
-        for div_idx, count in enumerate(facilities.team_counts):
+        if div_idx is None:
+            div_counts = list(enumerate(facilities.team_counts))
+        else:
+            div_counts = [(div_idx, facilities.team_counts[div_idx])]
+        for div_idx, count in div_counts:
             div_games = [game for game in games if game.div == div_idx]
             div = ScheduleDivFitness(count, day_num, div_games, bye_requirements[div_idx])
             self._divs.append(div)
