@@ -73,4 +73,7 @@ manage.py
 # pycharm
 .idea/
 scheduler/scratch/
+scheduler/inputs/
+scheduler/output/
 scheduler/test/scratch/
+team_name_cleaner/input
