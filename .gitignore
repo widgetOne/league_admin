@@ -61,7 +61,7 @@ target/
 #Ipython Notebook
 .ipynb_checkpoint
 
-# files note ready for prime time yet BRC, 2016-04-02
+# files not ready for prime time yet BRC, 2016-04-02
 league/
 league_admin/
 static/
