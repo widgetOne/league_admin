@@ -72,8 +72,8 @@ manage.py
 # machines (all py3). Ignoring them will force location specific configs of
 # pycharm
 .idea/
-scheduler/scratch/
-scheduler/inputs/
-scheduler/output/
-scheduler/test/scratch/
+website_support/scratch/
+website_support/inputs/
+website_support/output/
+website_support/test/scratch/
 team_name_cleaner/input
