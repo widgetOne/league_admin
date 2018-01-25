@@ -1,0 +1,14 @@
+
+
+Near-term Goals:
+
+Deliverables:
+Mid-Season Re-rate report
+    link player processing with the schedule to tell S&D when people are free to do mid-season rerates
+Board Committee debug view
+    Sometimes having board members free or present for certain events is important. I should add a
+    debug report to the schedule audit report saying which board members are playing when in a week
+Link to Google Sheets
+    It should not be hard to use the google sheet API to directly access
+    and pull down the datafiles for players, teams and schedule (auth protection will be critical, of course)
+
