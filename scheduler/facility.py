@@ -10,6 +10,7 @@ from model import init_value
 def csv_file_to_list_list(csv_path):
     pass
 
+
 def make_league_from_csv(team_counts, csv):
     ndivs = len(team_counts)
     ndays = len(csv)
@@ -17,6 +18,7 @@ def make_league_from_csv(team_counts, csv):
     ntimes = len(csv[0][0])
     day_type = Facility_Day
     return Facility(ndivs, ndays, ncourts, ntimes, team_counts, day_type, csv)
+
 
 class Facility(object):
     '''This is basically all the set characteristics of the problem'''
@@ -125,6 +127,7 @@ class Facility(object):
                 bye_targets[div_idx] += byes_needed
         return bye_targets
 
+
 def sch_template_path_to_fac(template_path, team_counts):
     with open(template_path, 'r') as template_file:
         sch_template_csv = template_file.read()
@@ -161,6 +164,12 @@ def are_games_rec_first(csv_obj):
             return True
     return False
 
+def try_make_int(x):
+    try:
+        return int(x)
+    except:
+        return x
+
 class Facility_Day(object):
     def __init__(self, team_counts, day_idx, court_count=None, time_count=None,
                  csv_obj=None):
@@ -177,10 +186,11 @@ class Facility_Day(object):
             self.time_count = len(csv_obj[0])
             self.refs = True  # todo: HACK, remove once fitness class is used
             def str_to_game_div(game):
-                if game == 'X' or game == '-1':
-                    return init_value
+                game = try_make_int(game)
+                if type(game) == int:
+                    return game
                 else:
-                    return int(game)
+                    return init_value
             self.court_divisions = csv_obj
             for court, row in enumerate(csv_obj):
                 for time, game_str in enumerate(row):
@@ -226,11 +236,13 @@ class Facility_Day(object):
         return self.csv()
 
     def add_game(self, court, time, div_idx):
-        if div_idx != init_value:
+        if div_idx != init_value:    # todo:   qwer
+        #if div_idx > -1:
             self.court_divisions[court][time] = div_idx
-            self.div_times_games[div_idx].append((court, time))
-            self.games_per_division[div_idx] += 1
-            self.div_games[div_idx].append((court, time))
+            if div_idx > -1:
+                self.div_times_games[div_idx].append((court, time))
+                self.games_per_division[div_idx] += 1
+                self.div_games[div_idx].append((court, time))
 
     def add_odd_games(self, div_missing_games, games_per_div, days_to_add):
         for court, time in self.open_slots():
@@ -249,9 +261,13 @@ class Facility_Day(object):
         out = []
         for court, times in enumerate(self.court_divisions):
             for time, div_idx in enumerate(times):
-                if div_idx <= -1:
+                if div_idx <= -1 and div_idx != -5:
                     out.append((court, time))
         return out
+
+    def get_open_play_times(self):
+        get_game_time = lambda x: x[1]
+        return list(set(map(get_game_time, self.open_slots())))
 
     def set_div_times_locs(self):
         inner = [1,2,3]
