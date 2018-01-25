@@ -1,6 +1,9 @@
 from model import init_value
 import random
+import copy
 from pprint import pprint
+import fitness
+
 
 def list_filter(primary, filter):
     both = [team for team in primary if team in filter]
@@ -59,8 +62,8 @@ class Schedule(object):
         sch_fitness = sum((day.fitness_str() for day in self.days))
         return [sch_fitness.div_value(idx) for idx in range(self.division_count)]
 
-    def fitness_error_breakdown(self):
-        sch_fitness = sum((day.fitness_str() for day in self.days))
+    def fitness_error_breakdown(self, div_idx=None):
+        sch_fitness = sum((day.fitness_str(div_idx=div_idx) for day in self.days))
         return sch_fitness.error_breakdown()
 
     def fitness_by_day(self):
@@ -99,14 +102,15 @@ class Schedule(object):
         from copy import deepcopy
         # todo: this summation logic could be integrated with fitness.py's
         rolling_sum_play, rolling_sum_ref, total_use = self.make_audit_structures()
-        out = ['audit of cumulative plays and refs by team']
+        out = ['\n\nSchedule Audit Report']
+        out += ['\nCumulative Plays and Refs by Team']
+        out += ['This section displays the schedule along-side running totals of the play/ref for each team']
+        out += ['in the league. It is generated programatically, so you can audit its accuracy for specific']
+        out += ['teams and areas, and then infer the overall behavior. The final line of this section states']
+        out += ['the play and ref totals for each team over the season']
         for day in self.days:
             out += day.audit_view(rolling_sum_play, rolling_sum_ref)
-        out += ['audit report of total play by each team at each time']
-        for day in self.days:
-            out += day.audit_total_use_view(total_use)
-        out += []
-        out += ['final reports']
+        out += ['\n\n\nCumulative Play / Ref Totals']
         play_str = ''
         ref_str = ''
         for div_idx in range(len(self.team_counts)):
@@ -114,15 +118,25 @@ class Schedule(object):
             ref_str += ",,REF DATA," + ",".join([(str(num)) for num in rolling_sum_ref[div_idx]])
         out += [play_str]
         out += [ref_str]
-        out += []
+        out += ['\n\nTotal Use Audit']
+        out += ['This report displays the total use (play and ref) for each team in each time']
+        out += ['slot for each day. This is useful for checking that no one is double-booked']
+        out += ['(playing on two courts at a time, playing and reffing at the same time, etc']
+        for day in self.days:
+            out += day.audit_total_use_view(total_use)
+        out += ['\n\n\nVs View']
         out += ["Number of times a team has played another team: rec, In, Cmp, Pw, P+"]
+        out += ["These are the total times each team will play another team in their own division"]
+        out += ["This data is symmetric for obvious reasons. The '1000' values are esentially filler"]
+        out += ["for the spaces for a team playing itself."]
         for div_idx in range(len(self.team_counts)):
             for team_idx in range(self.team_counts[div_idx]):
                 team = self.divisions[div_idx].teams[team_idx]
                 row = ",".join([str(num) for num in team.times_team_played])
                 out += [row]
         out += []
-        out += ['bye view']
+        out += ['\n\n\nBye View']
+        out += ['Below are the counts of the number of games each team has in a given week']
         for div_idx in range(len(self.team_counts)):
             out += ["division %s" % div_idx]
             for team_idx in range(self.team_counts[div_idx]):
@@ -130,10 +144,30 @@ class Schedule(object):
                 row = ",".join([str(num) for num in team.games_per_day]) + \
                       '  total: {}'.format(sum((1 for num in team.games_per_day if num == 0)))
                 out += [row]
-        out += ['\nrepeated_play_view\n']
+        out += ['\n\n\nRepeated Play View\n']
         out += [self.get_sequencial_vs_play_report()]
+        out += ['\n\n\nOpen Play Report\n']
+        out += [self.get_open_play_report()]
+        out += ['\n\n\nDouble Ref Report\n']
+        out += [self.get_double_ref_report()]
+        out += ['\n\n\nSolution Error']
+        out += ['This section reports what is checked for each division, and displays the total number']
+        out += ['of errors for each category, for each division. This is basically always all 0.']
+        out += [self.solution_debug_data()]
+        out += ['\n\n\n\n']
         return '\n'.join(out)
 
+    def get_team_round_robin_audit(self):
+        day = self.days[0]
+        time_slots = len(day.courts[0])
+        div_histories = [[[0] * time_slots for _ in range(count)] for count in self.team_counts]
+        for court in day.courts:
+            for game_time, game in enumerate(court):
+                if game.team1 > -1:
+                    div_histories[game.div][game.team1][game_time] += 1
+                    div_histories[game.div][game.team2][game_time] += 1
+        asdf = '\n\n'.join('\n'.join((','.join((str(game) for game in team_hist)) for team_hist in div_hist)) for div_hist in div_histories)
+        return asdf
 
     def get_sequencial_vs_play_report(self):
         """Collection all the vs games in order and assess how much they repeat.
@@ -146,22 +180,53 @@ class Schedule(object):
                         vs_play[game.div][game.team1].append(game.team2)
                         vs_play[game.div][game.team2].append(game.team1)
         vs_repeat_period = [[[] for _ in range(count)] for count in self.team_counts]
-        output = ''
+        output = '\nDebug of repeats of the same vs match over successive games'
+        output += '\nEach line is the readout for one team'
+        output += '\nThe first list in a line are the opposing teams for each game and '
+        output += '\nthe second list are the successive games before that team is played again.'
+        output += '\n(the default for this is 0 if the team is not played again in a season)'
         for div_idx, div_vs_play in enumerate(vs_play):
             output += '\nOutput for division:  {}\n'.format(div_idx)
             for team_idx, team_vs_play in enumerate(div_vs_play):
                 for idx1 in range(len(team_vs_play)):
                     for idx2 in range(idx1 + 1, len(team_vs_play)):
-                        # print('idx = {} team {} and idx = {} team {}'.format(idx1, team_vs_play[idx1], idx2, team_vs_play[idx2]))
                         if team_vs_play[idx1] == team_vs_play[idx2]:
                             vs_repeat_period[div_idx][team_idx].append(idx2 - idx1)
                             break
                     else:
                         vs_repeat_period[div_idx][team_idx].append(0)
+                output += ','.join([str(num) for num in vs_play[div_idx][team_idx]]) + '   '
                 output += ','.join([str(num) for num in vs_repeat_period[div_idx][team_idx]]) + '\n'
         return output
 
 
+    def get_open_play_report(self):
+        """Generate a report of teams with open play opertunities vs day for debugging"""
+        output = '\nDebug of open play opertunties in the schedule.'
+        output += '\nFirst, there is a report of what the facilities objects view as open play.'
+        output += '\nThen there is the day-by-day running total of the number'
+        output += '\nof oppertinies a team has to play open play i.e. when a team has'
+        output += '\na game before or after an open play / skills clinic slot'
+        output += '\nOpen play slots'
+        for idx, day in enumerate(self.days):
+            open_play_times = day.facility_day.get_open_play_times()
+            output += '\nThe open play oppertunies for day {} are {}'.format(idx, open_play_times)
+        output += '\nOpen oppertunities by team'
+        total_fit = 0
+        for idx, day in enumerate(self.days):
+            day_fit = day.fitness_str()
+            total_fit += day_fit
+            output += '\nOpen play data after day {} is {}'.format(idx, total_fit.open_play_lists())
+        return output
+
+    def get_double_ref_report(self):
+        """Generate a report of teams with open play opertunities vs day for debugging"""
+        output = '\nDebug of double ref metrics. This means one team getting forced'
+        output += '\nto ref twice in the same day'
+        for idx, day in enumerate(self.days):
+            day_fitness = day.fitness_str()
+            output += '\ndouble refs for day {}: {}'.format(idx, day_fitness.get_double_ref_lists())
+        return output
 
     def remake_worst_day(self, count):
         days_fitness = [(idx, day.fitness(self.divisions)) for idx, day in enumerate(self.days)]
@@ -185,11 +250,10 @@ class Schedule(object):
         for day_idx in day_indexes:
             self.subtract_day_from_division_history(self.days[day_idx])
         for day_idx in day_indexes:
-            new_day = self.make_day(self.days[day_idx].facilities,
+            new_day = self.make_day(self.days[day_idx].facility_day,
                                     old_day=self.days[day_idx], target_div_idx=div_idx)
             self.days[day_idx] = new_day
         fitness = self.fitness()
-        print('Old fitness is {} and new fitness is {}'.format(original_fitness, fitness))
         # fudge factor to allow more drift in solution, to avoid local stability issues
         local_stability_avoidance_fudge_factor = 0
         if original_fitness > fitness + local_stability_avoidance_fudge_factor:
@@ -313,11 +377,12 @@ class Schedule(object):
             ('longer is worse quad', [0, -5, -20, -45, -80, -125, -180]),
             ('long sits worse quad', [0, 0, -1, -4, -9, -16, -25]),
             ('min 45 minutes', [0, 0, -2, -200, bad, bad, bad]),
-            ('min hour and no-sit', [-200, 0, -5, -200, bad, bad, bad]),
+            ('min hour and no-sit', [-180, 0, -5, -600, bad, bad, bad]),
             ('min hour and small-sit', [-200, 0, 0, -200, bad, bad, bad]),
         ]
-        time_cypher = [0,15,30,45,   60,75,90,115,   130,145]
-        team_wise_penality = [-5000,0,0,0,   0,-10,bad,bad,   bad,bad]
+        game_length = 20
+        time_cypher = [game_length * idx for idx in range(10)]
+        team_wise_penality = [-5000,0,0,0,   -100,bad,bad,bad,   bad,bad]
         count = sum(sitting_counts)
         sum_prod = sum(time * count for time, count in enumerate(sitting_counts))
         average = sum_prod / count * 4
@@ -326,7 +391,7 @@ class Schedule(object):
         team_penalty_total = 0
         for team_sit in team_sits:
             team_sit_total = sum((a * b for a, b in zip(team_sit, time_cypher)))
-            team_penalty_total += team_wise_penality[int(team_sit_total / 15)]
+            team_penalty_total += team_wise_penality[int(team_sit_total / 20)]
         teamwise_fitness = team_penalty_total / len(team_sits)
         # calc the total sit fitness for various functions
         for name, func in fitness_func:
@@ -365,7 +430,7 @@ class Schedule(object):
     def skillz_clinic_count(self):
         # The number of skillz clinics is the number of open game slots
         total_slots = self.daycount * self.courts * self.times
-        total_games = self.games_per_team * sum(self.team_counts) / 2 # 2 teams per game
+        total_games = self.games_per_team * sum(self.team_counts) / 2  # 2 teams per game
         self.skillz_clinics = total_slots - total_games
         print("There will be %s skillz clinics in this schedule"
               % self.skillz_clinics)
@@ -384,7 +449,6 @@ class Schedule(object):
             sch_obj.append(court_list)
         out = json.dumps(sch_obj)
         return out
-
 
     def clear_all_reffing_for_division(self, division_idx):
         for day in self.days:
@@ -413,7 +477,6 @@ class Schedule(object):
                 break
         return div
 
-
     def ref_transfering_is_neeeded(self, div):
         reffings = [team.refs for team in div.teams]
         if max(reffings) - min(reffings) > 1:
@@ -422,7 +485,7 @@ class Schedule(object):
             return False
 
     def add_reffing(self, debug=False):
-        max_number_of_attempts = 10000  # not expected to happen
+        max_number_of_attempts = 1000  # not expected to happen
         for div_idx, div in enumerate(self.divisions):
             print('Adding Reffing for division {}'.format(div_idx))
             for idx in range(max_number_of_attempts):
@@ -440,7 +503,6 @@ class Schedule(object):
                 print('\n'.join(self.get_audit_text()))
                 raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
 
-
     def switch_teams(self, div_idx, team1, team2):
         teams = [team1, team2]
         otherer = create_get_other(teams)
@@ -456,14 +518,17 @@ class Schedule(object):
                             game.ref = otherer(game.ref)
                     self.days[day_idx].courts[court_idx][time_idx] = game
 
-    def solution_debug_data(self, mut_idx):
+    def solution_debug_data(self, mut_idx=0, div_idx=None):
         fitness = self.fitness()
-        breakdown = self.fitness_error_breakdown()
-        by_day = self.fitness_by_day()
-        print("value = %s while on mutation step %s: %s %s %s" %
-              (fitness, mut_idx, self.fitness_div_list(), breakdown, by_day))
-        # could add back in [div._double_refs for div in self.fitness_structure._divs]
-
+        def get_sorted_breakdown(div_idx):
+            error_dict = self.fitness_error_breakdown(div_idx=div_idx)
+            return str(sorted(list(error_dict.items())))
+        if div_idx == None:
+            breakdown = '\n'.join(['division {} breakdown: {}'.format(div_idx, [get_sorted_breakdown(div_idx) for div_idx in range(5)])])
+        else:
+            breakdown = 'division {} breakdown: {}'.format(div_idx, get_sorted_breakdown(div_idx))
+        return "value = {} while on mutation step {}: division fitness = {}\n{}".format(
+              fitness, mut_idx, self.fitness_div_list(), breakdown)
 
     def try_move_game_from_court(self, day_idx, target_court_idx, time):
         div_idx = self.days[day_idx].courts[target_court_idx][time].div
@@ -483,6 +548,31 @@ class Schedule(object):
                     if game.div == div_idx and team_idx in [game.team1, game.team2]:
                         self.try_move_game_from_court(day_idx, court_idx_to_avoid, time)
 
+    def switch_specific_games(self, game_data1, game_data2):
+        game1 = copy.deepcopy(self.days[game_data1['day']].courts[game_data1['court']][game_data1['time']])
+        game2 = copy.deepcopy(self.days[game_data2['day']].courts[game_data2['court']][game_data2['time']])
+        if game1.div != game2.div:
+            raise(Exception('Tried to switch games at {} and {} but they are not the same division:\n'.format(game_data1, game_data2) +
+                            'game1 = {}, game2 = {}'.format(game1, game2)))
+        self.days[game_data1['day']].courts[game_data1['court']][game_data1['time']] = game2
+        self.days[game_data2['day']].courts[game_data2['court']][game_data2['time']] = game1
+
+    def switch_specific_refs(self, game_data1, game_data2):
+        game1 = copy.deepcopy(self.days[game_data1['day']].courts[game_data1['court']][game_data1['time']])
+        game2 = copy.deepcopy(self.days[game_data2['day']].courts[game_data2['court']][game_data2['time']])
+        if game1.div != game2.div:
+            raise(Exception('Tried to switch games at {} and {} but they are not the same division:\n'.format(game_data1, game_data2) +
+                            'game1 = {}, game2 = {}'.format(game1, game2)))
+        self.days[game_data1['day']].courts[game_data1['court']][game_data1['time']].ref = game2.ref
+        self.days[game_data2['day']].courts[game_data2['court']][game_data2['time']].ref = game1.ref
+
+    def switch_days(self, day1, day2):
+        (self.days[day1], self.days[day2]) = (self.days[day2], self.days[day1])
+        self.days[day1].num = day1
+        self.days[day2].num = day2
+        self.days[day1].facilities.day_idx = day1
+        self.days[day2].facilities.day_idx = day2
+
 def create_get_other(list):
     def other(current):
         if list[0] == current:
@@ -500,7 +590,7 @@ def load_reg_schedule():
     path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
     tag = '2016-01-22a_'
     sch_py_obj = path + tag + 'python_file_obj.pickle'
-    with open(sch_py_obj,'rb') as sch_file:
+    with open(sch_py_obj, 'rb') as sch_file:
         schedule = pickle.load(sch_file)
         return schedule
 
