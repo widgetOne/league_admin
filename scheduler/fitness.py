@@ -54,7 +54,10 @@ def division_specific_bye_fitness(bye_array):
 
 
 class ScheduleDivFitness(object):
-    def __init__(self, count, day_num, games=[], bye_requirement=0):
+    def __init__(self, count, day_num, games=[], bye_requirement=0, open_play_times=[]):
+        # TODO: This needs refactored into an array of fitness objects, that all have a consistent interface
+        # for target data collection, target data summation, fitness. Then these objects would be assigned to
+        # this class, like "self.fitness_methods" is now.
         from copy import deepcopy
         from model import init_value
         blank_1d = [0] * count
@@ -69,6 +72,7 @@ class ScheduleDivFitness(object):
         self._vs_by_day = [[[] for _ in range(count)] for _ in range(count)]
         self._play_over_time = [{} for _ in range(count)]
         self.bye_requirement = bye_requirement
+        self._open_play = deepcopy(blank_1d)
         usage_w_time = {}
         for game in games:  # There may be no games
             self.add_game(game, day_num)
@@ -93,14 +97,17 @@ class ScheduleDivFitness(object):
             else:
                 return 0
         self._double_refs = sum((double_ref(refs) for refs in self._refs))
+        if games and games[0].div != 1:
+            self._open_play = self.get_team_open_play(games, open_play_times, self._open_play)
         self.fitness_methods = {
             'plays': lambda x: even_distribution_fitness(x._plays),
             'refs': lambda x: even_distribution_fitness(x._refs),
-            'vs': lambda x: x.vs_fitness(),
+            'vs_evenness': lambda x: x.vs_fitness(),
             'no_vs_repeats': lambda x: x.vs_repeat_fitness(),
             'conflict': lambda x: -conflict_weight * x._multi_use_in_time,
             'byes_total': lambda x: (x.bye_requirement - sum(x._byes)) * 3,
             'bye_evenness': lambda x: even_distribution_fitness(x._byes),
+            'open_play_evenness': lambda x: even_distribution_fitness(x._open_play),
             'successive_byes': lambda x: x.successive_byes_fitness(),
             'double_refs': lambda x: -conflict_weight * x._double_refs,
         }
@@ -114,6 +121,7 @@ class ScheduleDivFitness(object):
             self._vs[idx][idx] -= default_vs_self
         self._multi_use_in_time += other._multi_use_in_time
         self._byes = add_lists(self._byes, other._byes, sign)
+        self._open_play = add_lists(self._open_play, other._open_play, sign)
         self._double_refs += other._double_refs * sign
         self._vs_by_day = add_list_of_lists(self._vs_by_day, other._vs_by_day, sign)
         self.successive_byes += other.successive_byes * sign
@@ -207,6 +215,15 @@ class ScheduleDivFitness(object):
                     fitness -= 1
         return fitness
 
+    def get_team_open_play(self, games, open_play_times, open_play_opertunities):
+        for game in games:
+            if (game.time + 1 in open_play_times or
+                game.time - 1 in open_play_times):
+                open_play_opertunities[game.team1] = 1
+                open_play_opertunities[game.team2] = 1
+        return open_play_opertunities
+
+
 def dict_to_list(dictionary):
     max_key = max(dictionary.keys())
     def try_get_number_from_dict(loc_dict, num):
@@ -230,9 +247,11 @@ class ScheduleFitness(object):
             div_counts = list(enumerate(facilities.team_counts))
         else:
             div_counts = [(div_idx, facilities.team_counts[div_idx])]
+        open_play_times = facilities.get_open_play_times()
         for div_idx, count in div_counts:
             div_games = [game for game in games if game.div == div_idx]
-            div = ScheduleDivFitness(count, day_num, div_games, bye_requirements[div_idx])
+            div = ScheduleDivFitness(count, day_num, div_games, bye_requirements[div_idx],
+                                     open_play_times=open_play_times)
             self._divs.append(div)
 
     def __add__(self, other, sign=1):
@@ -265,6 +284,12 @@ class ScheduleFitness(object):
         for div in self._divs:
             result = add_dict(result, div.error_breakdown())
         return result
+
+    def open_play_lists(self):
+        return [div._open_play for div in self._divs]
+
+    def get_double_ref_lists(self):
+        return [div._double_refs for div in self._divs]
 
 
 if __name__ == '__main__':
