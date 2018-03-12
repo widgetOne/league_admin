@@ -216,11 +216,20 @@ class ScheduleDivFitness(object):
         return fitness
 
     def get_team_open_play(self, games, open_play_times, open_play_opertunities):
+        raise(Exception('This code change is needed but has not been evaluated yet'))
+        if not open_play_times:
+            return
+        team_busy_data = [{} for _ in range(len(open_play_opertunities))]
         for game in games:
-            if (game.time + 1 in open_play_times or
-                game.time - 1 in open_play_times):
-                open_play_opertunities[game.team1] = 1
-                open_play_opertunities[game.team2] = 1
+            for team in [game.team1, game.team2, game.ref]:
+                if game.ref > -1:
+                    team_busy_data[team].add(game.time)
+        for team_idx, team_obligations in enumerate(team_busy_data):
+            for open_time in open_play_times:
+                if (open_time not in team_obligations and
+                        (open_time + 1 in team_obligations or
+                        open_time - 1 in team_obligations)):
+                    open_play_opertunities[team_idx] = 1
         return open_play_opertunities
 
 
