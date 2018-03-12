@@ -77,3 +77,5 @@ scheduler/inputs/
 scheduler/output/
 scheduler/test/scratch/
 website_support/input
+env.sh
+client_secret.json
