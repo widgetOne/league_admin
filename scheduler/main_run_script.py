@@ -10,68 +10,37 @@ from facility import SCVL_Facility_Day
 from facility import Facility
 from pprint import pprint
 
-def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
-    """not currently used"""
-    days = []
-    import random
-    random.seed(seed)
-    league = Facility(ndivs=4, ndays=ndays, ncourts=5, ntimes=4,
-                    team_counts=team_counts, day_type=SCVL_Facility_Day)
-    league.debug_print()
-    sch = make_schedule(team_counts, league, sch_tries=sch_tries)
-    return sch
 
-def make_regular_season_fall_2016():
-    team_counts = [6, 10, 11, 10, 6]
-    canned_path = get_default_potential_sch_loc('2016-09-10')
-    sch_template_path = 'test/reg_season/draft_fac_a.csv'
-    sch_tries = 5000
-    fac = facility.sch_template_path_to_fac(sch_template_path, team_counts)
-    seed = 1
-    print('\nMaking schedule %s.' % seed)
-    sch = make_schedule(team_counts, fac,
-                        sch_tries=sch_tries, seed=seed, debug=True, save_play_schedule=True)
-    save_schedules([sch], canned_path)
-    print(sch.get_audit_text())
-
-
-def make_round_robin_spring_2017():
-    team_counts = [6, 12, 11, 10, 6]
-    sch_template_path = 'inputs/2017-spring/round_robin_template_2017-01-21a.csv'
+def make_round_robin_schedule(sch_template_path, team_counts):
     canned_path = 'test/scratch/'
-    total_schedules = 3000
+    total_schedules = 1  # 12000
     summary, schedules = make_round_robin_game(team_counts, sch_template_path, total_schedules)
     choosing_a_winner = True
     if choosing_a_winner:
-        #pprint(summary)
-        sch = summary['min hour and no-sit']['sch']
-        print(sch)
+        preferred_winner = 'min hour and no-sit'
+        sch = summary[preferred_winner]['sch']
+        print(sch.get_audit_text())
+        current_sum = summary[preferred_winner]
         make_final_report = True
         if make_final_report:
-            file_path = 'scratch/{}b_round_robin_sch.csv'.format(datetime.date.today())
+            file_path = 'scratch/{}_round_robin_sch.csv'.format(datetime.date.today())
             sch.gen_csv(file_path)
+        print(sch.get_team_round_robin_audit())
+        print('''\n\n\n\nThe final schedule has these properties:
+              {}
+              was seed {} and looks like this:
+              {}'''.format(current_sum['team_sit_report'], current_sum['seed'], sch))
 
 
-def make_regular_season_spring_2017():
-    team_counts = [6, 12, 11, 10, 6]
-    canned_path = get_default_potential_sch_loc(str(datetime.date.today()))
-    sch_template_path = 'inputs/reg_season/spring_2017_template_01_23b.csv'
-    sch_tries = 5000
-    fac = facility.sch_template_path_to_fac(sch_template_path, team_counts)
-    seed = 10  # 4 got through play
-    print('\nMaking schedule %s.' % seed)
-    sch = make_schedule(team_counts, fac, sch_tries=sch_tries, seed=seed, debug=True,
-                        save_play_schedule=True)
-    save_schedules([sch], canned_path)
-    print(sch.get_audit_text())
-    make_final_report = True
-    print(sch)
-    print(sch.solution_debug_data(1))
-    if make_final_report:
-        file_path = 'output/2017_spring/2017_spring_regular_season_sch_{}.csv'.format(datetime.date.today())
-        sch.gen_csv(file_path)
+def make_2018_spring_round_robin_schedule():
+    dir_name = '2018-1-spring'
+    file_name = 'round_robin_input_template_maker_2018_1_spring.csv - machine_version.csv'
+    sch_template_path = 'inputs/{}/{}'.format(dir_name, file_name)
+    team_counts = [6, 10, 13, 11, 4]
+    make_round_robin_schedule(sch_template_path, team_counts)
 
 
 if __name__ == '__main__':
+    make_2018_spring_round_robin_schedule()
     #make_regular_season_fall_2016()
-    make_regular_season_spring_2017()
+    #make_regular_season_spring_2017()
