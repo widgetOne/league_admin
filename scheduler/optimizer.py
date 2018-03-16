@@ -1,9 +1,7 @@
-import random
+import generic_tools
 import traceback
 import datetime
 import os
-#!/anaconda/bin/python
-
 """
 reqs
 1. generate teams based on the following constraints
@@ -33,11 +31,6 @@ Objects:
 class FailedToConverge(Exception):
     pass
 
-def epoch_now():
-    '''this is a simple utility for getting the current epoch'''
-    from calendar import timegm
-    from time import gmtime
-    return timegm(gmtime())
 
 def compare_days(day1, day2):
     ''' this is a debugging and reporting tool'''
@@ -56,32 +49,32 @@ def compare_days(day1, day2):
 def play_schedule_pkl_path():
     return 'scratch/play_schedule_{}.pkl'.format(datetime.date.today())
 
+
 def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, reffing=True,
                   save_play_schedule=False):
     from schedule import Schedule
     from random import choice, randrange
     import random
     import pickle
-    start = epoch_now()
+    start = datetime.datetime.now()
+    if seed != None:
+        random.seed(seed)
     try:
         if save_play_schedule and os.path.isfile(play_schedule_pkl_path()):
             sch = get_schedules(play_schedule_pkl_path())[0]
             mut_idx = 0
         else:
             facilities = league.days
-            if seed != None:
-                random.seed(seed)
             sch = Schedule(league, team_counts, facilities)
-            print(league.get_bye_target())
             #print([num / 4.0 for num in sch.get_game_div_count_list()])
             # add play schedule
             for div_idx in range(5):  # todo: if kept, make this dynamic
                 for mut_idx in range(sch_tries):
                     if True:
                         sch.try_remake_a_few_random_days(div_idx, 1)
-                        sch.try_remake_a_few_random_days(div_idx, randrange(1, sch.daycount))
+                        sch.try_remake_a_few_random_days(div_idx, randrange(1, sch.daycount+1))
                     if debug:
-                        print(sch.solution_debug_data(mut_idx))
+                        print(sch.solution_debug_data(mut_idx, div_idx))
                     if (sch.fitness_div_list()[div_idx] == 0):
                         if debug:
                             print("correct schedule found for division {}!!!!!".format(div_idx))
@@ -98,9 +91,8 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, ref
             sch.add_reffing(debug=debug)
         if debug:
             print(sch.solution_debug_data(mut_idx))
-        end = epoch_now()
-        print("total run_emr_job time was {} second and {} iterations".format(float(end - start),
-                                                                              mut_idx))
+        delta = (datetime.datetime.now() - start).total_seconds()
+        print("total run_emr_job time was {} second and {} iterations".format(delta, mut_idx))
         path = '/Users/coulter/Desktop/life_notes/2016_q1/scvl/'
         # todo, change this to use print(datetime.datetime.now().date())
         save_sch = False
@@ -140,7 +132,7 @@ def get_default_potential_sch_loc(date=None):
     import datetime
     if date == None:
         date = str(datetime.datetime.now().date())
-    default_path = 'test/scratch/'
+    default_path = 'scratch/'
     file_name = default_path + 'round_robin-schedules-from-{}.pkl'.format(date)
     return file_name
 
@@ -185,15 +177,20 @@ def make_round_robin_game(team_counts, sch_template_path, total_schedules, canne
     fac = facility.sch_template_path_to_fac(sch_template_path, team_counts)
     schedules = get_schedules(file_path=canned_path)
     already_created = len(schedules)
-    for seed in range(already_created, total_schedules):
-        print('\nMaking schedule %s.' % seed)
-        sch = make_schedule(team_counts, fac,
-                            sch_tries=sch_tries, seed=seed, debug=False, reffing=False)
-        schedules.append(sch)
-        if (seed + 1) % 50 == 0: # save every 50th schedule
-            # todo: change this to be time based so round round and reg can use same logic
-            # only save progress periodically, as each only takes a second and read/write can be mny
-            save_schedules(schedules, file_path=canned_path)
+    try:
+        target_seeds = list(range(already_created, total_schedules))
+        for seed in generic_tools.display_progress(target_seeds):
+            seed += 3000
+            print('\nMaking schedule %s.' % seed)
+            sch = make_schedule(team_counts, fac,
+                                sch_tries=sch_tries, seed=seed, debug=False, reffing=False)
+            schedules.append(sch)
+            if (seed + 1) % 25 == 0: # save every 25th schedule
+                # todo: change this to be time based so round round and reg can use same logic
+                # only save progress periodically, as each only takes a second and read/write can be mny
+                save_schedules(schedules, file_path=canned_path)
+    except KeyboardInterrupt:
+        pass
     summary = report_on_schedules(schedules)
     return summary, schedules
 
@@ -210,18 +207,19 @@ def report_on_schedules(schedules):
                 result['seed'] = idx
                 result['sch'] = sch
                 summary[name] = result
-
     for name, result in sorted(summary.items()):
         result['name'] = name
         print('{:22s}: sits={}          ave={} func={} seed={}'.format(name, result['sits'],
                                                        result['ave'], result['func'],
                                                        result['seed']))
-        times = [15*x for x in range(8)]
-        team_scores = []
+        times = [20*x for x in range(8)]
+        team_sit_report = []
         for sits in result['team_sits']:
             sum_prod = sum((x*y for x,y in zip(times, sits)))
-            team_scores.append(sum_prod)
-        print(sorted(team_scores))
+            team_sit_report.append(sum_prod)
+            team_sit_report = sorted(team_sit_report)
+        print(team_sit_report)
+        summary[name]['team_sit_report'] = team_sit_report
     return summary
 
 
