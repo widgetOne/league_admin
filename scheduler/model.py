@@ -25,7 +25,7 @@ class Game(object):
     def csv_str(self, there_is_reffing=True):
         if self.div == init_value:
             if there_is_reffing:
-                return "    TBD  ,   ,"
+                return "    TBD  ,TBD,"
             else:
                 return "WARM UP  ,"
         div_csv_str = ['REC', 'INT', 'COM', 'POW', 'P+ ', '']
@@ -119,7 +119,6 @@ class Day(object):
                     double_use_penalty = 100
                     fitness -= double_use_penalty
         return fitness
-
 
     def there_is_reffing(self):
         for court in self.courts:
