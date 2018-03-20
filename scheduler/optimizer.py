@@ -1,4 +1,3 @@
-import generic_tools
 import traceback
 import datetime
 import os
@@ -179,7 +178,7 @@ def make_round_robin_game(team_counts, sch_template_path, total_schedules, canne
     already_created = len(schedules)
     try:
         target_seeds = list(range(already_created, total_schedules))
-        for seed in generic_tools.display_progress(target_seeds):
+        for seed in target_seeds:
             seed += 3000
             print('\nMaking schedule %s.' % seed)
             sch = make_schedule(team_counts, fac,
