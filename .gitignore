@@ -79,3 +79,5 @@ scheduler/test/scratch/
 website_support/input
 env.sh
 client_secret.json
+gmail_metrics_auth.json
+
