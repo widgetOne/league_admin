@@ -42,11 +42,14 @@ def get_csvs_in_input():
     return csv_paths
 
 
+part_time_tag = ' (PT)'
 class Name(object):
     def __init__(self, name):
+        self.full = name
+        self.part_time = part_time_tag in name
+        name = name.replace(part_time_tag, '')
         first_name_re = re.compile('^(\S+) ')
         last_name_re = re.compile('^\S+ (.*)$')
-        self.full = name
         self.first = re.findall(first_name_re, name)[0]
         self.last = re.findall(last_name_re, name)[0]
         self.last_name_chars = 1
@@ -54,6 +57,8 @@ class Name(object):
 
     def set_unique_name(self):
         self.unique = '{} {}'.format(self.first, self.last[:self.last_name_chars])
+        if self.part_time:
+            self.unique += part_time_tag
 
     def increment_name_length(self):
         self.last_name_chars += 1
@@ -79,6 +84,7 @@ def get_name_cypher(name_objects):
                 unique_names[existing.unique] = existing
                 unique_names[name_obj.unique] = name_obj
             else:
+                print('warning, {} is in there multiple times'.format(name_obj.full))
                 pass  # its already in there
         else:
             unique_names[name_obj.unique] = name_obj
@@ -92,7 +98,8 @@ def remake_csv(name_cypher, input_path, output_path):
         string = out_file.read()
     for name, unique in name_cypher.items():
         string = string.replace(name, unique)
-    with open(output_path, 'r+') as out_file:
+    string = string.replace('\r', '')
+    with open(output_path, 'w') as out_file:
         out_file.write(string)
     print(string)
 
@@ -104,10 +111,11 @@ def convert_csv_path_to_new_csv(csv_path, output_path):
     player_name_list = filter(lambda x: ' ' in x, player_name_list)
     name_objects = list(map(Name, player_name_list))
     name_cypher = get_name_cypher(name_objects)
+    pprint(name_cypher)
     remake_csv(name_cypher, csv_path, output_path)
 
 
 if __name__ == '__main__':
-    test_path = './input/2018-1-spring/int and rec teams - Sheet1.csv'
+    test_path = '/Users/bcoulter/PycharmProjects/league_admin/website_support/input/2018-1-spring/Spring 2018 Teams.csv'
     output_path = test_path.replace('.csv', '_clean.csv')
     convert_csv_path_to_new_csv(test_path, output_path)
