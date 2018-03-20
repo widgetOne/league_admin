@@ -1,6 +1,11 @@
 from unittest import TestCase
+import os
+basedir = os.path.dirname(os.path.abspath(__file__))
+os.sys.path.insert(0, basedir)
 import fitness
-__author__ = 'coulter'
+import unittest
+from optimizer import make_schedule
+
 
 def check_total_sizes(assert_true, div_totals, count):
     assert_true(len(div_totals._plays) == count)
@@ -9,21 +14,35 @@ def check_total_sizes(assert_true, div_totals, count):
     assert_true(len(div_totals._vs[0]) == count)
     assert_true(len(div_totals._vs[count - 1]) == count)
 
+
 def basic_facilities(tries=1):
     from facility import SCVL_Facility_Day
-    from facility import League
+    from facility import Facility
     import random
+    '''
+    def make_league_from_csv(team_counts, csv):
+        ndivs = len(team_counts)
+        ndays = len(csv)
+        ncourts = len(csv[0])
+        ntimes = len(csv[0][0])
+        day_type = Facility_Day
+        return Facility(ndivs, ndays, ncourts, ntimes, team_counts, day_type, csv)
+    '''
     random.seed(1)
     team_counts = [6, 13, 14, 7]
+    # qwer
     ndays = 1
-    facilities = League(ndivs=4, ndays=ndays, ncourts=5, ntimes=4,
-                        team_counts=team_counts, day_type=SCVL_Facility_Day)
+    facilities = Facility(ndivs=4, ndays=ndays, ncourts=5, ntimes=4,
+                          team_counts=team_counts, day_type=SCVL_Facility_Day)
     return facilities
+
 
 class TestFitness(TestCase):
     def test_blank_schedule_total(self):
         facilities = basic_facilities()
-        blank_totals = fitness.ScheduleFitness(facilities)
+        fac_day = facilities.days[0]
+        blank_totals = fitness.ScheduleFitness(day_num=1, bye_requirements=fac_day.bye_requirements,
+                                               facilities=facilities)
         self.assertTrue(len(blank_totals._divs) == len(facilities.team_counts))
         for div_idx, count in enumerate(facilities.team_counts):
             div = blank_totals._divs[div_idx]
@@ -94,7 +113,6 @@ class TestFitness(TestCase):
         blank_totals._divs[1]._vs[3][3] -= 2
 
     def test_game_processing(self):
-        from maker import make_schedule
         from model import Game
         from copy import deepcopy
         from fitness import ScheduleFitness as Fit
@@ -150,6 +168,7 @@ class TestFitness(TestCase):
         self.assertEqual(0, Fit(facilities, games).value())
         sch_fitness = sum([day.fitness_str() for day in sch.days])
         self.assertEqual(0, sch_fitness.value())
+
 
 if __name__ == '__main__':
     unittest.main()
