@@ -228,12 +228,20 @@ class Schedule(object):
             output += '\ndouble refs for day {}: {}'.format(idx, day_fitness.get_double_ref_lists())
         return output
 
+    '''
     def remake_worst_day(self, count):
         days_fitness = [(idx, day.fitness(self.divisions)) for idx, day in enumerate(self.days)]
         days_fitness.sort(key=lambda x: x[1])
         worst_days = [days_fitness[idx][0] for idx in range(count)]
         fitness = self.try_remake_days(worst_days)
         return fitness
+    '''
+
+    def try_remake_play_imbalance(self, div_idx):
+        """This routine enqueues all days with non-mean number of game plays to be remade"""
+        # todo 2018-09-09: not completed
+        days_to_remake = random.sample(all_day_indexes, day_remake_count)
+        self.try_remake_div_days(div_idx, days_to_remake)
 
 
     def try_remake_a_few_random_days(self, div_idx, day_remake_count):
@@ -241,11 +249,12 @@ class Schedule(object):
         days_to_remake = random.sample(all_day_indexes, day_remake_count)
         self.try_remake_div_days(div_idx, days_to_remake)
 
-    ### not currently used qwer
     def try_remake_div_days(self, div_idx, day_indexes):
         from copy import deepcopy
-        original_days = deepcopy(self.days)
-        original_division = deepcopy(self.divisions)
+        # todo 2018-09-09: can I accellerate things by making this more focused?
+        day_backups = {day_idx: deepcopy(self.days[day_idx]) for day_idx in day_indexes}
+        #original_days = deepcopy(self.days)
+        original_division = deepcopy(self.divisions[div_idx])
         original_fitness = self.fitness()
         for day_idx in day_indexes:
             self.subtract_day_from_division_history(self.days[day_idx])
@@ -257,11 +266,14 @@ class Schedule(object):
         # fudge factor to allow more drift in solution, to avoid local stability issues
         local_stability_avoidance_fudge_factor = 0
         if original_fitness > fitness + local_stability_avoidance_fudge_factor:
-            self.days = original_days
-            self.divisions = original_division
+            for day_idx in day_indexes:
+                self.days[day_idx] = day_backups[day_idx]
+            #self.days = original_days
+            self.divisions[div_idx] = original_division
             fitness = original_fitness
         return fitness
 
+    '''
     def try_remake_days(self, day_indexes):
         from copy import deepcopy
         original_days = deepcopy(self.days)
@@ -279,6 +291,7 @@ class Schedule(object):
             self.divisions = original_division
             fitness = original_fitness
         return fitness
+    '''
 
     # todo: not currently used. use or delete
     def try_remake_days_new_method(self, day_indexs):
