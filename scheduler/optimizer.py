@@ -1,5 +1,6 @@
 import traceback
 import datetime
+import random
 import os
 """
 reqs
@@ -52,8 +53,6 @@ def play_schedule_pkl_path():
 def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, reffing=True,
                   save_play_schedule=False):
     from schedule import Schedule
-    from random import choice, randrange
-    import random
     import pickle
     start = datetime.datetime.now()
     if seed != None:
@@ -71,7 +70,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, ref
                 for mut_idx in range(sch_tries):
                     if True:
                         sch.try_remake_a_few_random_days(div_idx, 1)
-                        sch.try_remake_a_few_random_days(div_idx, randrange(1, sch.daycount+1))
+                        sch.try_remake_a_few_random_days(div_idx, random.randrange(1, sch.daycount + 1))
                     if debug:
                         print(sch.solution_debug_data(mut_idx, div_idx))
                     if (sch.fitness_div_list()[div_idx] == 0):
@@ -144,6 +143,7 @@ def save_schedules(schedules, file_path=None):
             del sch.fitness_structure
         except:
             pass
+    print(os.getcwd())
     with open(file_path, 'wb') as pickle_file:
         pickle.dump(schedules, pickle_file)
 
@@ -179,7 +179,6 @@ def make_round_robin_game(team_counts, sch_template_path, total_schedules, canne
     try:
         target_seeds = list(range(already_created, total_schedules))
         for seed in target_seeds:
-            seed += 3000
             print('\nMaking schedule %s.' % seed)
             sch = make_schedule(team_counts, fac,
                                 sch_tries=sch_tries, seed=seed, debug=False, reffing=False)
