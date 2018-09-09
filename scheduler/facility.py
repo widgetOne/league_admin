@@ -353,19 +353,3 @@ class SCVL_Advanced_Regular_Day(Facility_Day):
         super(SCVL_Advanced_Regular_Day, self).__init__(team_counts,
                                                         court_count, time_count)
         self.refs = False
-
-    def set_division(self):
-        pass
-
-'''
-class Facility_Space(object):
-    def __init__(self, time_court_days=None, time_court_array_of_days=None):
-        self.time_court_
-        if time_court_array_of_days:
-            pass
-        elif time_court_days:
-            pass
-        else:
-            raise(Exception('unknown init method for {}'.format(type(self))))
-
-'''
