@@ -1,4 +1,4 @@
-from random import shuffle, choice
+import random
 from fitness import ScheduleFitness
 
 init_value = -999999
@@ -210,7 +210,7 @@ class Day(object):
     def schedule_div_players_without_refs(self, fac, div_idx, div):
         from schedule import list_filter
         game_slots = fac.div_games[div_idx].copy()
-        shuffle(game_slots)
+        random.shuffle(game_slots)
         day_idx = fac.day_idx
         # fill in players
         teams_not_played_today = list(range(div.team_count))
@@ -222,7 +222,7 @@ class Day(object):
             best_list = free
             best_list = list_filter(best_list, teams_not_played_today)
             best_list = list_filter(best_list, least_played)
-            team1_idx = choice(best_list)
+            team1_idx = random.choice(best_list)
             self.courts[court][time].team1 = team1_idx
             div.add_play_for_team(team1_idx, day_idx)
             if team1_idx in teams_not_played_today:
@@ -236,7 +236,7 @@ class Day(object):
             best_list = list_filter(best_list, best_opponent)
             best_list = list_filter(best_list, teams_not_played_today)
             best_list = list_filter(best_list, least_played)
-            team2_idx = choice(best_list)
+            team2_idx = random.choice(best_list)
             self.courts[court][time].team2 = team2_idx
             div.add_play_for_team(team2_idx, day_idx, team1_idx)
             if team2_idx in teams_not_played_today:
@@ -292,18 +292,17 @@ class Day(object):
                 #                                                     reffing_already_that_day)))
 
     def add_reffing(self, div_idx, div):
-        from random import shuffle, choice
         from schedule import list_filter
         fac = self.facility_day
         game_slots = fac.div_games[div_idx].copy()
-        shuffle(game_slots)
+        random.shuffle(game_slots)
         day_idx = fac.day_idx
         for court, time in game_slots:
             game = self.courts[court][time]
             ref_options = self.get_free_to_ref(div_idx, time)
             teams_w_least_reffing = div.teams_w_least_ref()
             best_ref_list = list_filter(ref_options, teams_w_least_reffing)
-            reffing_team = choice(best_ref_list)
+            reffing_team = random.choice(best_ref_list)
             game.ref = reffing_team
             div.teams[reffing_team].refs += 1
 
@@ -316,7 +315,7 @@ class Day(object):
                         free_to_ref = self.get_free_to_ref(div_idx, time)
                         potential_to = list(set(to_list).intersection(set(free_to_ref)))
                         if potential_to:
-                            new_ref_team = choice(potential_to)
+                            new_ref_team = random.choice(potential_to)
                             self.courts[court_idx][time].ref = new_ref_team
                             div.teams[from_team].refs -= 1
                             div.teams[new_ref_team].refs += 1
