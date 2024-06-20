@@ -85,10 +85,13 @@ class ScheduleDivFitness(object):
         usage = sum(usage_w_time.values(), [])
         self._multi_use_in_time = sum((val - 1 for val in usage if val > 1))
         def bye(plays):
-            if plays > 0:
-                return 0
-            else:
+            if plays == 0:
                 return 1
+            elif plays > 2:
+                #return 10  # to suppress triple headers
+                return 10  # to suppress triple headers
+            else:
+                return 0
         self._byes = [bye(play_num) for play_num in self._plays]
         self.successive_byes = sum((a and b for a,b in zip(self._byes[:-1], self._byes[1:])))
         def double_ref(ref):
@@ -97,8 +100,8 @@ class ScheduleDivFitness(object):
             else:
                 return 0
         self._double_refs = sum((double_ref(refs) for refs in self._refs))
-        if games and games[0].div != 1:
-            self._open_play = self.get_team_open_play(games, open_play_times, self._open_play)
+        #if games and games[0].div != 1:
+        #    self._open_play = self.get_team_open_play(games, open_play_times, self._open_play)
         self.fitness_methods = {
             'plays': lambda x: even_distribution_fitness(x._plays),
             'refs': lambda x: even_distribution_fitness(x._refs),
@@ -107,10 +110,16 @@ class ScheduleDivFitness(object):
             'conflict': lambda x: -conflict_weight * x._multi_use_in_time,
             'byes_total': lambda x: (x.bye_requirement - sum(x._byes)) * 3,
             'bye_evenness': lambda x: even_distribution_fitness(x._byes),
-            'open_play_evenness': lambda x: even_distribution_fitness(x._open_play),
+            # 'open_play_evenness': lambda x: even_distribution_fitness(x._open_play),
             'successive_byes': lambda x: x.successive_byes_fitness(),
             'double_refs': lambda x: -conflict_weight * x._double_refs,
         }
+
+        """
+        Additional criteria discussed but not implemented:
+           no reffing on days with double headers
+           All teams must play the first week
+        """
 
     def __add__(self, other, sign=1):
         self._plays = add_lists(self._plays, other._plays, sign)
@@ -216,7 +225,7 @@ class ScheduleDivFitness(object):
         return fitness
 
     def get_team_open_play(self, games, open_play_times, open_play_opertunities):
-        raise(Exception('This code change is needed but has not been evaluated yet'))
+        ######2018-09-05#### raise(Exception('This code change is needed but has not been evaluated yet'))
         if not open_play_times:
             return
         team_busy_data = [{} for _ in range(len(open_play_opertunities))]

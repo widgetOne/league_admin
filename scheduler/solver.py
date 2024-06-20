@@ -21,7 +21,7 @@ class Solver(metaclass=ABCMeta):
 
     def mutate(self):
         '''This routine finds all other mutate_* methods and calls one'''
-        from random import choice
+        from random__wtf import choice
         methods = self.mutation_methods()
         if not methods:
             raise(Exception('A Solver sub-class was created that does not' +

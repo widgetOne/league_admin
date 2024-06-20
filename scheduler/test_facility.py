@@ -128,8 +128,8 @@ class TestSchedulerFacility(TestCase):
         '''
 
     def test_new_fac_read_write(self):
-        import random
-        random.seed(0)
+        import random__wtf
+        random__wtf.seed(0)
         team_counts = [6,11,12,7]
         day_count = 2
         league = facility.League(ndivs=4, ndays=day_count, ncourts=5, ntimes=4,

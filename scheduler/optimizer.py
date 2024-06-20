@@ -75,7 +75,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, ref
                         print(sch.solution_debug_data(mut_idx, div_idx))
                     if (sch.fitness_div_list()[div_idx] == 0):
                         if debug:
-                            print("correct schedule found for division {}!!!!!".format(div_idx))
+                            print("correct schedule found for division {}!!!!!\n\n\n".format(div_idx))
                         break
                 else:
                     print(sch.solution_debug_data(1))
@@ -85,6 +85,10 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, ref
             if save_play_schedule and not os.path.isfile(play_schedule_pkl_path()):
                 save_schedules([sch], play_schedule_pkl_path())
         # add reffing duties
+        #games_to_switch = [{'day': 1, 'court': 1, 'time': 0}, {'day': 1, 'court': 1, 'time': 1}]
+        #games_to_switch = [{'day': 1, 'court': 3, 'time': 0}, {'day': 1, 'court': 3, 'time': 1}]
+        #sch.switch_specific_games(*games_to_switch)
+
         if reffing:
             sch.add_reffing(debug=debug)
         if debug:

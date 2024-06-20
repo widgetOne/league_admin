@@ -18,7 +18,7 @@ def check_total_sizes(assert_true, div_totals, count):
 def basic_facilities(tries=1):
     from facility import SCVL_Facility_Day
     from facility import Facility
-    import random
+    import random__wtf
     '''
     def make_league_from_csv(team_counts, csv):
         ndivs = len(team_counts)
@@ -28,7 +28,7 @@ def basic_facilities(tries=1):
         day_type = Facility_Day
         return Facility(ndivs, ndays, ncourts, ntimes, team_counts, day_type, csv)
     '''
-    random.seed(1)
+    random__wtf.seed(1)
     team_counts = [6, 13, 14, 7]
     # qwer
     ndays = 1

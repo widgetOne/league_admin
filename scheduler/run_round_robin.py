@@ -11,9 +11,8 @@ from facility import Facility
 from pprint import pprint
 
 
-def make_round_robin_schedule(sch_template_path, team_counts):
+def make_round_robin_schedule(sch_template_path, team_counts, total_schedules=3000):
     canned_path = 'test/scratch/'
-    total_schedules = 1  # 12000
     summary, schedules = make_round_robin_game(team_counts, sch_template_path, total_schedules)
     choosing_a_winner = True
     if choosing_a_winner:
@@ -40,7 +39,13 @@ def make_2018_spring_round_robin_schedule():
     make_round_robin_schedule(sch_template_path, team_counts)
 
 
+def make_2018_fall_round_robin_schedule():
+    dir_name = '2018-2-fall'
+    file_name = 'round_robin_input_template_maker_2018_2_fall.csv'
+    sch_template_path = 'inputs/{}/{}'.format(dir_name, file_name)
+    team_counts = [5, 11, 14, 13, 4]
+    make_round_robin_schedule(sch_template_path, team_counts, total_schedules=1000)
+
+
 if __name__ == '__main__':
-    make_2018_spring_round_robin_schedule()
-    #make_regular_season_fall_2016()
-    #make_regular_season_spring_2017()
+    make_2018_fall_round_robin_schedule()

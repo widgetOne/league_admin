@@ -6,8 +6,8 @@ __author__ = 'brcoulter'
 
 class TestSolver(TestCase):
     def test_simple_int_solver(self):
-        import random
-        random.seed(1)
+        import random__wtf
+        random__wtf.seed(1)
 
         class IntSolver(Solver):
             def __init__(self, state=-10):

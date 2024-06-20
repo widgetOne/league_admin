@@ -146,7 +146,7 @@ def csv_str_to_fac_list_list(csv_str):
     day = []
     days = []
     for row in rows:
-        there_are_no_games_in_row = not(any(row)) or all((div == '-1' for div in row))
+        there_are_no_games_in_row = not(any(row)) or all((int(div) == -1 for div in row))
         if there_are_no_games_in_row:
             if day:
                 days += [day]

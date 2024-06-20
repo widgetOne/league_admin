@@ -1,7 +1,12 @@
 import random
+import copy
 from fitness import ScheduleFitness
 
 init_value = -999999
+
+class WeirdReffingCollision(Exception):
+    pass
+
 
 class Game(object):
     def __init__(self, team1=init_value, team2=init_value, ref=init_value, div=init_value,
@@ -283,13 +288,16 @@ class Day(object):
             if can_ref:
                 return can_ref
             else:
+                if True and div_idx != 0:
+                    raise(WeirdReffingCollision('''Could not find a reffing option:
+                    day {}    at time  {}
+                    division {} 
+                    the total potential were {} but teams {} were playing at the same time and
+                    {} were reffing at other points in the day'''.format(self.num, target_time, div_idx,
+                                                                         sorted(list(playing_before_or_after)),
+                                                                         sorted(list(playing_or_reffing_then)),
+                                                                         sorted(list(reffing_already_that_day)))))
                 return []
-                #raise(Exception('''Could not find a reffing option for division {} at time {} on day {}
-                #the total potential were {} but teama {} were playing at the same time and
-                #{} were reffing at other points in the day'''.format(div_idx, target_time, self.num,
-                #                                                     playing_before_or_after,
-                #                                                     playing_or_reffing_then,
-                #                                                     reffing_already_that_day)))
 
     def add_reffing(self, div_idx, div):
         from schedule import list_filter
@@ -302,14 +310,30 @@ class Day(object):
             ref_options = self.get_free_to_ref(div_idx, time)
             teams_w_least_reffing = div.teams_w_least_ref()
             best_ref_list = list_filter(ref_options, teams_w_least_reffing)
-            reffing_team = random.choice(best_ref_list)
-            game.ref = reffing_team
-            div.teams[reffing_team].refs += 1
+            if len(best_ref_list) == 0:
+                if day_idx in {0} and div_idx == 0:
+                    pass # This is a known scheduling anomoly
+                else:
+                    raise(Exception("""Something weird is going on. We don't seem to have any reffing options:
+                              div_idx = {}
+                              day_idx = {}
+                              court = {}
+                              time = {}""".format(div_idx, day_idx, court, time)))
+                reffing_team = -8
+            else:
+                reffing_team = random.choice(best_ref_list)
+                game.ref = reffing_team
+                div.teams[reffing_team].refs += 1
 
 
     def try_transfer_reffing(self, from_list, to_list, div, div_idx):
+        """This function loops over the from list, transfering things to the to list. It stops of the to list is
+        empty"""
+        output_from_list = copy.deepcopy(from_list)
         for from_team in from_list:
             for court_idx, court in enumerate(self.courts):
+                if from_team not in output_from_list:
+                    break
                 for time, game in enumerate(court):
                     if game.div == div_idx and from_team == game.ref:
                         free_to_ref = self.get_free_to_ref(div_idx, time)
@@ -319,9 +343,10 @@ class Day(object):
                             self.courts[court_idx][time].ref = new_ref_team
                             div.teams[from_team].refs -= 1
                             div.teams[new_ref_team].refs += 1
-                            from_list.remove(from_team)
                             to_list.remove(new_ref_team)
-        return from_list, to_list, div
+                            output_from_list.remove(from_team)
+                            break
+        return output_from_list, to_list, div
 
 
 class Division(object):
