@@ -1,8 +1,9 @@
-from model import init_value
+from model import init_value, WeirdReffingCollision
 import random
 import copy
 from pprint import pprint
 import fitness
+import traceback
 
 
 def list_filter(primary, filter):
@@ -51,8 +52,12 @@ class Schedule(object):
         with open(loc, "w") as csv_file:
             print(self.__repr__(), file=csv_file)
 
-    def fitness(self):
-        self.fitness_structure = sum((day.fitness_str() for day in self.days))
+    # todo: this div_idx flag doesn't seem to work yet, for some reason
+    def fitness(self, div_idx=None):
+        if div_idx is None:
+            self.fitness_structure = sum((day.fitness_str() for day in self.days))
+        else:
+            self.fitness_structure = sum((day.fitness_str(div_idx) for day in self.days))
         return self.fitness_structure.value()
 
     def fitness_div(self, div_idx):
@@ -249,12 +254,17 @@ class Schedule(object):
         days_to_remake = random.sample(all_day_indexes, day_remake_count)
         self.try_remake_div_days(div_idx, days_to_remake)
 
+
+    #def
+    # todo: create a mutation subroutine which tries to
+
+
     def try_remake_div_days(self, div_idx, day_indexes):
         from copy import deepcopy
         # todo 2018-09-09: can I accellerate things by making this more focused?
         day_backups = {day_idx: deepcopy(self.days[day_idx]) for day_idx in day_indexes}
-        #original_days = deepcopy(self.days)
         original_division = deepcopy(self.divisions[div_idx])
+        # todo: there should be a way to focus this and the later fitness function to just this div
         original_fitness = self.fitness()
         for day_idx in day_indexes:
             self.subtract_day_from_division_history(self.days[day_idx])
@@ -268,7 +278,6 @@ class Schedule(object):
         if original_fitness > fitness + local_stability_avoidance_fudge_factor:
             for day_idx in day_indexes:
                 self.days[day_idx] = day_backups[day_idx]
-            #self.days = original_days
             self.divisions[div_idx] = original_division
             fitness = original_fitness
         return fitness
@@ -498,23 +507,30 @@ class Schedule(object):
             return False
 
     def add_reffing(self, debug=False):
-        max_number_of_attempts = 1000  # not expected to happen
+        max_number_of_attempts = 100  # not expected to happen
         for div_idx, div in enumerate(self.divisions):
             print('Adding Reffing for division {}'.format(div_idx))
             for idx in range(max_number_of_attempts):
                 self.clear_all_reffing_for_division(div_idx)
-                for day_idx in range(len(self.days)):
-                    self.days[day_idx].add_reffing(div_idx, self.divisions[div_idx])
-                if self.ref_transfering_is_neeeded(div):
-                    div = self.try_transfer_reffing(div, div_idx)
-                if debug:
-                    print(self.solution_debug_data(idx))
-                if self.fitness() == 0:
-                    break
+                try:
+                    for day_idx in range(len(self.days)):
+                        self.days[day_idx].add_reffing(div_idx, self.divisions[div_idx])
+                    if self.ref_transfering_is_neeeded(div):
+                        div = self.try_transfer_reffing(div, div_idx)
+                    if debug:
+                        print(self.solution_debug_data(idx))
+                    current_fitness = self.fitness()
+                    if current_fitness == 0:
+                        break
+
+                except WeirdReffingCollision:   #   WeirdReffingCollision    ValueError     qwer
+                    print('i like waffles')
+                    continue
             else:
+                print('Initial traceback was asdf:\n{}'.format(traceback.format_exc()))
                 print(self.solution_debug_data(1))
-                print('\n'.join(self.get_audit_text()))
-                raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
+                print(self.get_audit_text())
+                # qwer todo raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
 
     def switch_teams(self, div_idx, team1, team2):
         teams = [team1, team2]
@@ -535,12 +551,14 @@ class Schedule(object):
         fitness = self.fitness()
         def get_sorted_breakdown(div_idx):
             error_dict = self.fitness_error_breakdown(div_idx=div_idx)
-            return str(sorted(list(error_dict.items())))
+            error_item_list = sorted(list(error_dict.items()))
+            error_item_list = list(filter(lambda x: x[1], error_item_list))
+            return str(error_item_list)
         if div_idx == None:
             breakdown = '\n'.join(['division {} breakdown: {}'.format(div_idx, [get_sorted_breakdown(div_idx) for div_idx in range(5)])])
         else:
             breakdown = 'division {} breakdown: {}'.format(div_idx, get_sorted_breakdown(div_idx))
-        return "value = {} while on mutation step {}: division fitness = {}\n{}".format(
+        return "value = {} while on mutation step   {}  : division fitness = {}    {}".format(
               fitness, mut_idx, self.fitness_div_list(), breakdown)
 
     def try_move_game_from_court(self, day_idx, target_court_idx, time):
