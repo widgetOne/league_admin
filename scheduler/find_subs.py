@@ -2,7 +2,7 @@
 __author__ = 'brcoulter'
 from pprint import pprint
 
-
+DIV_COUNT = 3
 
 #High Tier		Mid Tier		Low Tier   SUBJECTIVE TIERS
 
@@ -16,7 +16,7 @@ def get_sub_lists():
         tier_names = ['Low Tier', 'Mid Tier', 'High Tier']
         col_for_div = [12, 10, 8]
         in_a_division = False
-        total_divisions = 5
+        total_divisions = DIV_COUNT
         sub_lists = [[[],[],[]] for _ in range(total_divisions)]
         current_divisions = total_divisions
         def filter_parentesis(string):
