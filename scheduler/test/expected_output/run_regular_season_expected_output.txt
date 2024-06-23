@@ -1,0 +1,243 @@
+Schedule Audit Report
+
+Cumulative Plays and Refs by Team
+This section displays the schedule along-side running totals of the play/ref for each team
+in the league. It is generated programatically, so you can audit its accuracy for specific
+teams and areas, and then infer the overall behavior. The final line of this section states
+the play and ref totals for each team over the season
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+INT  6v 8,INT 10, REC  8v10,REC  3, REC  4v 7,REC  6, REC  2v 9,REC  1, ,,PLAY DATA,0,1,0,1,0,0,1,1,1,1,,PLAY DATA,0,0,0,0,0,1,0,1,0,0,,PLAY DATA,0,0,0,0,0,0,0,0,,REF DATA,1,0,1,0,0,1,0,0,0,0,,REF DATA,0,0,0,0,0,0,0,0,0,1,,REF DATA,0,0,0,0,0,0,0,0
+INT  3v10,INT  8, REC  1v 6,REC  4, REC  3v 5,REC 10, COM  4v 7,COM  5, ,,PLAY DATA,1,1,1,1,1,1,1,1,1,1,,PLAY DATA,0,0,1,0,0,1,0,1,0,1,,PLAY DATA,0,0,0,1,0,0,1,0,,REF DATA,1,0,1,1,0,1,0,0,0,1,,REF DATA,0,0,0,0,0,0,0,1,0,1,,REF DATA,0,0,0,0,1,0,0,0
+INT  2v 7,INT  1, INT  3v 9,INT  4, COM  2v 5,COM  6, COM  7v 8,COM  3, ,,PLAY DATA,1,1,1,1,1,1,1,1,1,1,,PLAY DATA,0,1,2,0,0,1,1,1,1,1,,PLAY DATA,0,1,0,1,1,0,2,1,,REF DATA,1,0,1,1,0,1,0,0,0,1,,REF DATA,1,0,0,1,0,0,0,1,0,1,,REF DATA,0,0,1,0,1,1,0,0
+INT  1v 8,INT  7, INT  4v 5,INT  9, COM  4v 6,COM  2, COM  1v 3,COM  7, ,,PLAY DATA,1,1,1,1,1,1,1,1,1,1,,PLAY DATA,1,1,2,1,1,1,1,2,1,1,,PLAY DATA,1,1,1,2,1,1,2,1,,REF DATA,1,0,1,1,0,1,0,0,0,1,,REF DATA,1,0,0,1,0,0,1,1,1,1,,REF DATA,0,1,1,0,1,1,1,0
+,,,,,,,,
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+REC  1v 7,REC  5, REC  8v 9,REC  3, REC  2v 6,REC  4, COM  2v 3,COM  1, ,,PLAY DATA,2,2,1,1,1,2,2,2,2,1,,PLAY DATA,1,1,2,1,1,1,1,2,1,1,,PLAY DATA,1,2,2,2,1,1,2,1,,REF DATA,1,0,2,2,1,1,0,0,0,1,,REF DATA,1,0,0,1,0,0,1,1,1,1,,REF DATA,1,1,1,0,1,1,1,0
+REC  1v 5,REC  9, REC  2v 4,REC  8, REC  3v10,REC  7, COM  1v 5,COM  2, ,,PLAY DATA,3,3,2,2,2,2,2,2,2,2,,PLAY DATA,1,1,2,1,1,1,1,2,1,1,,PLAY DATA,2,2,2,2,2,1,2,1,,REF DATA,1,0,2,2,1,1,1,1,1,1,,REF DATA,1,0,0,1,0,0,1,1,1,1,,REF DATA,1,2,1,0,1,1,1,0
+INT  3v 8,INT  4, INT  2v 9,INT  1, INT  5v 6,INT 10, COM  6v 7,COM  8, ,,PLAY DATA,3,3,2,2,2,2,2,2,2,2,,PLAY DATA,1,2,3,1,2,2,1,3,2,1,,PLAY DATA,2,2,2,2,2,2,3,1,,REF DATA,1,0,2,2,1,1,1,1,1,1,,REF DATA,2,0,0,2,0,0,1,1,1,2,,REF DATA,1,2,1,0,1,1,1,1
+INT  1v 2,INT  3, INT  7v10,INT  6, INT  4v 9,INT  5, COM  4v 8,COM  7, ,,PLAY DATA,3,3,2,2,2,2,2,2,2,2,,PLAY DATA,2,3,3,2,2,2,2,3,3,2,,PLAY DATA,2,2,2,3,2,2,3,2,,REF DATA,1,0,2,2,1,1,1,1,1,1,,REF DATA,2,0,1,2,1,1,1,1,1,2,,REF DATA,1,2,1,0,1,1,2,1
+,,,,,,,,
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+INT  8v 9,INT  1, REC  4v10,REC  7, REC  2v 3,REC  6, REC  5v 8,REC  1, ,,PLAY DATA,3,4,3,3,3,2,2,3,2,3,,PLAY DATA,2,3,3,2,2,2,2,4,4,2,,PLAY DATA,2,2,2,3,2,2,3,2,,REF DATA,2,0,2,2,1,2,2,1,1,1,,REF DATA,3,0,1,2,1,1,1,1,1,2,,REF DATA,1,2,1,0,1,1,2,1
+INT  1v10,INT  5, REC  1v 4,REC  8, REC  3v 7,REC  2, REC  6v 9,REC 10, ,,PLAY DATA,4,4,4,4,3,3,3,3,3,3,,PLAY DATA,3,3,3,2,2,2,2,4,4,3,,PLAY DATA,2,2,2,3,2,2,3,2,,REF DATA,2,1,2,2,1,2,2,2,1,2,,REF DATA,3,0,1,2,2,1,1,1,1,2,,REF DATA,1,2,1,0,1,1,2,1
+INT  2v 6,INT  4, INT  3v 5,INT  7, COM  1v 8,COM  3, COM  5v 6,COM  4, ,,PLAY DATA,4,4,4,4,3,3,3,3,3,3,,PLAY DATA,3,4,4,2,3,3,2,4,4,3,,PLAY DATA,3,2,2,3,3,3,3,3,,REF DATA,2,1,2,2,1,2,2,2,1,2,,REF DATA,3,0,1,3,2,1,2,1,1,2,,REF DATA,1,2,2,1,1,1,2,1
+INT  5v 7,INT  2, INT  4v10,INT  6, COM  3v 4,COM  5, COM  2v 7,COM  8, ,,PLAY DATA,4,4,4,4,3,3,3,3,3,3,,PLAY DATA,3,4,4,3,4,3,3,4,4,4,,PLAY DATA,3,3,3,4,3,3,4,3,,REF DATA,2,1,2,2,1,2,2,2,1,2,,REF DATA,3,1,1,3,2,2,2,1,1,2,,REF DATA,1,2,2,1,2,1,2,2
+,,,,,,,,
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+REC  4v 9,REC  2, REC  5v 6,REC 10,     TBD  ,TBD,    TBD  ,TBD,,,PLAY DATA,4,4,4,5,4,4,3,3,4,3,,PLAY DATA,3,4,4,3,4,3,3,4,4,4,,PLAY DATA,3,3,3,4,3,3,4,3,,REF DATA,2,2,2,2,1,2,2,2,1,3,,REF DATA,3,1,1,3,2,2,2,1,1,2,,REF DATA,1,2,2,1,2,1,2,2
+INT  3v 7,INT  2, REC  3v 9,REC  7, REC  2v 8,REC  5, REC  1v10,REC  6, ,,PLAY DATA,5,5,5,5,4,4,3,4,5,4,,PLAY DATA,3,4,5,3,4,3,4,4,4,4,,PLAY DATA,3,3,3,4,3,3,4,3,,REF DATA,2,2,2,2,2,3,3,2,1,3,,REF DATA,3,2,1,3,2,2,2,1,1,2,,REF DATA,1,2,2,1,2,1,2,2
+INT  2v 4,INT  3, REC  7v10,REC  9, COM  3v 5,COM  2, COM  1v 6,COM  7, ,,PLAY DATA,5,5,5,5,4,4,4,4,5,5,,PLAY DATA,3,5,5,4,4,3,4,4,4,4,,PLAY DATA,4,3,4,4,4,4,4,3,,REF DATA,2,2,2,2,2,3,3,2,2,3,,REF DATA,3,2,2,3,2,2,2,1,1,2,,REF DATA,1,3,2,1,2,1,3,2
+INT  1v 7,INT  8, INT  6v10,INT  9, COM  5v 7,COM  6, COM  2v 4,COM  1, ,,PLAY DATA,5,5,5,5,4,4,4,4,5,5,,PLAY DATA,4,5,5,4,4,4,5,4,4,5,,PLAY DATA,4,4,4,5,5,4,5,3,,REF DATA,2,2,2,2,2,3,3,2,2,3,,REF DATA,3,2,2,3,2,2,2,2,2,2,,REF DATA,2,3,2,1,2,2,3,2
+INT  5v 8,INT  6, INT  1v 9,INT 10, COM  3v 8,COM  5, COM  1v 2,COM  4, ,,PLAY DATA,5,5,5,5,4,4,4,4,5,5,,PLAY DATA,5,5,5,4,5,4,5,5,5,5,,PLAY DATA,5,5,5,5,5,4,5,4,,REF DATA,2,2,2,2,2,3,3,2,2,3,,REF DATA,3,2,2,3,2,3,2,2,2,3,,REF DATA,2,3,2,2,3,2,3,2
+,,,,,,,,
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+REC  3v 8,REC  2, REC  5v 7,REC  1,     TBD  ,TBD,    TBD  ,TBD,,,PLAY DATA,5,5,6,5,5,4,5,5,5,5,,PLAY DATA,5,5,5,4,5,4,5,5,5,5,,PLAY DATA,5,5,5,5,5,4,5,4,,REF DATA,3,3,2,2,2,3,3,2,2,3,,REF DATA,3,2,2,3,2,3,2,2,2,3,,REF DATA,2,3,2,2,3,2,3,2
+INT  6v 9,INT  8, REC  6v 8,REC  9, REC  5v10,REC  3, REC  1v 2,REC  4, ,,PLAY DATA,6,6,6,5,6,5,5,6,5,6,,PLAY DATA,5,5,5,4,5,5,5,5,6,5,,PLAY DATA,5,5,5,5,5,4,5,4,,REF DATA,3,3,3,3,2,3,3,2,3,3,,REF DATA,3,2,2,3,2,3,2,3,2,3,,REF DATA,2,3,2,2,3,2,3,2
+INT  7v 8,INT  9, REC  4v 6,REC  8, REC  7v 9,REC  5, COM  6v 8,COM  1, ,,PLAY DATA,6,6,6,6,6,6,6,6,6,6,,PLAY DATA,5,5,5,4,5,5,6,6,6,5,,PLAY DATA,5,5,5,5,5,5,5,5,,REF DATA,3,3,3,3,3,3,3,3,3,3,,REF DATA,3,2,2,3,2,3,2,3,3,3,,REF DATA,3,3,2,2,3,2,3,2
+INT  4v 6,INT  7, INT  2v 3,INT  5, COM  1v 4,COM  3, COM  2v 6,COM  8, ,,PLAY DATA,6,6,6,6,6,6,6,6,6,6,,PLAY DATA,5,6,6,5,5,6,6,6,6,5,,PLAY DATA,6,6,5,6,5,6,5,5,,REF DATA,3,3,3,3,3,3,3,3,3,3,,REF DATA,3,2,2,3,3,3,3,3,3,3,,REF DATA,3,3,3,2,3,2,3,3
+INT  5v10,INT  3, INT  1v 4,INT  2, COM  3v 7,COM  6, COM  5v 8,COM  4, ,,PLAY DATA,6,6,6,6,6,6,6,6,6,6,,PLAY DATA,6,6,6,6,6,6,6,6,6,6,,PLAY DATA,6,6,6,6,6,6,6,6,,REF DATA,3,3,3,3,3,3,3,3,3,3,,REF DATA,3,3,3,3,3,3,3,3,3,3,,REF DATA,3,3,3,3,3,3,3,3
+,,,,,,,,
+
+
+
+Cumulative Play / Ref Totals
+,,PLAY DATA,6,6,6,6,6,6,6,6,6,6,,PLAY DATA,6,6,6,6,6,6,6,6,6,6,,PLAY DATA,6,6,6,6,6,6,6,6
+,,REF DATA,3,3,3,3,3,3,3,3,3,3,,REF DATA,3,3,3,3,3,3,3,3,3,3,,REF DATA,3,3,3,3,3,3,3,3
+
+
+Total Use Audit
+This report displays the total use (play and ref) for each team in each time
+slot for each day. This is useful for checking that no one is double-booked
+(playing on two courts at a time, playing and reffing at the same time, etc
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+INT  6v 8,INT 10, REC  8v10,REC  3, REC  4v 7,REC  6, REC  2v 9,REC  1, ,,Total Use,1,1,1,1,0,1,1,1,1,1,,Total Use,0,0,0,0,0,1,0,1,0,1,,Total Use,0,0,0,0,0,0,0,0
+INT  3v10,INT  8, REC  1v 6,REC  4, REC  3v 5,REC 10, COM  4v 7,COM  5, ,,Total Use,1,0,1,1,1,1,0,0,0,1,,Total Use,0,0,1,0,0,0,0,1,0,1,,Total Use,0,0,0,1,1,0,1,0
+INT  2v 7,INT  1, INT  3v 9,INT  4, COM  2v 5,COM  6, COM  7v 8,COM  3, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,1,1,1,0,0,1,0,1,0,,Total Use,0,1,1,0,1,1,1,1
+INT  1v 8,INT  7, INT  4v 5,INT  9, COM  4v 6,COM  2, COM  1v 3,COM  7, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,0,0,1,1,0,1,1,1,0,,Total Use,1,1,1,1,0,1,1,0
+,,,,,,,,
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+REC  1v 7,REC  5, REC  8v 9,REC  3, REC  2v 6,REC  4, COM  2v 3,COM  1, ,,Total Use,1,1,1,1,1,1,1,1,1,0,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,1,1,0,0,0,0,0
+REC  1v 5,REC  9, REC  2v 4,REC  8, REC  3v10,REC  7, COM  1v 5,COM  2, ,,Total Use,1,1,1,1,1,0,1,1,1,1,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,1,0,0,1,0,0,0
+INT  3v 8,INT  4, INT  2v 9,INT  1, INT  5v 6,INT 10, COM  6v 7,COM  8, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,1,1,1,1,1,0,1,1,1,,Total Use,0,0,0,0,0,1,1,1
+INT  1v 2,INT  3, INT  7v10,INT  6, INT  4v 9,INT  5, COM  4v 8,COM  7, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,1,1,1,1,1,1,0,1,1,,Total Use,0,0,0,1,0,0,1,1
+,,,,,,,,
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+INT  8v 9,INT  1, REC  4v10,REC  7, REC  2v 3,REC  6, REC  5v 8,REC  1, ,,Total Use,1,1,1,1,1,1,1,1,0,1,,Total Use,1,0,0,0,0,0,0,1,1,0,,Total Use,0,0,0,0,0,0,0,0
+INT  1v10,INT  5, REC  1v 4,REC  8, REC  3v 7,REC  2, REC  6v 9,REC 10, ,,Total Use,1,1,1,1,0,1,1,1,1,1,,Total Use,1,0,0,0,1,0,0,0,0,1,,Total Use,0,0,0,0,0,0,0,0
+INT  2v 6,INT  4, INT  3v 5,INT  7, COM  1v 8,COM  3, COM  5v 6,COM  4, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,0,1,1,1,1,1,1,0,0,0,,Total Use,1,0,1,1,1,1,0,1
+INT  5v 7,INT  2, INT  4v10,INT  6, COM  3v 4,COM  5, COM  2v 7,COM  8, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,0,1,0,1,1,1,1,0,0,1,,Total Use,0,1,1,1,1,0,1,1
+,,,,,,,,
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+REC  4v 9,REC  2, REC  5v 6,REC 10,     TBD  ,TBD,    TBD  ,TBD,,,Total Use,0,1,0,1,1,1,0,0,1,1,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,0,0,0,0,0,0,0,0
+INT  3v 7,INT  2, REC  3v 9,REC  7, REC  2v 8,REC  5, REC  1v10,REC  6, ,,Total Use,1,1,1,0,1,1,1,1,1,1,,Total Use,0,1,1,0,0,0,1,0,0,0,,Total Use,0,0,0,0,0,0,0,0
+INT  2v 4,INT  3, REC  7v10,REC  9, COM  3v 5,COM  2, COM  1v 6,COM  7, ,,Total Use,0,0,0,0,0,0,1,0,1,1,,Total Use,0,1,1,1,0,0,0,0,0,0,,Total Use,1,1,1,0,1,1,1,0
+INT  1v 7,INT  8, INT  6v10,INT  9, COM  5v 7,COM  6, COM  2v 4,COM  1, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,0,0,0,0,1,1,1,1,1,,Total Use,1,1,0,1,1,1,1,0
+INT  5v 8,INT  6, INT  1v 9,INT 10, COM  3v 8,COM  5, COM  1v 2,COM  4, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,0,0,0,1,1,0,1,1,1,,Total Use,1,1,1,1,1,0,0,1
+,,,,,,,,
+CT 1,CT 2,CT 3,CT 4,  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums
+REC  3v 8,REC  2, REC  5v 7,REC  1,     TBD  ,TBD,    TBD  ,TBD,,,Total Use,1,1,1,0,1,0,1,1,0,0,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,0,0,0,0,0,0,0,0
+INT  6v 9,INT  8, REC  6v 8,REC  9, REC  5v10,REC  3, REC  1v 2,REC  4, ,,Total Use,1,1,1,1,1,1,0,1,1,1,,Total Use,0,0,0,0,0,1,0,1,1,0,,Total Use,0,0,0,0,0,0,0,0
+INT  7v 8,INT  9, REC  4v 6,REC  8, REC  7v 9,REC  5, COM  6v 8,COM  1, ,,Total Use,0,0,0,1,1,1,1,1,1,0,,Total Use,0,0,0,0,0,0,1,1,1,0,,Total Use,1,0,0,0,0,1,0,1
+INT  4v 6,INT  7, INT  2v 3,INT  5, COM  1v 4,COM  3, COM  2v 6,COM  8, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,0,1,1,1,1,1,1,0,0,0,,Total Use,1,1,1,1,0,1,0,1
+INT  5v10,INT  3, INT  1v 4,INT  2, COM  3v 7,COM  6, COM  5v 8,COM  4, ,,Total Use,0,0,0,0,0,0,0,0,0,0,,Total Use,1,1,1,1,1,0,0,0,0,1,,Total Use,0,0,1,1,1,1,1,1
+,,,,,,,,
+
+
+
+Vs View
+Number of times a team has played another team: rec, In, Cmp, Pw, P+
+These are the total times each team will play another team in their own division
+This data is symmetric for obvious reasons. The '1000' values are esentially filler
+for the spaces for a team playing itself.
+1000,1,0,1,1,1,1,0,0,1
+1,1000,1,1,0,1,0,1,1,0
+0,1,1000,0,1,0,1,1,1,1
+1,1,0,1000,0,1,1,0,1,1
+1,0,1,0,1000,1,1,1,0,1
+1,1,0,1,1,1000,0,1,1,0
+1,0,1,1,1,0,1000,0,1,1
+0,1,1,0,1,1,0,1000,1,1
+0,1,1,1,0,1,1,1,1000,0
+1,0,1,1,1,0,1,1,0,1000
+1000,1,0,1,0,0,1,1,1,1
+1,1000,1,1,0,1,1,0,1,0
+0,1,1000,0,1,0,1,1,1,1
+1,1,0,1000,1,1,0,0,1,1
+0,0,1,1,1000,1,1,1,0,1
+0,1,0,1,1,1000,0,1,1,1
+1,1,1,0,1,0,1000,1,0,1
+1,0,1,0,1,1,1,1000,1,0
+1,1,1,1,0,1,0,1,1000,0
+1,0,1,1,1,1,1,0,0,1000
+1000,1,1,1,1,1,0,1
+1,1000,1,1,1,1,1,0
+1,1,1000,1,1,0,1,1
+1,1,1,1000,0,1,1,1
+1,1,1,0,1000,1,1,1
+1,1,0,1,1,1000,1,1
+0,1,1,1,1,1,1000,1
+1,0,1,1,1,1,1,1000
+
+
+
+Bye View
+Below are the counts of the number of games each team has in a given week
+division 0
+1,2,1,1,1  total: 0
+1,2,1,1,1  total: 0
+1,1,2,1,1  total: 0
+1,1,2,1,1  total: 0
+1,1,1,1,2  total: 0
+1,1,1,1,2  total: 0
+1,1,1,1,2  total: 0
+1,1,1,1,2  total: 0
+1,1,1,2,1  total: 0
+1,1,1,2,1  total: 0
+division 1
+1,1,1,2,1  total: 0
+1,2,1,1,1  total: 0
+2,1,1,1,1  total: 0
+1,1,1,1,2  total: 0
+1,1,2,1,1  total: 0
+1,1,1,1,2  total: 0
+1,1,1,2,1  total: 0
+2,1,1,1,1  total: 0
+1,2,1,1,1  total: 0
+1,1,2,1,1  total: 0
+division 2
+1,1,1,2,1  total: 0
+1,1,1,2,1  total: 0
+1,1,1,2,1  total: 0
+2,1,1,1,1  total: 0
+1,1,1,2,1  total: 0
+1,1,1,1,2  total: 0
+2,1,1,1,1  total: 0
+1,1,1,1,2  total: 0
+
+
+
+Repeated Play View
+
+
+Debug of repeats of the same vs match over successive games
+Each line is the readout for one team
+The first list in a line are the opposing teams for each game and 
+the second list are the successive games before that team is played again.
+(the default for this is 0 if the team is not played again in a season)
+Output for division:  0
+5,6,4,3,9,1   0,0,0,0,0,0
+8,3,5,2,7,0   0,0,0,0,0,0
+4,9,1,6,8,7   0,0,0,0,0,0
+6,1,9,0,8,5   0,0,0,0,0,0
+2,0,7,5,6,9   0,0,0,0,0,0
+0,1,8,4,7,3   0,0,0,0,0,0
+3,0,2,9,4,8   0,0,0,0,0,0
+9,8,4,1,2,5   0,0,0,0,0,0
+1,7,5,3,2,6   0,0,0,0,0,0
+7,2,3,6,0,4   0,0,0,0,0,0
+
+Output for division:  1
+7,1,9,6,8,3   0,0,0,0,0,0
+6,0,8,5,3,2   0,0,0,0,0,0
+9,8,7,4,6,1   0,0,0,0,0,0
+4,8,9,1,5,0   0,0,0,0,0,0
+3,5,6,2,7,9   0,0,0,0,0,0
+7,4,1,9,8,3   0,0,0,0,0,0
+1,9,4,2,0,7   0,0,0,0,0,0
+5,0,2,8,4,6   0,0,0,0,0,0
+2,1,3,7,0,5   0,0,0,0,0,0
+2,6,0,3,5,4   0,0,0,0,0,0
+
+Output for division:  2
+2,4,7,5,1,3   0,0,0,0,0,0
+4,2,6,3,0,5   0,0,0,0,0,0
+0,1,3,4,7,6   0,0,0,0,0,0
+5,6,7,2,1,0   0,0,0,0,0,0
+1,0,5,2,6,7   0,0,0,0,0,0
+3,6,4,0,7,1   0,0,0,0,0,0
+3,7,5,1,4,2   0,0,0,0,0,0
+6,3,0,2,5,4   0,0,0,0,0,0
+
+
+
+
+Open Play Report
+
+
+Debug of open play opertunties in the schedule.
+First, there is a report of what the facilities objects view as open play.
+Then there is the day-by-day running total of the number
+of oppertinies a team has to play open play i.e. when a team has
+a game before or after an open play / skills clinic slot
+Open play slots
+The open play oppertunies for day 0 are []
+The open play oppertunies for day 1 are []
+The open play oppertunies for day 2 are []
+The open play oppertunies for day 3 are [0]
+The open play oppertunies for day 4 are [0]
+Open oppertunities by team
+Open play data after day 0 is [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+Open play data after day 1 is [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+Open play data after day 2 is [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+Open play data after day 3 is [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+Open play data after day 4 is [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+
+
+
+Double Ref Report
+
+
+Debug of double ref metrics. This means one team getting forced
+to ref twice in the same day
+double refs for day 0: [0, 0, 0]
+double refs for day 1: [0, 0, 0]
+double refs for day 2: [0, 0, 0]
+double refs for day 3: [0, 0, 0]
+double refs for day 4: [0, 0, 0]
+
+
+
+Solution Error
+This section reports what is checked for each division, and displays the total number
+of errors for each category, for each division. This is basically always all 0.
+value = 0 while on mutation step   0  : division fitness = [0, 0, 0]    division None breakdown: ['[]', '[]', '[]']
