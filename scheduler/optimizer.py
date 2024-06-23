@@ -28,6 +28,7 @@ Objects:
     where does games-per-team go?
 """
 
+
 class FailedToConverge(Exception):
     pass
 
@@ -66,7 +67,7 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, ref
             sch = Schedule(league, team_counts, facilities)
             #print([num / 4.0 for num in sch.get_game_div_count_list()])
             # add play schedule
-            for div_idx in range(5):  # todo: if kept, make this dynamic
+            for div_idx in range(len(team_counts)):
                 for mut_idx in range(sch_tries):
                     if True:
                         sch.try_remake_a_few_random_days(div_idx, 1)
@@ -91,6 +92,8 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, ref
 
         if reffing:
             sch.add_reffing(debug=debug)
+            # qwerqwerqwer experiment into inter-division reffing
+            #sch.add_sand_reffing(debug=debug)
         if debug:
             print(sch.solution_debug_data(mut_idx))
         delta = (datetime.datetime.now() - start).total_seconds()
@@ -106,18 +109,19 @@ def make_schedule(team_counts, league, sch_tries=500, seed=None, debug=True, ref
             with open(sch_py_obj,'wb') as sch_file:
                 pickle.dump(sch, sch_file)
     except (Exception, KeyboardInterrupt) as e:
-        print(sch.get_audit_text())
-        print('Initial traceback was:\n{}'.format(traceback.format_exc()))
+        if debug:
+            print(sch.get_audit_text())
+            print('Initial traceback was:\n{}'.format(traceback.format_exc()))
         raise (e)
     return sch
 
-def make_regular_season(team_counts, ndays=9, sch_tries=500, seed=1):
+def make_regular_season(team_counts, ndays=5, sch_tries=500, seed=1):
     from facility import SCVL_Facility_Day
     from facility import League
     days = []
     import random
     random.seed(seed)
-    league = League(ndivs=4, ndays=ndays, ncourts=5, ntimes=4,
+    league = League(ndivs=3, ndays=ndays, ncourts=4, ntimes=4,
                     team_counts=team_counts, day_type=SCVL_Facility_Day)
     league.debug_print()
 
