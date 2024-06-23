@@ -8,6 +8,9 @@ class WeirdReffingCollision(Exception):
     pass
 
 
+get_team_str = lambda t: str(t + 1).rjust(2)
+
+
 class Game(object):
     def __init__(self, team1=init_value, team2=init_value, ref=init_value, div=init_value,
                  time=init_value, court=init_value):
@@ -34,11 +37,14 @@ class Game(object):
             else:
                 return "WARM UP  ,"
         div_csv_str = ['REC', 'INT', 'COM', 'POW', 'P+ ', '']
-        teams = [self.team1 + 1, self.team2 + 1]
-        out = "{} {}v{},".format(div_csv_str[self.div], min(teams), max(teams))
-        if self.ref > -1:
-            ref_str = self.ref + 1
-            out += div_csv_str[self.div] + " %s" % (ref_str) + ", "
+        teams = (self.team1, self.team2)
+        out = "{} {}v{},".format(div_csv_str[self.div], get_team_str(min(teams)), get_team_str(max(teams)))
+        if self.ref is not None:
+            if isinstance(self.ref, tuple):
+                out += div_csv_str[self.ref[0]] + " %s" % (get_team_str(self.ref[1])) + ", "
+            elif self.ref > -1:
+                ref_str = self.ref + 1
+                out += div_csv_str[self.div] + " %s" % (get_team_str(self.ref)) + ", "
         return out
 
 
@@ -81,7 +87,7 @@ class Day(object):
         return self.fitness_str().value()
 
     def fitness(self, divisions):
-        fix_this_team_num_to_be_dynamic = 5
+        fix_this_team_num_to_be_dynamic = 3
         fitness = sum(self.div_fitness(divisions, div) for div in range(fix_this_team_num_to_be_dynamic))
         return fitness
 
@@ -128,16 +134,18 @@ class Day(object):
     def there_is_reffing(self):
         for court in self.courts:
             for game in court:
-                if game.ref > -1:
+                if isinstance(game.ref, tuple):
+                    return True
+                if game.ref is not None and game.ref > -1:
                     return True
         return False
 
     def csv_str(self):
         out = []
         if self.there_is_reffing():
-            header = ",".join('CT '+ str(idx+1) + ',Ref' for idx in range(5))
+            header = ",".join('CT '+ str(idx+1) + ',Ref' for idx in range(self.facility_day.court_count))
         else:
-            header = ",".join('CT ' + str(idx + 1) for idx in range(5))
+            header = ",".join('CT ' + str(idx + 1) for idx in range(self.facility_day.court_count))
         out += [header]
         time_count = len(self.courts[0])
         for time in range(len(self.courts[0])):
@@ -146,12 +154,12 @@ class Day(object):
                 game_str = self.courts[court][time].csv_str(there_is_reffing=self.there_is_reffing())
                 row += game_str
             out += [row]
-        out += ["," * 2 * 5]
+        out += ["," * 2 * self.facility_day.court_count]
         return out
 
     def audit_view(self, rolling_sum_play, rolling_sum_ref):
         out = []
-        header = ",".join('CT '+ str(idx + 1) for idx in range(5))
+        header = ",".join('CT '+ str(idx + 1) for idx in range(4))
         header += ",  ||| Rec Inter Comp Power Playing" +\
                   " sums followed by Reffing Sums"
         out += [header]
@@ -162,24 +170,26 @@ class Day(object):
                 game = self.courts[court][time]
                 game_str = game.csv_str()
                 if (game.div >= 0):
-                    if (game.ref >= 0):
-                        rolling_sum_ref[game.div][game.ref] += 1
+                    if game.ref is not None:
+                        if isinstance(game.ref, tuple):
+                            rolling_sum_ref[game.ref[0]][game.ref[1]] += 1
+                        elif game.ref > -1:
+                            rolling_sum_ref[game.div][game.ref] += 1
                     rolling_sum_play[game.div][game.team1] += 1
                     rolling_sum_play[game.div][game.team2] += 1
                 row += game_str
             play_str = ""
             ref_str = ""
-            for div_idx in range(5):
+            for div_idx in range(len(self.facility_day.team_counts)):
                 play_str += ",,PLAY DATA," + ",".join([(str(num)) for num in rolling_sum_play[div_idx]])
                 ref_str += ",,REF DATA," + ",".join([(str(num)) for num in rolling_sum_ref[div_idx]])
             out += [row + play_str + ref_str]
-        out += ["," * 2 * 5]
+        out += ["," * 2 * 4]
         return out
 
     def audit_total_use_view(self, total_use):
         out = []
-    #    header = "," + ",".join('CT '+ str(idx + 1) + ',Ref' for idx in range(5))
-        header = ",".join('CT '+ str(idx + 1) for idx in range(5))
+        header = ",".join('CT '+ str(idx + 1) for idx in range(4))
         header += ",  ||| Rec Inter Comp Power Playing sums followed by Reffing Sums"
         out += [header]
         time_count = len(self.courts[0])
@@ -192,16 +202,18 @@ class Day(object):
                 game = self.courts[court][time]
                 game_str = game.csv_str(there_is_reffing=self.there_is_reffing())
                 if (game.div >= 0):
-                    if (game.ref >= 0):
+                    total_use[game.div][game.team1] += 1
+                    total_use[game.div][game.team2] += 1
+                    if isinstance(game.ref, tuple):
+                        total_use[game.ref[0]][game.ref[1]] += 1
+                    elif game.ref is not None and game.ref >= 0:
                         total_use[game.div][game.ref] += 1
-                        total_use[game.div][game.team1] += 1
-                        total_use[game.div][game.team2] += 1
                 row += game_str
             use_str = ""
-            for div_idx in range(5):
+            for div_idx in range(len(self.facility_day.team_counts)):
                 use_str += ",,Total Use," + ",".join([(str(num)) for num in total_use[div_idx]])
             out += [row + use_str]
-        out += ["," * 2 * 5]
+        out += ["," * 2 * 4]
         return out
 
     def import_div_games(self, div_idx, old_day):
@@ -269,8 +281,11 @@ class Day(object):
         for court in self.courts:
             for time, game in enumerate(court):
                 if game.div == div_idx:
-                    if game.ref > -1:
-                        reffing_already_that_day.add(game.ref)
+                    if game.ref is not None:
+                        if isinstance(game.ref, tuple) and game.ref == div_idx:
+                            reffing_already_that_day.add(game.ref[1])
+                        elif game.ref > -1:
+                            reffing_already_that_day.add(game.ref)
                     is_before_or_after_target = abs(target_time - time) == 1
                     if is_before_or_after_target:
                         playing_before_or_after.add(game.team1)
@@ -278,7 +293,9 @@ class Day(object):
                     elif target_time == time:
                         playing_or_reffing_then.add(game.team1)
                         playing_or_reffing_then.add(game.team2)
-                        if game.ref > -1:
+                        if isinstance(game.ref, tuple) and game.ref == div_idx:
+                            playing_or_reffing_then.add(game.ref[1])
+                        elif game.ref is not None and game.ref > -1:
                             playing_or_reffing_then.add(game.ref)
         should_ref = list(playing_before_or_after - playing_or_reffing_then - reffing_already_that_day)
         can_ref = list(playing_before_or_after - playing_or_reffing_then)
@@ -311,15 +328,13 @@ class Day(object):
             teams_w_least_reffing = div.teams_w_least_ref()
             best_ref_list = list_filter(ref_options, teams_w_least_reffing)
             if len(best_ref_list) == 0:
-                if day_idx in {0} and div_idx == 0:
-                    pass # This is a known scheduling anomoly
-                else:
+                game.ref = None
+                if True:
                     raise(Exception("""Something weird is going on. We don't seem to have any reffing options:
                               div_idx = {}
                               day_idx = {}
                               court = {}
                               time = {}""".format(div_idx, day_idx, court, time)))
-                reffing_team = -8
             else:
                 reffing_team = random.choice(best_ref_list)
                 game.ref = reffing_team
