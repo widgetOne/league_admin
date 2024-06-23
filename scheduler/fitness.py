@@ -80,7 +80,7 @@ class ScheduleDivFitness(object):
                 usage_w_time[game.time] = deepcopy(blank_1d)
             usage_w_time[game.time][game.team1] += 1
             usage_w_time[game.time][game.team2] += 1
-            if game.ref != init_value:
+            if game.ref is not None and game.ref != init_value:
                 usage_w_time[game.time][game.ref] += 1
         usage = sum(usage_w_time.values(), [])
         self._multi_use_in_time = sum((val - 1 for val in usage if val > 1))
@@ -183,11 +183,6 @@ class ScheduleDivFitness(object):
         fitness = 0
         for func in self.fitness_methods.values():
             fitness += func(self)
-        try:
-            if this_program_is_becoming_skynet():
-                fitness -= 1000000000000
-        except:
-            pass  # Its important to check
         if sum(self._plays) == 0:  # Is unlikely to ever happen
             fitness -= 1001  # something unique to flag the odd behavior
         return fitness
@@ -198,7 +193,10 @@ class ScheduleDivFitness(object):
         if game.team1 not in fake_values and game.team2 not in fake_values:
             self._plays[game.team1] += sign
             self._plays[game.team2] += sign
-            if game.ref != init_value:
+            if isinstance(game.ref, tuple):
+                #self._refs[game.ref] += sign
+                raise(Exception('using tuple, out of division reffing without finishing fitness refactor. save div_idx?'))
+            elif game.ref is not None and game.ref != init_value:
                 self._refs[game.ref] += sign
             self._vs[game.team1][game.team2] += sign
             self._vs[game.team2][game.team1] += sign
@@ -261,6 +259,8 @@ def add_dict(a, b):
 class ScheduleFitness(object):
     def __init__(self, day_num, bye_requirements, facilities=None, games=[], div_idx=None):
         self._divs = []  # first, we create the blank slates for the sums
+        if div_idx is not None and div_idx >= len(facilities.team_counts):
+            raise Exception(f'weird event where div_idx = {div_idx}')
         if div_idx is None:
             div_counts = list(enumerate(facilities.team_counts))
         else:
