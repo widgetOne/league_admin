@@ -506,7 +506,34 @@ class Schedule(object):
         else:
             return False
 
-    def add_reffing(self, debug=False):
+    def add_sand_reffing(self, debug=False):
+        # qwerqwerqwer
+        def fresh_ref_counts():
+            return [[0] * count for count in self.team_counts]
+        ref_counts = fresh_ref_counts()
+        times_reffed = lambda team_tup: ref_counts[team_tup[0]][team_tup[1]]
+        time_order = (4, 0, 3, 1, 2)
+        # self.courts[court][time]
+        for day in self.days:
+            for time in time_order:
+                if time >= len(day.courts[0]):
+                    continue
+                ref_options = [(div_idx, team)
+                               for div_idx in range(len(self.divisions))
+                               for team in day.get_free_to_ref(div_idx, time)
+                               ]
+                ref_options = sorted(ref_options, key=times_reffed, reverse=True)
+                for game in [day.courts[cc][time] for cc in range(len(day.courts))]:
+                    if game.team1 >= 0:
+                        new_ref = ref_options.pop()
+                        game.ref = new_ref
+            print(f'qwerqwerqwer = {ref_options}')
+
+        for day_idx in range(len(self.days)):
+            self.days[day_idx].add_reffing(div_idx, self.divisions[div_idx])
+        return
+        if debug:
+            print(f'qwerqwerqwer {ref_counts}')
         max_number_of_attempts = 100  # not expected to happen
         for div_idx, div in enumerate(self.divisions):
             print('Adding Reffing for division {}'.format(div_idx))
@@ -524,13 +551,45 @@ class Schedule(object):
                         break
 
                 except WeirdReffingCollision:   #   WeirdReffingCollision    ValueError     qwer
-                    print('i like waffles')
+                    if debug:
+                        print('i like waffles')
                     continue
             else:
                 print('Initial traceback was asdf:\n{}'.format(traceback.format_exc()))
                 print(self.solution_debug_data(1))
                 print(self.get_audit_text())
-                # qwer todo raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
+                raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
+
+
+    def add_reffing(self, debug=False):
+        max_number_of_attempts = 100  # not expected to happen
+        for div_idx, div in enumerate(self.divisions):
+            if debug:
+                print('Adding Reffing for division {}'.format(div_idx))
+            for idx in range(max_number_of_attempts):
+                self.clear_all_reffing_for_division(div_idx)
+                try:
+                    for day_idx in range(len(self.days)):
+                        self.days[day_idx].add_reffing(div_idx, self.divisions[div_idx])
+                    if self.ref_transfering_is_neeeded(div):
+                        div = self.try_transfer_reffing(div, div_idx)
+                    if debug:
+                        print(self.solution_debug_data(idx))
+                    current_fitness = self.fitness()
+                    if current_fitness == 0:
+                        break
+
+                except WeirdReffingCollision:   #   WeirdReffingCollision    ValueError     qwer
+                    if debug:
+                        print('i like waffles')
+                    continue
+            else:
+                if debug:
+                    print('Initial traceback was asdf:\n{}'.format(traceback.format_exc()))
+                    print(self.solution_debug_data(1))
+                    print(self.get_audit_text())
+
+                    raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
 
     def switch_teams(self, div_idx, team1, team2):
         teams = [team1, team2]
@@ -555,7 +614,9 @@ class Schedule(object):
             error_item_list = list(filter(lambda x: x[1], error_item_list))
             return str(error_item_list)
         if div_idx == None:
-            breakdown = '\n'.join(['division {} breakdown: {}'.format(div_idx, [get_sorted_breakdown(div_idx) for div_idx in range(5)])])
+            breakdown = '\n'.join(['division {} breakdown: {}'.format(div_idx, [get_sorted_breakdown(div_idx)
+                                                                                      for div_idx in
+                                                                                      range(len(self.team_counts))])])
         else:
             breakdown = 'division {} breakdown: {}'.format(div_idx, get_sorted_breakdown(div_idx))
         return "value = {} while on mutation step   {}  : division fitness = {}    {}".format(
