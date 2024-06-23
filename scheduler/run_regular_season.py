@@ -108,6 +108,7 @@ def make_sand_schdule_flock(sch_template_path, team_counts, seed=3, sch_tries=50
         file_path = 'scratch/audit_2017_spring_regular_season_sch_{}.text'.format(datetime.date.today())
         with open(file_path, 'w') as audit_file:
             audit_file.write(sch.get_audit_text())
+    return sch
 
 
 def make_2018_spring_regular_season_schedule():
@@ -142,8 +143,9 @@ def make_2024_sand_schedule():
     sch_template_path = get_newest_schedule_template(sch_template_root)
     print(f'making schedule for {sch_template_path}')
     #make_regular_season_schedule(sch_template_path, team_counts, seed=2, sch_tries=400, cycle_seeds=60)
-    make_sand_schdule_flock(sch_template_path, team_counts, seed=6, sch_tries=1000, cycle_count=100)
+    sch = make_sand_schdule_flock(sch_template_path, team_counts, seed=6, sch_tries=1000, cycle_count=100)
+    return sch
 
 
 if __name__ == '__main__':
-    make_2024_sand_schedule()
+    sch = make_2024_sand_schedule()
