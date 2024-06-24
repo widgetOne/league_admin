@@ -20,15 +20,29 @@ def split_out_reffing(sch):
     return sch
 
 
-def generate_sand_schedule_csv():
-    output_csv = ''
+def format_sand_schedule():
+    output_data = []
+    all_times = ['12pm', '1pm', '2pm', '3pm', '4pm']
     sch = caching.get_schedule_with_caching()
     split_sch = split_out_reffing(sch)
+    header_data = ['Time'] + sum(
+                   [[f"Court {c+1} Team 1", f"Court {c+1} Team 1",
+                     'Up Ref', 'Line Ref']
+                    for c in range(len(split_sch.days[0].courts))], [])
     for day in split_sch.days:
-        for court in day.courts:
-            for game in court:
-                print(game)
-
+        output_data.append(header_data)
+        times = all_times[-len(day.courts[0]):]
+        for time_idx, time_str in enumerate(times):
+            row_list = [time_str]
+            for court_idx in range(len(day.courts)):
+                game = day.courts[court_idx][time_idx]
+                if game.div != schedule.init_value:
+                    game_teams = [
+                        (game.div, game.team1),
+                        (game.div, game.team2),
+                        game.ref[0],
+                        game.ref[1],
+                    ]
 
 def review_int_team_play_times():
     int_teams = list(range(10))
@@ -60,4 +74,4 @@ def get_team_name_cypher():
 
 
 if __name__ == '__main__':
-    print(get_team_name_cypher())
+    print(format_sand_schedule())

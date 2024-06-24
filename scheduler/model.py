@@ -41,7 +41,10 @@ class Game(object):
         out = "{} {}v{},".format(div_csv_str[self.div], get_team_str(min(teams)), get_team_str(max(teams)))
         if self.ref is not None:
             if isinstance(self.ref, tuple):
-                out += div_csv_str[self.ref[0]] + " %s" % (get_team_str(self.ref[1])) + ", "
+                if isinstance(self.ref[0], tuple):
+                    out += str(self.ref[0]) + " %s" % str(self.ref[1]) + ", "
+                else:
+                    out += div_csv_str[self.ref[0]] + " %s" % (get_team_str(self.ref[1])) + ", "
             elif self.ref > -1:
                 ref_str = self.ref + 1
                 out += div_csv_str[self.div] + " %s" % (get_team_str(self.ref)) + ", "
