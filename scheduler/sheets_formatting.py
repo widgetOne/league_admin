@@ -65,13 +65,17 @@ def review_int_team_play_times():
         df[time] = 0
     df.drop([0], axis=1, inplace=True)
     sch = caching.get_schedule_with_caching()
-    for day in sch.days:
+    for day_idx in range(len(sch.days)):
+        df[day_idx] = 0
+    for day_idx, day in enumerate(sch.days):
         for court in day.courts:
             times = all_times[-len(court):]
             for game, time in zip(court, times):
                 if game.div == 1:
                     df[time][game.team1] += 1
                     df[time][game.team2] += 1
+                    df[day_idx][game.team1] += 1
+                    df[day_idx][game.team2] += 1
     df = df.replace([0], "")
     print(df)
 
@@ -87,4 +91,4 @@ def get_team_name_cypher():
 
 
 if __name__ == '__main__':
-    pprint(get_team_name_cypher())
+    pprint(review_int_team_play_times())
