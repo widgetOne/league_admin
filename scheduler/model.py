@@ -175,7 +175,11 @@ class Day(object):
                 if (game.div >= 0):
                     if game.ref is not None:
                         if isinstance(game.ref, tuple):
-                            rolling_sum_ref[game.ref[0]][game.ref[1]] += 1
+                            if isinstance(game.ref, tuple):
+                                ref_tup = game.ref[0]
+                            else:
+                                ref_tup = game.ref
+                            rolling_sum_ref[ref_tup[0]][ref_tup[1]] += 1
                         elif game.ref > -1:
                             rolling_sum_ref[game.div][game.ref] += 1
                     rolling_sum_play[game.div][game.team1] += 1
