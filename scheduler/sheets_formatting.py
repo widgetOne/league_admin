@@ -3,6 +3,8 @@ import sheets_access
 import caching
 import schedule
 import numpy as np
+from copy import deepcopy
+from pprint import pprint
 
 
 def split_out_reffing(sch):
@@ -23,7 +25,7 @@ def split_out_reffing(sch):
 def format_sand_schedule(sch):
     output_data = []
     all_times = ['12pm', '1pm', '2pm', '3pm', '4pm']
-    split_sch = split_out_reffing(sch)
+    split_sch = split_out_reffing(deepcopy(sch))
     header_data = ['Time'] + sum(
                    [[f"Court {c+1} Team 1", f"Court {c+1} Team 1",
                      'Up Ref', 'Line Ref']
@@ -85,4 +87,4 @@ def get_team_name_cypher():
 
 
 if __name__ == '__main__':
-    print(format_sand_schedule())
+    pprint(get_team_name_cypher())
