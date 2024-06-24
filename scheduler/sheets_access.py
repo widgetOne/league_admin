@@ -13,7 +13,7 @@ def get_sheets_config():
     config_file_name = 'gsheets_config.yaml'
     config_path = os.path.join('../auth', config_file_name)
     with open(config_path, 'r') as config_file:
-        return config_file.read()
+        return yaml.safe_load(config_file)
 
 
 def get_gspread_client():
@@ -27,5 +27,10 @@ def get_gspread_client():
     return client
 
 
+def get_team_names():
+    config = get_sheets_config()
+    print(config)
+
+
 if __name__ == '__main__':
-    print(get_gspread_client())
+    print(get_team_names())
