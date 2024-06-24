@@ -82,7 +82,7 @@ def make_sand_schdule_flock(sch_template_path, team_counts, seed=3, sch_tries=50
         # sch = make_schedule(team_counts, fac, sch_tries=sch_tries, seed=seed, debug=True, save_play_schedule=True)
         sch = make_schedule(team_counts, fac, sch_tries=sch_tries, seed=seed, debug=True)
     save_schedules([sch], canned_path)
-    print(sch.get_audit_text())
+    # print(sch.get_audit_text())
     print(sch)
     make_final_report = True
     # teams_to_shift_out_court = [(0, 0), (1, 10), (2, 11), (1, 8)]
@@ -159,4 +159,4 @@ def make_and_upload_schedule():
 
 if __name__ == '__main__':
     #sch = make_2024_sand_schedule()
-    make_and_upload_schedule()
+    make_2024_sand_schedule()
