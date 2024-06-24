@@ -36,11 +36,11 @@ def get_gspread_range(worksheet_name, sheet_range):
     return worksheet.get(sheet_range)
 
 
-def get_team_names():
+def get_team_names_data():
     config = get_sheets_config()
     teams = get_gspread_range('team names', 'A1:C11')
-    print(teams)
+    return teams
 
 
 if __name__ == '__main__':
-    print(get_team_names())
+    print(get_team_names_data())

@@ -1,7 +1,9 @@
 import pandas as pd
-
+import sheets_access
 import caching
 import schedule
+import numpy as np
+
 
 def split_out_reffing(sch):
     for day in sch.days:
@@ -47,6 +49,15 @@ def review_int_team_play_times():
     print(df)
 
 
+def get_team_name_cypher():
+    team_data = sheets_access.get_team_names_data()
+    team_cypher = {}
+    for team_idx, team_row in enumerate(team_data):
+        for div_idx, team_name in enumerate(team_row):
+            team_id = (div_idx, team_idx)
+            team_cypher[team_id] = team_name
+    return team_cypher
+
+
 if __name__ == '__main__':
-    #generate_sand_schedule_csv()
-    review_int_team_play_times()
+    print(get_team_name_cypher())
