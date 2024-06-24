@@ -37,7 +37,7 @@ def get_gspread_range(worksheet_name, sheet_range):
 
 
 def get_team_names_data():
-    teams = get_gspread_range('team names', 'A1:C11')
+    teams = get_gspread_range('team names', 'A2:C11')
     return teams
 
 
