@@ -7,6 +7,9 @@ from optimizer import make_schedule, save_schedules, FailedToConverge
 from optimizer import make_round_robin_game, get_default_potential_sch_loc
 import datetime
 import os
+import sheets_formatting
+import sheets_access
+import caching
 
 
 def make_regular_season_schedule(sch_template_path, team_counts, seed=3, sch_tries=5000, cycle_seeds=0):
@@ -147,5 +150,12 @@ def make_2024_sand_schedule():
     return sch
 
 
+def make_and_upload_schedule():
+    sch = caching.get_schedule_with_caching()
+    schedule_list_list = sheets_formatting.format_sand_schedule(sch)
+    sheets_access.set_formatted_schedule_to_sheet(schedule_list_list)
+
+
 if __name__ == '__main__':
-    sch = make_2024_sand_schedule()
+    #sch = make_2024_sand_schedule()
+    make_and_upload_schedule()

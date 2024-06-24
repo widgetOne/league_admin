@@ -20,10 +20,9 @@ def split_out_reffing(sch):
     return sch
 
 
-def format_sand_schedule():
+def format_sand_schedule(sch):
     output_data = []
     all_times = ['12pm', '1pm', '2pm', '3pm', '4pm']
-    sch = caching.get_schedule_with_caching()
     split_sch = split_out_reffing(sch)
     header_data = ['Time'] + sum(
                    [[f"Court {c+1} Team 1", f"Court {c+1} Team 1",
