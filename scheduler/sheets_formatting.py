@@ -28,7 +28,7 @@ def format_sand_schedule(sch):
                    [[f"Court {c+1} Team 1", f"Court {c+1} Team 1",
                      'Up Ref', 'Line Ref']
                     for c in range(len(split_sch.days[0].courts))], [])
-    total_cols = 1 + len(split_sch.days[0].courts)
+    total_cols = 1 + 4 * len(split_sch.days[0].courts)
     blank_row = ['' for _ in range(total_cols)]
     team_name_cypher = get_team_name_cypher()
     get_team_name = lambda team_tup: team_name_cypher[team_tup]
@@ -49,7 +49,7 @@ def format_sand_schedule(sch):
                     team_names = list(map(get_team_name, game_teams))
                 else:
                     team_names = ['NO PLAY' for _ in range(4)]
-                row_list.append(team_names)
+                row_list += team_names
             output_data.append(row_list)
         output_data.append(blank_row)
     return output_data

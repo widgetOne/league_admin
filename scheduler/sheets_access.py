@@ -41,11 +41,19 @@ def get_team_names_data():
     return teams
 
 
-def set_formatted_schedule_to_sheet():
+def set_formatted_schedule_to_sheet(schedule_list_list):
     sheet = get_gspread_sheet()
-    sheet.open_sheet('edit_me')
-    #teams = get_gspread_range('team names', 'A1:C11')
-    return teams
+    sheet.open_sheet('robot_schedule_upload__dont_edit')
+    col_count = len(schedule_list_list[0])
+    end_col_options = {17: "Q", 21: "U"}
+    edit_me_worksheet = sheet.sheet
+    cell_range = f'A1:{end_col_options[col_count]}{len(schedule_list_list)}'
+    cell_list = edit_me_worksheet.range(cell_range)
+    schedule_list = sum(schedule_list_list, [])
+    for cell_idx, cell in enumerate(cell_list):
+        cell.value = schedule_list[cell_idx]
+    edit_me_worksheet.update_cells(cell_list)
+    return
 
 
 if __name__ == '__main__':
