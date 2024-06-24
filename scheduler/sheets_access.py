@@ -53,7 +53,6 @@ def set_formatted_schedule_to_sheet(schedule_list_list):
     for cell_idx, cell in enumerate(cell_list):
         cell.value = schedule_list[cell_idx]
     edit_me_worksheet.update_cells(cell_list)
-    return
 
 
 if __name__ == '__main__':
