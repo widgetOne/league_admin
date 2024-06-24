@@ -55,6 +55,7 @@ def format_sand_schedule():
         output_data.append(blank_row)
     return output_data
 
+
 def review_int_team_play_times():
     int_teams = list(range(10))
     df = pd.DataFrame(int_teams, index=int_teams)
