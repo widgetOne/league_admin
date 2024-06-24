@@ -16,7 +16,7 @@ def get_sheets_config():
         return yaml.safe_load(config_file)
 
 
-def get_gspread_client():
+def get_gspread_sheet():
     scope = [
         'https://spreadsheets.google.com/feeds',
         'https://www.googleapis.com/auth/drive'
@@ -24,12 +24,22 @@ def get_gspread_client():
     creds = (ServiceAccountCredentials
              .from_json_keyfile_name(get_auth_token_path(), scope))
     client = Client(creds=creds)
-    return client
+    config = get_sheets_config()
+    sheet = Spread(config['sheet_url'], client=client)
+    return sheet
+
+
+def get_gspread_range(worksheet_name, sheet_range):
+    sheet = get_gspread_sheet()
+    sheet.open_sheet(worksheet_name)
+    worksheet = sheet.sheet
+    return worksheet.get(sheet_range)
 
 
 def get_team_names():
     config = get_sheets_config()
-    print(config)
+    teams = get_gspread_range('team names', 'A1:C11')
+    print(teams)
 
 
 if __name__ == '__main__':
