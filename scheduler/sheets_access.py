@@ -12,8 +12,8 @@ def get_auth_token():
 def get_sheets_config():
     config_file_name = 'gsheets_config.yaml'
     config_path = os.path.join('../auth', config_file_name)
-    with open(config_path, 'r') as coonfig_file:
-        return coonfig_file.read()
+    with open(config_path, 'r') as config_file:
+        return config_file.read()
 
 
 if __name__ == '__main__':
