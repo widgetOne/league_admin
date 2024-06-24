@@ -152,6 +152,7 @@ def make_2024_sand_schedule():
 
 def make_and_upload_schedule():
     sch = caching.get_schedule_with_caching()
+    sheets_access.set_schedule_audit_sheet(sch.get_audit_text())
     schedule_list_list = sheets_formatting.format_sand_schedule(sch)
     sheets_access.set_formatted_schedule_to_sheet(schedule_list_list)
 

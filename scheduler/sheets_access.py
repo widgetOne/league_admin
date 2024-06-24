@@ -55,5 +55,17 @@ def set_formatted_schedule_to_sheet(schedule_list_list):
     edit_me_worksheet.update_cells(cell_list)
 
 
+def set_schedule_audit_sheet(audit_report):
+    audit_lines = audit_report.split('\n')
+    sheet = get_gspread_sheet()
+    sheet.open_sheet('uploaded_schedule_audit_report')
+    audit_worksheet = sheet.sheet
+    cell_range = f'A1:A{len(audit_lines)}'
+    cell_list = audit_worksheet.range(cell_range)
+    for cell_idx, cell in enumerate(cell_list):
+        cell.value = audit_lines[cell_idx]
+    audit_worksheet.update_cells(cell_list)
+
+
 if __name__ == '__main__':
     print(set_formatted_schedule_to_sheet())
