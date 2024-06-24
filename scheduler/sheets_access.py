@@ -9,10 +9,6 @@ def get_auth_token():
         return token_file.read()
 
 
-def get_sheet_config():
-    config_file_name = 'google_sheets_vball_config.yaml'
-
-
 def get_sheets_config():
     config_file_name = 'gsheets_config.yaml'
     config_path = os.path.join('../auth', config_file_name)
