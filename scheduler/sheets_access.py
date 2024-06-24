@@ -37,10 +37,16 @@ def get_gspread_range(worksheet_name, sheet_range):
 
 
 def get_team_names_data():
-    config = get_sheets_config()
     teams = get_gspread_range('team names', 'A1:C11')
     return teams
 
 
+def set_formatted_schedule_to_sheet():
+    sheet = get_gspread_sheet()
+    sheet.open_sheet('edit_me')
+    #teams = get_gspread_range('team names', 'A1:C11')
+    return teams
+
+
 if __name__ == '__main__':
-    print(get_team_names_data())
+    print(set_formatted_schedule_to_sheet())
