@@ -117,9 +117,9 @@ def format_team_schedules(split_schedule, source_schedule):
     today_str, today_has_play = day_strings[day_idx]
     add_to_all_schedules(output_schedules, today_str)
     for row in split_schedule[1:]:
-        if row[0] == "Time":
+        if row[0] == "Time":  # header row for new set of games
             continue
-        elif row[0] == '':
+        elif row[0] == '':  # blank row between days
             add_no_reffing_notes(output_schedules)
             today_has_play = False
             while not today_has_play and day_idx < len(day_strings) - 1:
