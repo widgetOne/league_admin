@@ -22,13 +22,13 @@ def get_day_strings():
     # the date and if play is taking place
     return [
         ('June 30th - Week 1', True),
-        ('July 7th - 7/4!', False),
+        ('July 7th - NO GAMES', False),
         ('July 14th - Week 2', True),
-        ('July 21th - Stonewall Nationals', False),
+        ('July 21th - NO GAMES', False),
         ('July 28th - Week 3', True),
         ('August 4th - Week 4', True),
         ('August 11th - Week 5', True),
-        ('August 16th - Volley Ball!!', False),
+        ('August 16th - The Volley Ball!!', False),
         ('August 17th/18th - Playoffs', False),
         ('August 24th/25th - Playoffs Rain Day', False),
     ]
