@@ -84,7 +84,6 @@ def add_entries_for_row(team_schedules, row, column_cypher):
             team_schedules[ref_team[0]][ref_team[1]].append(get_ref_str(time, column_cypher[ref_idx], court_idx))
 
 
-
 def reffing_in_last_schedule_day(team_schedule):
     max_daily_events = 6
     for line in team_schedule[:-max_daily_events:-1]:
@@ -101,7 +100,6 @@ def add_no_reffing_notes(team_schedules):
         for team_idx, team_sch in enumerate(div_schs):
             if not reffing_in_last_schedule_day(team_sch):
                 team_sch.append('No Reffing')
-
 
 
 def format_team_schedules(split_schedule, source_schedule):
