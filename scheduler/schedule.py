@@ -1,4 +1,4 @@
-from model import init_value, WeirdReffingCollision
+from model import init_value, NoOneAvailableToRef
 import random
 import copy
 from pprint import pprint
@@ -155,6 +155,8 @@ class Schedule(object):
         out += [self.get_open_play_report()]
         out += ['\n\n\nDouble Ref Report\n']
         out += [self.get_double_ref_report()]
+        out += ['\n\n\nThree Hour Day Report\n']
+        out += [self.get_three_hour_day_report()]
         out += ['\n\n\nSolution Error']
         out += ['This section reports what is checked for each division, and displays the total number']
         out += ['of errors for each category, for each division. This is basically always all 0.']
@@ -232,6 +234,17 @@ class Schedule(object):
             day_fitness = day.fitness_str()
             output += '\ndouble refs for day {}: {}'.format(idx, day_fitness.get_double_ref_lists())
         return output
+
+    def get_three_hour_day_report(self):
+        """Generate a report of that have three hours days"""
+        # qwerqwerqwer
+        output = '\nDebug of teams that have to play 3 hours days'
+        for day_idx, day in enumerate(self.days):
+            day_fit = day.fitness_str()
+            for div_idx, div in enumerate(day_fit._divs):
+                output += f'\nfitness on day {day_idx} in div {div_idx} was {div._three_hours_days}'
+        return output
+
 
     '''
     def remake_worst_day(self, count):
@@ -507,10 +520,12 @@ class Schedule(object):
             return False
 
     def add_reffing(self, debug=False):
-        max_number_of_attempts = 100  # not expected to happen
+        max_number_of_attempts = 200  # not expected to happen
         for div_idx, div in enumerate(self.divisions):
             if debug:
                 print('Adding Reffing for division {}'.format(div_idx))
+            min_3h_days = 1000
+            times_min_3h = 0
             for idx in range(max_number_of_attempts):
                 self.clear_all_reffing_for_division(div_idx)
                 try:
@@ -523,10 +538,20 @@ class Schedule(object):
                     current_fitness = self.fitness()
                     if current_fitness == 0:
                         break
+                        if False:
+                            this_3h_days = self.fitness_structure.get_three_hour_days()
+                            print('this_3h_days', this_3h_days, 'times_min_3h', times_min_3h)
+                            if this_3h_days < min_3h_days:
+                                min_3h_days = 0
+                                times_min_3h = 0
+                            elif this_3h_days == min_3h_days:
+                                times_min_3h += 1
+                            if this_3h_days == 0 or times_min_3h == 3:
+                                break
 
-                except WeirdReffingCollision:   #   WeirdReffingCollision    ValueError     qwer
+                except NoOneAvailableToRef:   #   WeirdReffingCollision    ValueError     qwer
                     if debug:
-                        print('i like waffles')
+                        print('WeirdReffingCollision is happening a lot')
                     continue
             else:
                 if debug:
@@ -534,7 +559,7 @@ class Schedule(object):
                     print(self.solution_debug_data(1))
                     print(self.get_audit_text())
 
-                    raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
+                    #raise(Exception('Could not find ref solution for div_idx {}'.format(div_idx)))
 
     def switch_teams(self, div_idx, team1, team2):
         teams = [team1, team2]
@@ -558,14 +583,17 @@ class Schedule(object):
             error_item_list = sorted(list(error_dict.items()))
             error_item_list = list(filter(lambda x: x[1], error_item_list))
             return str(error_item_list)
-        if div_idx == None:
+        day_breakdown = [day.fitness_str().value() for day in self.days]
+        day_breakdown_str = f'day breakdown: {day_breakdown}'
+        if div_idx is not None:
             breakdown = '\n'.join(['division {} breakdown: {}'.format(div_idx, [get_sorted_breakdown(div_idx)
                                                                                       for div_idx in
                                                                                       range(len(self.team_counts))])])
         else:
             breakdown = 'division {} breakdown: {}'.format(div_idx, get_sorted_breakdown(div_idx))
-        return "value = {} while on mutation step   {}  : division fitness = {}    {}".format(
+        output_str = "value = {} while on mutation step   {}  : division fitness = {}    {}".format(
               fitness, mut_idx, self.fitness_div_list(), breakdown)
+        return f'{output_str}   {day_breakdown_str}'
 
     def try_move_game_from_court(self, day_idx, target_court_idx, time):
         div_idx = self.days[day_idx].courts[target_court_idx][time].div

@@ -73,16 +73,29 @@ class ScheduleDivFitness(object):
         self._play_over_time = [{} for _ in range(count)]
         self.bye_requirement = bye_requirement
         self._open_play = deepcopy(blank_1d)
+        self._play_times = [{} for _ in range(count)]
+        self._usage_times = [{} for _ in range(count)]
         usage_w_time = {}
         for game in games:  # There may be no games
             self.add_game(game, day_num)
             if game.time not in usage_w_time:
                 usage_w_time[game.time] = deepcopy(blank_1d)
             usage_w_time[game.time][game.team1] += 1
+            self._play_times[game.team1][game.time] = self._play_times[game.team1].get(game.time, 0) + 1
+            self._usage_times[game.team1][game.time] = self._usage_times[game.team1].get(game.time, 0) + 1
             usage_w_time[game.time][game.team2] += 1
+            self._play_times[game.team2][game.time] = self._play_times[game.team2].get(game.time, 0) + 1
+            self._usage_times[game.team2][game.time] = self._usage_times[game.team2].get(game.time, 0) + 1
             if game.ref is not None and game.ref != init_value:
                 usage_w_time[game.time][game.ref] += 1
+                self._usage_times[game.ref][game.time] = self._usage_times[game.ref].get(game.time, 0) + 1
         usage = sum(usage_w_time.values(), [])
+        THREE_HOUR_DAY_PENALTY = -1
+        def get_max_time_gap(time_dict):
+            is_3h_day = time_dict and max(time_dict.keys()) - min(time_dict.keys()) > 1
+            return THREE_HOUR_DAY_PENALTY if is_3h_day else 0
+        self._play_gaps = list(map(get_max_time_gap, self._play_times))
+        self._three_hours_days = list(map(get_max_time_gap, self._usage_times))
         self._multi_use_in_time = sum((val - 1 for val in usage if val > 1))
         def bye(plays):
             if plays == 0:
@@ -106,6 +119,7 @@ class ScheduleDivFitness(object):
             'plays': lambda x: even_distribution_fitness(x._plays),
             'refs': lambda x: even_distribution_fitness(x._refs),
             'vs_evenness': lambda x: x.vs_fitness(),
+            'play_gaps': lambda x: sum(p * 19 for p in x._play_gaps),
             'no_vs_repeats': lambda x: x.vs_repeat_fitness(),
             'conflict': lambda x: -conflict_weight * x._multi_use_in_time,
             'byes_total': lambda x: (x.bye_requirement - sum(x._byes)) * 3,
@@ -135,6 +149,8 @@ class ScheduleDivFitness(object):
         self._vs_by_day = add_list_of_lists(self._vs_by_day, other._vs_by_day, sign)
         self.successive_byes += other.successive_byes * sign
         self._play_over_time = [add_dict(a, b) for a,b in zip(self._play_over_time, other._play_over_time)]
+        self._three_hours_days = add_lists(self._three_hours_days, other._three_hours_days, sign)
+        self._play_gaps = add_lists(self._play_gaps, other._play_gaps, sign)
         return self
 
     def __radd__(self, other):
@@ -289,6 +305,9 @@ class ScheduleFitness(object):
 
     def __sub__(self, other):
         return self.__add__(other, sign=-1)
+
+    def get_three_hour_days(self):
+        return -sum(sum(div._three_hours_days) for div in self._divs)
 
     def value(self):
         fitness = sum((div.value() for div in self._divs))

@@ -59,25 +59,32 @@ def make_regular_season_schedule(sch_template_path, team_counts, seed=3, sch_tri
             audit_file.write(sch.get_audit_text())
 
 
-def make_sand_schdule_flock(sch_template_path, team_counts, seed=3, sch_tries=5000, cycle_count=0):
+def make_sand_schdule_flock(sch_template_path, team_counts, seed=3, sch_tries=5000, cycle_count=0,
+                            debug=False, end_on_success=True):
     canned_path = get_default_potential_sch_loc(str(datetime.date.today()))
     fac = facility.sch_template_path_to_fac(sch_template_path, team_counts)
     final_schedule_option_report = ''
     print('\nMaking schedule %s.' % seed)
+    best_schdule_fitness = -999999
     if cycle_count:
         for cycling_seed in range(seed, seed + cycle_count):
             try:
                 #sch = make_schedule(team_counts, fac, sch_tries=sch_tries, seed=cycling_seed, debug=True,
                 #                    save_play_schedule=True)
-                sch = make_schedule(team_counts, fac, sch_tries=sch_tries, seed=cycling_seed, debug=False)
+                sch = make_schedule(team_counts, fac, sch_tries=sch_tries, seed=cycling_seed, debug=debug)
                 print(f'fitness for seed {cycling_seed} is {sch.fitness()}')
                 #print(sch.get_audit_text())
                 #print(sch)
             except FailedToConverge:
                 continue
-            print('Things worked for seed {}'.format(cycling_seed))
             if sch.fitness() == 0:
-                break
+                print('Things worked for seed {}'.format(cycling_seed))
+                print('three hours days = ', sch.fitness_structure.get_three_hour_days())
+                if end_on_success:
+                    break
+            else:
+                print('Things FAILED for seed {}'.format(cycling_seed))
+                print(sch.solution_debug_data())
     else:
         # sch = make_schedule(team_counts, fac, sch_tries=sch_tries, seed=seed, debug=True, save_play_schedule=True)
         sch = make_schedule(team_counts, fac, sch_tries=sch_tries, seed=seed, debug=True)
@@ -143,10 +150,13 @@ def make_2024_sand_schedule():
     #sch_template_path = 'inputs/{}/{}'.format(dir_name, file_name)
     sch_template_root = os.path.join('inputs', dir_name)
     team_counts = [10, 10, 8]
-    sch_template_path = get_newest_schedule_template(sch_template_root)
+    #sch_template_path = get_newest_schedule_template(sch_template_root)
+    file_name = 'sand_2024-06-20f.csv'
+    sch_template_path = os.path.join(sch_template_root, file_name)
     print(f'making schedule for {sch_template_path}')
     #make_regular_season_schedule(sch_template_path, team_counts, seed=2, sch_tries=400, cycle_seeds=60)
-    sch = make_sand_schdule_flock(sch_template_path, team_counts, seed=6, sch_tries=1000, cycle_count=100)
+    sch = make_sand_schdule_flock(sch_template_path, team_counts, seed=6, sch_tries=1000, cycle_count=100,
+                                  debug=False, end_on_success=True)
     return sch
 
 
@@ -158,5 +168,6 @@ def make_and_upload_schedule():
 
 
 if __name__ == '__main__':
-    #sch = make_2024_sand_schedule()
-    make_2024_sand_schedule()
+    sch = make_2024_sand_schedule()
+    print(sch.get_audit_text())
+    #make_and_upload_schedule()

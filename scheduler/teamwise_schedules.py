@@ -5,7 +5,7 @@ import caching
 from optimizer import save_schedules, get_schedules
 from sheets_formatting import format_sand_schedule, get_team_name_cypher
 from copy import deepcopy
-from sheets_access import get_team_names_data
+from sheets_access import get_team_names_data, set_teamwise_schedules_to_sheet
 
 def load_current_schedule():
     path = 'scratch'
@@ -47,14 +47,14 @@ def add_to_all_schedules(team_schedules, day_string):
             team_sch.append(day_string)
 
 
-inv_team_cypher = None
+cached_inv_team_cypher = None
 def get_inv_cypher():
-    global inv_team_cypher
-    if inv_team_cypher is None:
+    global cached_inv_team_cypher
+    if cached_inv_team_cypher is None:
         basic_cypher = get_team_name_cypher()
         inv_cypher = {v:k for k, v in basic_cypher.items()}
-        inv_team_cypher = inv_cypher
-    return inv_team_cypher
+        cached_inv_team_cypher = inv_cypher
+    return cached_inv_team_cypher
 
 
 def get_play_str(time, court_idx, opponent_name):
@@ -87,6 +87,11 @@ def add_entries_for_row(team_schedules, row, column_cypher):
 def format_team_schedules(split_schedule, team_schedules):
     output_schedules = deepcopy(team_schedules)
     column_cypher = get_column_cypher(split_schedule[0])
+    team_cypher = get_team_name_cypher()
+    for div_idx, div_schs in enumerate(output_schedules):
+        for team_idx, team_sch in enumerate(div_schs):
+            print()
+            team_sch.append(team_cypher[(div_idx, team_idx)])
     day_strings = get_day_strings()
     day_idx = 0
     today_str, today_has_play = day_strings[day_idx]
@@ -110,8 +115,8 @@ def upload_teamwise_schedules():
     sch = load_current_schedule()
     split_sch = format_sand_schedule(sch)
     team_schedules = [[list() for _ in range(div_count)] for div_count in sch.team_counts]
-    #print(split_sch)
     teamwise_schedule = format_team_schedules(split_sch, team_schedules)
+    set_teamwise_schedules_to_sheet(teamwise_schedule)
     print(teamwise_schedule)
 
 

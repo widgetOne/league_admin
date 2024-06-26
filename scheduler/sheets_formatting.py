@@ -27,7 +27,7 @@ def format_sand_schedule(sch):
     all_times = ['12pm', '1pm', '2pm', '3pm', '4pm']
     split_sch = split_out_reffing(deepcopy(sch))
     header_data = ['Time'] + sum(
-                   [[f"Court {c+1} Team 1", f"Court {c+1} Team 1",
+                   [[f"Court {c+1} Team 1", f"Court {c+1} Team 2",
                      'Up Ref', 'Line Ref']
                     for c in range(len(split_sch.days[0].courts))], [])
     total_cols = 1 + 4 * len(split_sch.days[0].courts)
@@ -42,9 +42,11 @@ def format_sand_schedule(sch):
             for court_idx in range(len(day.courts)):
                 game = day.courts[court_idx][time_idx]
                 if game.div != schedule.init_value:
+                    left_team = min(game.team1, game.team2)
+                    right_team = max(game.team1, game.team2)
                     game_teams = [
-                        (game.div, game.team1),
-                        (game.div, game.team2),
+                        (game.div, left_team),
+                        (game.div, right_team),
                         game.ref[0],
                         game.ref[1],
                     ]

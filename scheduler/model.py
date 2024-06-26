@@ -4,7 +4,7 @@ from fitness import ScheduleFitness
 
 init_value = -999999
 
-class WeirdReffingCollision(Exception):
+class NoOneAvailableToRef(Exception):
     pass
 
 
@@ -308,20 +308,19 @@ class Day(object):
         can_ref = list(playing_before_or_after - playing_or_reffing_then)
         if should_ref:
             return should_ref
+        elif can_ref:
+            return can_ref
         else:
-            if can_ref:
-                return can_ref
-            else:
-                if True and div_idx != 0:
-                    raise(WeirdReffingCollision('''Could not find a reffing option:
-                    day {}    at time  {}
-                    division {} 
-                    the total potential were {} but teams {} were playing at the same time and
-                    {} were reffing at other points in the day'''.format(self.num, target_time, div_idx,
-                                                                         sorted(list(playing_before_or_after)),
-                                                                         sorted(list(playing_or_reffing_then)),
-                                                                         sorted(list(reffing_already_that_day)))))
-                return []
+            if True and div_idx != 0:
+                raise(NoOneAvailableToRef('''Could not find a reffing option:
+                day {}    at time  {}
+                division {} 
+                the total potential were {} but teams {} were playing at the same time and
+                {} were reffing at other points in the day'''.format(self.num, target_time, div_idx,
+                                                                     sorted(list(playing_before_or_after)),
+                                                                     sorted(list(playing_or_reffing_then)),
+                                                                     sorted(list(reffing_already_that_day)))))
+            return []
 
     def add_reffing(self, div_idx, div):
         from schedule import list_filter
@@ -329,11 +328,15 @@ class Day(object):
         game_slots = fac.div_games[div_idx].copy()
         random.shuffle(game_slots)
         day_idx = fac.day_idx
+        if day_idx == 3 and div_idx == 2:
+            asdf = 4
         for court, time in game_slots:
             game = self.courts[court][time]
-            ref_options = self.get_free_to_ref(div_idx, time)
+            best_ref_list = self.get_free_to_ref(div_idx, time)
             teams_w_least_reffing = div.teams_w_least_ref()
-            best_ref_list = list_filter(ref_options, teams_w_least_reffing)
+            best_ref_list = list_filter(best_ref_list, teams_w_least_reffing)
+            test_w_least_play = self.team_w_least_play_today(div_idx)
+            best_ref_list = list_filter(best_ref_list, test_w_least_play)
             if len(best_ref_list) == 0:
                 game.ref = None
                 if True:
@@ -347,6 +350,20 @@ class Day(object):
                 game.ref = reffing_team
                 div.teams[reffing_team].refs += 1
 
+    def get_games_list(self):
+        return [game for court in self.courts for game in court]
+
+    def team_w_least_play_today(self, div_idx=None):
+        team_plays = [0 for _ in range(self.facility_day.team_counts[div_idx])]
+        game_list = self.get_games_list()
+        if div_idx is not None:
+            game_list = list(filter(lambda g: g.div == div_idx, game_list))
+        for game in game_list:
+            for team in [game.team1, game.team2]:
+                if team != init_value:
+                    team_plays[team] += 1
+        min_val = min(team_plays)
+        return [idx for idx, val in enumerate(team_plays) if val == min_val]
 
     def try_transfer_reffing(self, from_list, to_list, div, div_idx):
         """This function loops over the from list, transfering things to the to list. It stops of the to list is
