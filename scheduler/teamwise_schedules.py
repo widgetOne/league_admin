@@ -3,9 +3,9 @@ import re
 from pprint import pprint
 import caching
 from optimizer import save_schedules, get_schedules
-from sheets_formatting import format_sand_schedule
+from sheets_formatting import format_sand_schedule, get_team_name_cypher
 from copy import deepcopy
-
+from sheets_access import get_team_names_data
 
 def load_current_schedule():
     path = 'scratch'
@@ -47,8 +47,42 @@ def add_to_all_schedules(team_schedules, day_string):
             team_sch.append(day_string)
 
 
-def add_entries_for_row(team_schedules, row):
-    pass
+inv_team_cypher = None
+def get_inv_cypher():
+    global inv_team_cypher
+    if inv_team_cypher is None:
+        basic_cypher = get_team_name_cypher()
+        inv_cypher = {v:k for k, v in basic_cypher.items()}
+        inv_team_cypher = inv_cypher
+    return inv_team_cypher
+
+
+def get_play_str(time, court_idx, opponent_name):
+    return f'{time}: Play on Court {court_idx+1} vs {opponent_name}'
+
+
+def get_ref_str(time, ref_type, court_idx):
+    return f'{time}: {ref_type} on Court {court_idx+1}'
+
+
+def add_entries_for_row(team_schedules, row, column_cypher):
+    time = row[0]
+    inv_team_cypher = get_inv_cypher()
+    court_count = int((len(row) - 1) // 4)
+    for court_idx in range(court_count):
+        start_idx = 1 + 4 * court_idx
+        if row[start_idx] == 'NO PLAY':
+            continue
+        team1_name = row[start_idx]
+        team1 = inv_team_cypher[team1_name]
+        team2_name = row[start_idx+1]
+        team2 = inv_team_cypher[team2_name]
+        team_schedules[team1[0]][team1[1]].append(get_play_str(time, court_idx, team2_name))
+        team_schedules[team2[0]][team2[1]].append(get_play_str(time, court_idx, team1_name))
+        for ref_idx in range(start_idx+2, start_idx+4):
+            ref_team = inv_team_cypher[row[ref_idx]]
+            team_schedules[ref_team[0]][ref_team[1]].append(get_ref_str(time, column_cypher[ref_idx], court_idx))
+
 
 def format_team_schedules(split_schedule, team_schedules):
     output_schedules = deepcopy(team_schedules)
@@ -68,7 +102,7 @@ def format_team_schedules(split_schedule, team_schedules):
                 today_str, today_has_play = day_strings[day_idx]
                 add_to_all_schedules(output_schedules, today_str)
         else:
-            add_entries_for_row(team_schedules, row)
+            add_entries_for_row(output_schedules, row, column_cypher)
     return output_schedules
 
 
