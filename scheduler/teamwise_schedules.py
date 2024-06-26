@@ -46,6 +46,10 @@ def add_to_all_schedules(team_schedules, day_string):
         for team_sch in div:
             team_sch.append(day_string)
 
+
+def add_entries_for_row(team_schedules, row):
+    pass
+
 def format_team_schedules(split_schedule, team_schedules):
     output_schedules = deepcopy(team_schedules)
     column_cypher = get_column_cypher(split_schedule[0])
@@ -53,14 +57,28 @@ def format_team_schedules(split_schedule, team_schedules):
     day_idx = 0
     today_str, today_has_play = day_strings[day_idx]
     add_to_all_schedules(output_schedules, today_str)
-    print(output_schedules)
+    for row in split_schedule[1:]:
+        if row[0] == "Time":
+            continue
+        elif row[0] == '':
+            today_has_play = False
+            while not today_has_play and day_idx < len(day_strings) - 1:
+                day_idx += 1
+                add_to_all_schedules(output_schedules, '')
+                today_str, today_has_play = day_strings[day_idx]
+                add_to_all_schedules(output_schedules, today_str)
+        else:
+            add_entries_for_row(team_schedules, row)
+    return output_schedules
 
 
 def upload_teamwise_schedules():
     sch = load_current_schedule()
     split_sch = format_sand_schedule(sch)
     team_schedules = [[list() for _ in range(div_count)] for div_count in sch.team_counts]
+    #print(split_sch)
     teamwise_schedule = format_team_schedules(split_sch, team_schedules)
+    print(teamwise_schedule)
 
 
 if __name__ == '__main__':
