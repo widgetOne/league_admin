@@ -68,23 +68,27 @@ def set_schedule_audit_sheet(audit_report):
 
 
 
-
-def set_teamwise_schedules_to_sheet(teamwise_schedules):
+def set_division_teamwise_schedules(div_schs, sheet_name):
     sheet = get_gspread_sheet()
-    sheet.open_sheet('Bumper')
-    div_schedules = teamwise_schedules[0]
-    max_rows = max(len(sch) for sch in div_schedules)
-    col_count = len(div_schedules)
-    end_col_options = {8: "H", 10: "J"}
+    sheet.open_sheet(sheet_name)
+    max_rows = max(len(sch) for sch in div_schs)
+    col_count = len(div_schs)
+    end_col_options = {8: "H", 10: "J"}  # turn this into a real function
     div_worksheet = sheet.sheet
     offset_rows = 3
     cell_range = f'A{offset_rows}:{end_col_options[col_count]}{offset_rows+max_rows-1}'
     cell_list = div_worksheet.range(cell_range)
-    div_schedules = list(map(list, zip(*div_schedules)))
-    div_schedule_cell_list = sum(div_schedules, [])
+    div_schedules_t = list(map(list, zip(*div_schs)))
+    div_schedule_cell_list = sum(div_schedules_t, [])
     for cell_idx, cell in enumerate(cell_list):
         cell.value = div_schedule_cell_list[cell_idx]
     div_worksheet.update_cells(cell_list)
+
+
+def set_teamwise_schedules_to_sheet(teamwise_schedules):
+    sheet_names = ['Bumper', 'Setter', 'Spiker']
+    for div_schs, sheet_name in zip(teamwise_schedules, sheet_names):
+        set_division_teamwise_schedules(div_schs, sheet_name)
 
 
 if __name__ == '__main__':

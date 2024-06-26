@@ -84,8 +84,28 @@ def add_entries_for_row(team_schedules, row, column_cypher):
             team_schedules[ref_team[0]][ref_team[1]].append(get_ref_str(time, column_cypher[ref_idx], court_idx))
 
 
-def format_team_schedules(split_schedule, team_schedules):
-    output_schedules = deepcopy(team_schedules)
+
+def reffing_in_last_schedule_day(team_schedule):
+    max_daily_events = 6
+    for line in team_schedule[:-max_daily_events:-1]:
+        # TODO: should probably make this more robust to team names/day changes
+        if 'ref' in line.lower():
+            return True
+        if ' - week ' in line.lower():
+            return False
+    raise(Exception(f'flaw in this function when parsing schedule {team_schedule}'))
+
+
+def add_no_reffing_notes(team_schedules):
+    for div_idx, div_schs in enumerate(team_schedules):
+        for team_idx, team_sch in enumerate(div_schs):
+            if not reffing_in_last_schedule_day(team_sch):
+                team_sch.append('No Reffing')
+
+
+
+def format_team_schedules(split_schedule, source_schedule):
+    output_schedules = deepcopy(source_schedule)
     column_cypher = get_column_cypher(split_schedule[0])
     team_cypher = get_team_name_cypher()
     for div_idx, div_schs in enumerate(output_schedules):
@@ -100,6 +120,7 @@ def format_team_schedules(split_schedule, team_schedules):
         if row[0] == "Time":
             continue
         elif row[0] == '':
+            add_no_reffing_notes(output_schedules)
             today_has_play = False
             while not today_has_play and day_idx < len(day_strings) - 1:
                 day_idx += 1
