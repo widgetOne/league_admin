@@ -6,8 +6,7 @@ import csv
 from schedule import init_value
 
 
-def make_league_apps_scv():
-    sch = caching.load_v2_current_schedule()
+def make_league_apps_scv(sch):
     header_base = 'SUB_PROGRAM	HOME_TEAM	AWAY_TEAM	DATE	START_TIME	END_TIME	LOCATION	SUB_LOCATION	TYPE	NOTES'
     header = header_base.split('\t')
     team_cypher = sheets_formatting.get_team_name_cypher()
