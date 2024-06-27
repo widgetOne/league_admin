@@ -7,7 +7,8 @@ from copy import deepcopy
 from pprint import pprint
 
 
-def split_out_reffing(sch):
+def split_out_reffing(base_sch):
+    sch = deepcopy(base_sch)
     for day in sch.days:
         for time in range(len(day.courts[0])):
             games = [day.courts[court][time]
