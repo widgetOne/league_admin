@@ -124,8 +124,7 @@ def format_team_schedules(split_schedule, source_schedule):
     return output_schedules
 
 
-def upload_teamwise_schedules():
-    sch = caching.load_current_schedule()
+def upload_teamwise_schedules(sch):
     split_sch = format_sand_schedule(sch)
     team_schedules = [[list() for _ in range(div_count)] for div_count in sch.team_counts]
     teamwise_schedule = format_team_schedules(split_sch, team_schedules)
@@ -134,4 +133,5 @@ def upload_teamwise_schedules():
 
 
 if __name__ == '__main__':
-    upload_teamwise_schedules()
+    sch = caching.load_v2_current_schedule()
+    upload_teamwise_schedules(sch)
