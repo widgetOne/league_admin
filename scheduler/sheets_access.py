@@ -98,7 +98,7 @@ def set_division_teamwise_schedules(div_schs, sheet_name):
 
 
 def set_teamwise_schedules_to_sheet(teamwise_schedules):
-    sheet_names = ['Bumper', 'Setter', 'Spiker']
+    sheet_names = ['Bumpers', 'Setters', 'Spikers']
     for div_schs, sheet_name in zip(teamwise_schedules, sheet_names):
         set_division_teamwise_schedules(div_schs, sheet_name)
 
