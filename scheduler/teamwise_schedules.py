@@ -7,12 +7,6 @@ from sheets_formatting import format_sand_schedule, get_team_name_cypher
 from copy import deepcopy
 from sheets_access import get_team_names_data, set_teamwise_schedules_to_sheet
 
-def load_current_schedule():
-    path = 'scratch'
-    schedule_name = 'round_robin-schedules-from-2024-06-24.pkl'
-    full_path = os.path.join(path, schedule_name)
-    return get_schedules(full_path)[0]
-
 
 def format_teamwise_row():
     pass
@@ -131,7 +125,7 @@ def format_team_schedules(split_schedule, source_schedule):
 
 
 def upload_teamwise_schedules():
-    sch = load_current_schedule()
+    sch = caching.load_current_schedule()
     split_sch = format_sand_schedule(sch)
     team_schedules = [[list() for _ in range(div_count)] for div_count in sch.team_counts]
     teamwise_schedule = format_team_schedules(split_sch, team_schedules)

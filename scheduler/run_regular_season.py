@@ -150,24 +150,32 @@ def make_2024_sand_schedule():
     #sch_template_path = 'inputs/{}/{}'.format(dir_name, file_name)
     sch_template_root = os.path.join('inputs', dir_name)
     team_counts = [10, 10, 8]
-    #sch_template_path = get_newest_schedule_template(sch_template_root)
-    file_name = 'sand_2024-06-20f.csv'
-    sch_template_path = os.path.join(sch_template_root, file_name)
+    sch_template_path = get_newest_schedule_template(sch_template_root)
+    #file_name = 'sand_2024-06-20f.csv'
+    #ch_template_path = os.path.join(sch_template_root, file_name)
     print(f'making schedule for {sch_template_path}')
     #make_regular_season_schedule(sch_template_path, team_counts, seed=2, sch_tries=400, cycle_seeds=60)
     sch = make_sand_schdule_flock(sch_template_path, team_counts, seed=6, sch_tries=1000, cycle_count=100,
                                   debug=False, end_on_success=True)
+    sch.switch_teams(div_idx=1, team1=0, team2=5)
     return sch
 
 
 def make_and_upload_schedule():
-    sch = caching.get_schedule_with_caching()
+    #sch = caching.get_schedule_with_caching()
+    # sch = caching.load_current_schedule()
+    sch = make_2024_sand_schedule()
+    print(sch.get_audit_text())
     sheets_access.set_schedule_audit_sheet(sch.get_audit_text())
     schedule_list_list = sheets_formatting.format_sand_schedule(sch)
     sheets_access.set_formatted_schedule_to_sheet(schedule_list_list)
 
 
 if __name__ == '__main__':
-    sch = make_2024_sand_schedule()
-    print(sch.get_audit_text())
-    #make_and_upload_schedule()
+    export_to_sheet = False
+    if export_to_sheet:
+        make_and_upload_schedule()
+    else:
+        sch = make_2024_sand_schedule()
+        print(sch.get_audit_text())
+

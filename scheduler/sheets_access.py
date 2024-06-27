@@ -43,7 +43,7 @@ def get_team_names_data():
 
 def set_formatted_schedule_to_sheet(schedule_list_list):
     sheet = get_gspread_sheet()
-    sheet.open_sheet('robot_schedule_upload__dont_edit')
+    sheet.open_sheet('robot_schedule_upload__dont_edit')  # 'v2 schedule', 'robot_schedule_upload__dont_edit'
     col_count = len(schedule_list_list[0])
     end_col_options = {17: "Q", 21: "U"}
     edit_me_worksheet = sheet.sheet
@@ -58,7 +58,7 @@ def set_formatted_schedule_to_sheet(schedule_list_list):
 def set_schedule_audit_sheet(audit_report):
     audit_lines = audit_report.split('\n')
     sheet = get_gspread_sheet()
-    sheet.open_sheet('uploaded_schedule_audit_report')
+    sheet.open_sheet('uploaded_schedule_audit_report')  #  'v2 schedule audit', 'uploaded_schedule_audit_report'
     audit_worksheet = sheet.sheet
     cell_range = f'A1:A{len(audit_lines)}'
     cell_list = audit_worksheet.range(cell_range)

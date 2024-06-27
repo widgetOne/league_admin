@@ -6,6 +6,20 @@ from optimizer import save_schedules, get_schedules
 from optimizer import get_default_potential_sch_loc
 
 
+def load_current_schedule():
+    path = 'scratch'
+    schedule_name = 'round_robin-schedules-from-2024-06-24.pkl'
+    full_path = os.path.join(path, schedule_name)
+    return get_schedules(full_path)[0]
+
+
+def load_v2_current_schedule():
+    path = 'scratch'
+    schedule_name = 'round_robin-schedules-from-2024-06-26.pkl'
+    full_path = os.path.join(path, schedule_name)
+    return get_schedules(full_path)[0]
+
+
 def get_schedule_with_caching():
     canned_path = get_default_potential_sch_loc(str(datetime.date.today()))
     if not os.path.isfile(canned_path):

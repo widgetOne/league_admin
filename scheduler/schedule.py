@@ -157,6 +157,8 @@ class Schedule(object):
         out += [self.get_double_ref_report()]
         out += ['\n\n\nThree Hour Day Report\n']
         out += [self.get_three_hour_day_report()]
+        out += ['\n\n\nTime of Day Play Report\n']
+        out += [self.time_of_day_play_report()]
         out += ['\n\n\nSolution Error']
         out += ['This section reports what is checked for each division, and displays the total number']
         out += ['of errors for each category, for each division. This is basically always all 0.']
@@ -237,13 +239,34 @@ class Schedule(object):
 
     def get_three_hour_day_report(self):
         """Generate a report of that have three hours days"""
-        # qwerqwerqwer
         output = '\nDebug of teams that have to play 3 hours days'
         for day_idx, day in enumerate(self.days):
             day_fit = day.fitness_str()
             for div_idx, div in enumerate(day_fit._divs):
                 output += f'\nfitness on day {day_idx} in div {div_idx} was {div._three_hours_days}'
         return output
+
+    def time_of_day_play_report(self):
+        """Generate a report what times of day teams are playing"""
+        # qwerqwerqwer
+        output = 'Debug what time each day teams are actually play'
+        times_played = [[[0 for __ in range(5)] for _ in range(div_count)] for div_count in self.team_counts]
+        for day_idx, day in enumerate(self.days):
+            for court in day.courts:
+                is_short_day = len(court) == 4
+                short_day_offset = 1 if is_short_day else 0
+                for time, game in enumerate(court):
+                    if game.team1 == init_value:
+                        continue
+                    time_of_day = time+short_day_offset
+                    times_played[game.div][game.team1][time_of_day] += 1
+                    times_played[game.div][game.team2][time_of_day] += 1
+        for div_idx, div_times in enumerate(times_played):
+            output += f'\n'
+            for team_idx, team_times in enumerate(div_times):
+                output += f'\nIn Div {div_idx}, team {team_idx} will play at {team_times}'
+        return output
+
 
 
     '''
