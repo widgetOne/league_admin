@@ -67,6 +67,18 @@ def set_schedule_audit_sheet(audit_report):
     audit_worksheet.update_cells(cell_list)
 
 
+def set_league_apps_csv_sheet(schedule_csv_data):
+    # TODO: Time to refactor cell pushing logic to a helper function
+    sheet = get_gspread_sheet()
+    sheet.open_sheet('league_apps_csv')
+    csv_worksheet = sheet.sheet
+    cell_range = f'A1:J{len(schedule_csv_data)}'
+    cell_data = sum(schedule_csv_data, [])
+    cell_list = csv_worksheet.range(cell_range)
+    for cell_idx, cell in enumerate(cell_list):
+        cell.value = cell_data[cell_idx]
+    csv_worksheet.update_cells(cell_list)
+
 
 def set_division_teamwise_schedules(div_schs, sheet_name):
     sheet = get_gspread_sheet()

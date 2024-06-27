@@ -21,6 +21,7 @@ def make_league_apps_scv():
                 if game.div == init_value:
                     continue
                 row = [
+                    '',
                     team_cypher[(game.div, game.team1)],
                     team_cypher[(game.div, game.team2)],
                     day_strs[day_idx],
@@ -33,12 +34,16 @@ def make_league_apps_scv():
                 ]
                 data.append(row)
     output_path = 'scratch/2024_sand_vball_league_apps.csv'
-    with open(output_path, 'w') as csv_file:
-        writer = csv.writer(csv_file)
-        writer.writerows(data)
-    with open(output_path, 'r') as csv_file:
-        csv_str = csv_file.read()
-        print(csv_str)
+    export_to_csv_file = False
+    if export_to_csv_file:
+        with open(output_path, 'w') as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerows(data)
+        with open(output_path, 'r') as csv_file:
+            csv_str = csv_file.read()
+            print(csv_str)
+    else:
+        sheets_access.set_league_apps_csv_sheet(data)
 
 
 def push_v2_schedule_everywhere():
