@@ -85,27 +85,3 @@ class EqualSeasonPlay(SchedulerComponent):
                     raise ValueError(f"Team {team} has played {schedule.get_games_played(team)} games, expected {total_season_play}")
         return apply_equal_play_constraint
 
-
-class SchedulerModel(SchedulerComponent):
-    """Base class for scheduling models."""
-    def __init__(self):
-        super().__init__()
-        self._model = None
-        self._team1 = {}
-        self._team2 = {}
-
-    def teams_by_divisions(self, team_counts):
-        """Organize teams into divisions based on team counts."""
-        pass
-
-
-class ReffedSchedulerModel(SchedulerModel):
-    """Scheduling model that includes referee assignments."""
-    def __init__(self):
-        super().__init__()
-        self._ref = {}
-
-    def assign_referees(self, schedule):
-        """Assign referees to games in the schedule."""
-        pass
-
