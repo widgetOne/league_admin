@@ -13,10 +13,11 @@ class TotalPlayConstraint(SchedulerComponent):
             total_games_per_team (int): The number of games each team should play
         """
         super().__init__()
+        self.add_validator(self._get_total_play_validator(total_games_per_team))
         self.add_constraint(self._get_total_play_constraint(total_games_per_team))
 
-    def _get_total_play_constraint(self, total_games):
-        """Create a constraint function that enforces the total games per team.
+    def _get_total_play_validator(self, total_games):
+        """Create a validator function that confirms the total games per team.
         
         Args:
             total_games (int): The number of games each team should play
@@ -24,7 +25,7 @@ class TotalPlayConstraint(SchedulerComponent):
         Returns:
             function: A constraint function that checks each team's total games
         """
-        def enforce_total_play(schedule):
+        def validator_total_play(schedule):
             """Enforce that each team plays exactly the target number of games.
             
             Args:
@@ -41,3 +42,27 @@ class TotalPlayConstraint(SchedulerComponent):
                         f"but should play exactly {total_games} games"
                     )
         return enforce_total_play 
+
+
+    def _get_total_play_constraint(self, total_games):
+        """Create a constraint function that enforces the total games per team.
+        
+        Args:
+            total_games (int): The number of games each team should play
+            
+        Returns:
+            function: A constraint function that checks each team's total games
+        """
+        def constrain_total_play(schedule):
+            """Enforce that each team plays exactly the target number of games.
+            
+            Args:
+                schedule: The schedule to check and enforce the constraint on
+                
+            Raises:
+                ValueError: If any team's total games doesn't match the target
+            """
+            for team in schedule.teams:
+                model.Add(sum(schedule.is_playing[m, t_idx] for m in schedule.matches) == 16)
+        return enforce_total_play 
+
