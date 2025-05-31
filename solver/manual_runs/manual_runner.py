@@ -1,6 +1,9 @@
 from typing import Optional, Set, Any
-from ..facilities.facility import Facilities
-from ..schedule_component import ScheduleModel
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from facilities.facility import Facilities
+from schedule_component import ScheduleModel
 
 def make_schedule(
     facilities: Facilities,
@@ -11,7 +14,6 @@ def make_schedule(
     Args:
         facilities: The Facilities object containing all facility constraints
         constraints: Set of constraint objects to apply to the schedule
-        model: Optional existing model to use instead of creating a new one
         
     Returns:
         ScheduleModel: The solved schedule model
