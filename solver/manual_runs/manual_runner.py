@@ -16,9 +16,7 @@ def make_schedule(facilities: Facilities, constraints: Set[Any] = None) -> Sched
     solver = SchedulerSolver(facilities)
     
     # Add all constraints
-    if constraints:
-        for constraint in constraints:
-            solver.add_constraint(constraint)
+    solver.add_constraints(constraints)
     
     # Solve the model
     solver.solve()
