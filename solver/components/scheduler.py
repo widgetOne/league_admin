@@ -7,7 +7,7 @@ class SchedulerModel(SchedulerComponent):
     This class provides the foundation for different scheduling approaches,
     managing team assignments and divisions.
     """
-    def __init__(self, model=None):
+    def __init__(self, facility, model=None):
         """Initialize the scheduler model.
         
         Args:
@@ -15,6 +15,7 @@ class SchedulerModel(SchedulerComponent):
         """
         super().__init__()
         self._model = model if model is not None else cp_model.CpModel()
+        self._facility = {}
         self._team1 = {}
         self._team2 = {}
 
@@ -33,13 +34,13 @@ class ReffedSchedulerModel(SchedulerModel):
     Extends the base scheduler model to handle referee assignments
     for games in the schedule.
     """
-    def __init__(self, model=None):
+    def __init__(self, facility, model=None):
         """Initialize the reffed scheduler model.
         
         Args:
             model: Optional OR-Tools model. If None, creates a new CpModel.
         """
-        super().__init__(model)
+        super().__init__(facility, model)
         self._ref = {}
 
     def assign_referees(self, schedule):
