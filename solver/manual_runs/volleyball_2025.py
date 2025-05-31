@@ -1,8 +1,6 @@
 from pathlib import Path
-import sys
-sys.path.append(str(Path(__file__).parent.parent))
-from facilities.facility import Facilities
-from manual_runs.manual_runner import make_schedule
+from ..facilities import Facilities
+from .manual_runner import make_schedule
 
 def main():
     # Get the directory of this file

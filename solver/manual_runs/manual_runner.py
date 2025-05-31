@@ -1,9 +1,6 @@
 from typing import Optional, Set, Any
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
-from facilities.facility import Facilities
-from components.solver import SchedulerSolver
+from ..facilities import Facilities
+from ..components import SchedulerSolver
 
 def make_schedule(
     facilities: Facilities,

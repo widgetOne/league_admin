@@ -1,7 +1,6 @@
-from ..schedule_component import SchedulerComponent
 from ortools.sat.python import cp_model
 from typing import List, Dict, Set, Any
-from ..facilities.facility import Facilities, GameSlot
+from ..facilities import Facilities, GameSlot
 
 class SchedulerSolver:
     """A solver for scheduling games using constraint programming."""
@@ -11,9 +10,11 @@ class SchedulerSolver:
         
         Args:
             facilities: The Facilities object containing all facility constraints
+            model: Optional OR-Tools model. If None, creates a new CpModel.
         """
         self.facilities = facilities
         self.model = model if model is not None else cp_model.CpModel()
+        self.solver = cp_model.CpSolver()
         self.constraints = []
         
     def add_constraint(self, constraint: Any):
@@ -45,10 +46,10 @@ class ReffedSchedulerSolver(SchedulerSolver):
         
         Args:
             facilities: The Facilities object containing all facility constraints
-            ref_teams: List of teams that can provide referees
+            model: Optional OR-Tools model. If None, creates a new CpModel.
         """
         super().__init__(facilities, model)
-        self.ref_teams = ref_teams
+        self.ref_teams = []
         
     def __str__(self) -> str:
         """Return a string representation of the solution."""
