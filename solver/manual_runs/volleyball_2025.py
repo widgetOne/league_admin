@@ -1,6 +1,7 @@
 from pathlib import Path
 from ..facilities import Facilities
 from ..solver import SchedulerSolver
+from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
 from .manual_runner import make_schedule
 
 def main():
@@ -10,8 +11,8 @@ def main():
     # Load the volleyball facilities
     facilities = Facilities.from_yaml(str(current_dir / "facilities" / "configs" / "volleyball_2025.yaml"))
     
-    # Create empty set of constraints for now
-    constraints = set()
+    # Get the sand volleyball template components
+    constraints = get_sand_volleyball_template()
     
     # Make the schedule
     solver = make_schedule(facilities, constraints)
