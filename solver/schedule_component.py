@@ -26,26 +26,6 @@ class SchedulerComponent(object):
         """Add a validator to the component."""
         self._validators.append(validator)
 
-    def apply_constraints(self, schedule):
-        """Apply all constraints to the schedule."""
-        for constraint in self._constraints:
-            constraint(schedule)
-
-    def optimize(self, schedule):
-        """Apply all optimizers to the schedule."""
-        for optimizer in self._optimizers:
-            optimizer(schedule)
-
-    def post_process(self, schedule):
-        """Apply all post-processors to the schedule."""
-        for post_processor in self._post_processors:
-            post_processor(schedule)
-
-    def validate(self, schedule):
-        """Apply all validators to the schedule."""
-        for validator in self._validators:
-            validator(schedule)
-
     def __add__(self, other):
         """Combine two SchedulerComponents into a new one.
         
