@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from facility import Facilities
+import difflib
 
 def test_volleyball_facility_output():
     # Get the directory of this file
@@ -28,6 +29,17 @@ def test_volleyball_facility_output():
         expected_output = f.read()
     
     # Compare outputs
+    if facility_str != expected_output:
+        print("---- Difference between actual and expected output ----")
+        diff = difflib.unified_diff(
+            expected_output.splitlines(),
+            facility_str.splitlines(),
+            fromfile='expected_output',
+            tofile='facility_str',
+            lineterm=''
+        )
+        for line in diff:
+            print(line)
     assert facility_str == expected_output, "Facility string output does not match expected output"
     print("Test passed: Facility string output matches expected output")
 
