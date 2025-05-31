@@ -15,11 +15,11 @@ def main():
     constraints = set()
     
     # Make the schedule
-    model = make_schedule(facilities, constraints)
+    solver = make_schedule(facilities, constraints)
     
     # Print the result
     print("Schedule created successfully!")
-    print(model)
+    print(solver)
 
 if __name__ == "__main__":
     main() 

@@ -3,12 +3,12 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 from facilities.facility import Facilities
-from schedule_component import ScheduleModel
+from components.solver import SchedulerSolver
 
 def make_schedule(
     facilities: Facilities,
     constraints: Set[Any],
-) -> ScheduleModel:
+) -> SchedulerSolver:
     """Make a scheduling optimization with the given facilities and constraints.
     
     Args:
@@ -16,16 +16,16 @@ def make_schedule(
         constraints: Set of constraint objects to apply to the schedule
         
     Returns:
-        ScheduleModel: The solved schedule model
+        SchedulerSolver: The solved scheduler
     """
-    # Create or use existing model
-    model = ScheduleModel(facilities)
+    # Create solver
+    solver = SchedulerSolver(facilities)
     
     # Add all constraints
     for constraint in constraints:
-        model.add_constraint(constraint)
+        solver.add_constraint(constraint)
     
     # Solve the model
-    model.solve()
+    solver.solve()
     
-    return model 
+    return solver 
