@@ -1,9 +1,10 @@
-from ..schedule_component.components.total_play import TotalPlay
+from ..components.total_play import TotalPlayConstraint
 
 def get_sand_volleyball_template():
     """Get the template of components for sand volleyball scheduling.
     
     Returns:
-        A list of constraint components for sand volleyball scheduling.
+       Returns a list of the constaints required by default for any
+       sand volleyball schedule.
     """
-    return TotalPlay()
+    return [TotalPlayConstraint()]
