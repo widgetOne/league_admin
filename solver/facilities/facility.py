@@ -50,28 +50,43 @@ class Facilities:
         self.team_counts = team_counts
         self.games_per_season = games_per_season
         self.games_per_day = games_per_day
-        self.times = times
-        self.dates = dates
-        self.locations = locations
+        self._times = times
+        self._dates = dates
+        self._locations = locations
         self.game_slots = game_slots
         
         # Create time index mapping for maintaining original order
         self.time_idx = {t: idx for idx, t in enumerate(times)}
 
     @property
-    def dates(self) -> List[str]:
-        """Get the list of unique dates in the schedule."""
-        return sorted(set(slot.date for slot in self.game_slots))
-
-    @property
     def times(self) -> List[time]:
         """Get the list of unique times in the schedule."""
-        return sorted(set(slot.time for slot in self.game_slots))
+        return self._times
+
+    @times.setter
+    def times(self, value: List[time]):
+        """Set the list of times."""
+        self._times = value
+
+    @property
+    def dates(self) -> List[str]:
+        """Get the list of unique dates in the schedule."""
+        return self._dates
+
+    @dates.setter
+    def dates(self, value: List[str]):
+        """Set the list of dates."""
+        self._dates = value
 
     @property
     def locations(self) -> List[int]:
         """Get the list of unique locations in the schedule."""
-        return sorted(set(slot.location for slot in self.game_slots))
+        return self._locations
+
+    @locations.setter
+    def locations(self, value: List[int]):
+        """Set the list of locations."""
+        self._locations = value
 
     def __str__(self) -> str:
         """Return a comprehensive string representation of the facility configuration.
@@ -141,26 +156,22 @@ class Facilities:
         with open(yaml_path, 'r') as f:
             config = yaml.safe_load(f)
             
-        # Parse times as datetime.time objects
-        times = [datetime.strptime(t, '%H:%M').time() for t in config['times']]
-        # Parse time_slots as well
-        time_slots = []
-        for ts in config['time_slots']:
-            t_obj = datetime.strptime(ts['time'], '%H:%M').time()
-            time_slots.append({'time': t_obj, 'courts': ts['courts']})
+        # Extract times from time_slots
+        times = [datetime.strptime(ts['time'], '%H:%M').time() for ts in config['time_slots']]
         
         # Generate game slots from the configuration
         game_slots = []
         for idx, date in enumerate(config['dates']):
             week_idx = idx + 1
-            for time_idx, time_slot in enumerate(time_slots):
+            for time_idx, time_slot in enumerate(config['time_slots']):
+                t_obj = datetime.strptime(time_slot['time'], '%H:%M').time()
                 for court_idx, court_active in enumerate(time_slot['courts']):
                     if court_active == 1:
                         game_slots.append(GameSlot(
                             weekend_idx=week_idx,
                             date=date,
                             location=court_idx,
-                            time=time_slot['time'],
+                            time=t_obj,
                             time_idx=time_idx
                         ))
             
@@ -170,6 +181,6 @@ class Facilities:
             games_per_day=config.get('games_per_day', 1),
             times=times,
             dates=config['dates'],
-            locations=config['locations'],
+            locations=list(range(len(config['time_slots'][0]['courts']))),  # Generate locations based on court count
             game_slots=game_slots
         ) 
