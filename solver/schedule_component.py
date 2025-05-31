@@ -8,6 +8,7 @@ class SchedulerComponent(object):
         self._constraints = []
         self._optimizers = []
         self._post_processors = []
+        self._validators = []
 
     def add_constraint(self, constraint):
         """Add a constraint to the component."""
@@ -20,6 +21,10 @@ class SchedulerComponent(object):
     def add_post_processor(self, post_processor):
         """Add a post-processor to the component."""
         self._post_processors.append(post_processor)
+
+    def add_validator(self, validator):
+        """Add a validator to the component."""
+        self._validators.append(validator)
 
     def apply_constraints(self, schedule):
         """Apply all constraints to the schedule."""
@@ -35,6 +40,11 @@ class SchedulerComponent(object):
         """Apply all post-processors to the schedule."""
         for post_processor in self._post_processors:
             post_processor(schedule)
+
+    def validate(self, schedule):
+        """Apply all validators to the schedule."""
+        for validator in self._validators:
+            validator(schedule)
 
     def __add__(self, other):
         """Combine two SchedulerComponents into a new one.
@@ -52,6 +62,7 @@ class SchedulerComponent(object):
         combined._constraints = self._constraints + other._constraints
         combined._optimizers = self._optimizers + other._optimizers
         combined._post_processors = self._post_processors + other._post_processors
+        combined._validators = self._validators + other._validators
         return combined
 
     def __iadd__(self, other):
@@ -69,6 +80,7 @@ class SchedulerComponent(object):
         self._constraints.extend(other._constraints)
         self._optimizers.extend(other._optimizers)
         self._post_processors.extend(other._post_processors)
+        self._validators.extend(other._validators)
         return self
 
 
