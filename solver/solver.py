@@ -1,6 +1,6 @@
-from ortools.sat.python import cp_model
 from typing import List, Dict, Set, Any
-from ..facilities import Facilities, GameSlot
+from ortools.sat.python import cp_model
+from .facilities.facility import Facilities, GameSlot
 
 class SchedulerSolver:
     """A solver for scheduling games using constraint programming."""

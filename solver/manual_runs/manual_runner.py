@@ -1,11 +1,8 @@
 from typing import Optional, Set, Any
 from ..facilities import Facilities
-from ..components import SchedulerSolver
+from ..solver import SchedulerSolver
 
-def make_schedule(
-    facilities: Facilities,
-    constraints: Set[Any],
-) -> SchedulerSolver:
+def make_schedule(facilities: Facilities, constraints: Set[Any] = None) -> SchedulerSolver:
     """Make a scheduling optimization with the given facilities and constraints.
     
     Args:
@@ -19,8 +16,9 @@ def make_schedule(
     solver = SchedulerSolver(facilities)
     
     # Add all constraints
-    for constraint in constraints:
-        solver.add_constraint(constraint)
+    if constraints:
+        for constraint in constraints:
+            solver.add_constraint(constraint)
     
     # Solve the model
     solver.solve()

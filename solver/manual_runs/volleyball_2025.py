@@ -1,5 +1,6 @@
 from pathlib import Path
 from ..facilities import Facilities
+from ..solver import SchedulerSolver
 from .manual_runner import make_schedule
 
 def main():
