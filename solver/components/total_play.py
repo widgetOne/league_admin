@@ -25,13 +25,12 @@ class TotalPlayConstraint(SchedulerComponent):
         Returns:
             function: A constraint function that adds the total games requirement to the model
         """
-        def enforce_total_play(schedule):
+        def enforce_total_play(model):
             """Add the total games constraint to the OR-Tools model.
             
             Args:
                 schedule: The schedule model to add the constraint to
             """
-            model = schedule._model
             total_games = model.GetVarByName('games_per_season')
             for team in schedule.teams:
                 games_played = sum(schedule.is_playing[m, team] for m in schedule.matches)
