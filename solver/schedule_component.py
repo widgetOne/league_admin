@@ -1,3 +1,27 @@
+from abc import ABC, abstractmethod
+
+class ModelActor(ABC):
+    """Base class for all model actors.
+    
+    These are function which act on the schedule model based on
+    concrete realities from the facilities object.
+    """
+    def __init__(self, actor_function: Callable[[cp_model.CpModel, Facilities], None]):
+        self._actor_function = actor_function
+    
+    def __call__(self, model: cp_model.CpModel, facilities: Facilities):
+        """Apply the actor to the model.
+        
+        This will add logic to the model based on the numbers and realities
+        imposed by the facilities for this schedule.
+
+        Args:
+            model: The model to apply the actor to
+            facilities: The facilities object to use for the actor
+        """
+        self._actor_function(model, facilities)
+
+
 class SchedulerComponent(object):
     """Base class for all scheduling components.
     
@@ -10,19 +34,19 @@ class SchedulerComponent(object):
         self._post_processors = []
         self._validators = []
 
-    def add_constraint(self, constraint):
+    def add_constraint(self, constraint: ModelActor):
         """Add a constraint to the component."""
         self._constraints.append(constraint)
 
-    def add_optimizer(self, optimizer):
+    def add_optimizer(self, optimizer: ModelActor):
         """Add an optimizer to the component."""
         self._optimizers.append(optimizer)
 
-    def add_post_processor(self, post_processor):
+    def add_post_processor(self, post_processor: ModelActor):
         """Add a post-processor to the component."""
         self._post_processors.append(post_processor)
 
-    def add_validator(self, validator):
+    def add_validator(self, validator: ModelActor):
         """Add a validator to the component."""
         self._validators.append(validator)
 
