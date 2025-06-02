@@ -6,7 +6,7 @@ from .schedule_component import SchedulerComponent
 class SchedulerSolver(SchedulerComponent):
     """A solver for scheduling games using constraint programming."""
     
-    def __init__(self, facilities: Facilities, constraints: Iterable[SchedulerComponent] = None, model=None):
+    def __init__(self, facilities: Facilities, components: Iterable[SchedulerComponent] = []], model=None):
         """Initialize the solver with facility constraints.
         
         Args:
@@ -22,8 +22,8 @@ class SchedulerSolver(SchedulerComponent):
         # Apply facility constraints to the model
         self._apply_facilities_to_model()
         
-        if constraints:
-            self.add_constraints(constraints)
+        for component in components:
+            self += component
     
     def _apply_facilities_to_model(self):
         """Apply facility-level constraints to the model.
@@ -38,14 +38,13 @@ class SchedulerSolver(SchedulerComponent):
             'games_per_season'  # Variable name
         )
 
-
         
     def solve(self):
         """Solve the scheduling problem."""
         for constraint in self._constraints:
-            constraint(self.model, self.facilities)
+            constraint(self)
         for optimizer in self._optimizers:
-            optimizer(self.model, self.facilities)
+            optimizer(self)
         status = self.solver.Solve(self.model)
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             print('Solution found!')

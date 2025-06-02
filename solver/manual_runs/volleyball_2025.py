@@ -1,6 +1,6 @@
 from pathlib import Path
-from ..facilities import Facilities
-from ..solver import SchedulerSolver
+from ..facilities.facility_volleyball_text import load_volleyball_facilities
+from ..schedule import Schedule
 from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
 from .manual_runner import make_schedule
 

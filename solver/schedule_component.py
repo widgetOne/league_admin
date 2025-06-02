@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Callable
 from ortools.sat.python import cp_model
 from .facilities.facility import Facilities
+from .schedule import Schedule
 
 class ModelActor(ABC):
     """Base class for any object that can act on the model.
@@ -9,7 +10,7 @@ class ModelActor(ABC):
     These are function which act on the schedule model based on
     concrete realities from the facilities object.
     """
-    def __init__(self, actor_function: Callable[[cp_model.CpModel, Facilities], None]):
+    def __init__(self, actor_function: Callable[[Schedule], None]):
         """Initialize with a function that acts on the model.
         
         Args:
@@ -17,9 +18,9 @@ class ModelActor(ABC):
         """
         self._actor_function = actor_function
 
-    def __call__(self, model: cp_model.CpModel, facilities: Facilities):
+    def __call__(self, model: Schedule):
         """Call the actor function with the given model and facilities."""
-        self._actor_function(model, facilities)
+        self._actor_function(Schedule)
 
 class SchedulerComponent:
     """Base class for all scheduler components.

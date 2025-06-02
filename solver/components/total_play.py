@@ -1,4 +1,6 @@
 from ..schedule_component import SchedulerComponent, ModelActor
+from ..schedule import Schedule
+
 
 class TotalPlayConstraint(SchedulerComponent):
     """A component that ensures each team plays exactly the specified number of games.
@@ -25,16 +27,16 @@ class TotalPlayConstraint(SchedulerComponent):
         Returns:
             function: A constraint function that adds the total games requirement to the model
         """
-        def enforce_total_play(model, facilities):
+        def enforce_total_play(schedule: Schedule):
             """Add the total games constraint to the OR-Tools model.
             
             Args:
                 schedule: The schedule model to add the constraint to
             """
-            total_games = facilities.games_per_season
+            total_games = schedule.facilities.games_per_season
             for team in schedule.teams:
                 games_played = sum(schedule.is_playing[m, team] for m in schedule.matches)
-                model.Add(games_played == total_games)
+                schedule.model.Add(games_played == total_games)
         return ModelActor(enforce_total_play)
 
     def _get_total_play_validator(self):
