@@ -14,7 +14,7 @@ class TimeSlot:
         return f"Time: {self.time.strftime('%H:%M')}, Courts: {self.courts}"
 
 @dataclass
-class GameSlot:
+class Match:
     """Represents a single game slot in the facility."""
     weekend_idx: int
     date: str
@@ -35,7 +35,7 @@ class Facilities:
                  times: List[time],
                  dates: List[str],
                  locations: List[str],
-                 game_slots: List[GameSlot]):
+                 matches: List[Match]):
         """Initialize a new Facilities instance.
         
         Args:
@@ -45,7 +45,7 @@ class Facilities:
             times: List of available time slots
             dates: List of available dates
             locations: List of available locations
-            game_slots: List of all possible game slots
+            matches: List of all possible game slots
         """
         self.team_counts = team_counts
         self.games_per_season = games_per_season
@@ -53,7 +53,7 @@ class Facilities:
         self._times = times
         self._dates = dates
         self._locations = locations
-        self.game_slots = game_slots
+        self.matches = matches
         
         # Create time index mapping for maintaining original order
         self.time_idx = {t: idx for idx, t in enumerate(times)}
@@ -105,10 +105,10 @@ class Facilities:
         lines.append("")
         
         # Game Slots Summary
-        lines.append("Game Slots:")
+        lines.append("Matches:")
         # Group slots by week
         slots_by_week = {}
-        for slot in self.game_slots:
+        for slot in self.matches:
             if slot.weekend_idx not in slots_by_week:
                 slots_by_week[slot.weekend_idx] = {}
             if slot.date not in slots_by_week[slot.weekend_idx]:
@@ -141,7 +141,7 @@ class Facilities:
         return pd.DataFrame([{
             **vars(slot),
             'time': slot.time.strftime('%H:%M')
-        } for slot in self.game_slots])
+        } for slot in self.matches])
     
     @classmethod
     def from_yaml(cls, yaml_path: str) -> 'Facilities':
@@ -160,14 +160,14 @@ class Facilities:
         times = [datetime.strptime(ts['time'], '%H:%M').time() for ts in config['time_slots']]
         
         # Generate game slots from the configuration
-        game_slots = []
+        matches = []
         for idx, date in enumerate(config['dates']):
             week_idx = idx + 1
             for time_idx, time_slot in enumerate(config['time_slots']):
                 t_obj = datetime.strptime(time_slot['time'], '%H:%M').time()
                 for court_idx, court_active in enumerate(time_slot['courts']):
                     if court_active == 1:
-                        game_slots.append(GameSlot(
+                        matches.append(Match(
                             weekend_idx=week_idx,
                             date=date,
                             location=court_idx,
@@ -182,5 +182,5 @@ class Facilities:
             times=times,
             dates=config['dates'],
             locations=list(range(len(config['time_slots'][0]['courts']))),  # Generate locations based on court count
-            game_slots=game_slots
+            matches=matches
         ) 
