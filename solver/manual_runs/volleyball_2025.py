@@ -12,10 +12,10 @@ def main():
     facilities = Facilities.from_yaml(str(current_dir / "facilities" / "configs" / "volleyball_2025.yaml"))
     
     # Get the sand volleyball template components
-    constraints = get_sand_volleyball_template()
+    schedule_components = get_sand_volleyball_template()
     
     # Make the schedule
-    solver = make_schedule(facilities, constraints)
+    solver = make_schedule(facilities, schedule_components)
     
     # Print the result
     print("Schedule created successfully!")
