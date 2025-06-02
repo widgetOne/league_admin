@@ -1,4 +1,4 @@
-from ..schedule_component import SchedulerComponent
+from ..schedule_component import SchedulerComponent, ModelActor
 
 class TotalPlayConstraint(SchedulerComponent):
     """A component that ensures each team plays exactly the specified number of games.
