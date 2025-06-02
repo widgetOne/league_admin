@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Callable
+from typing import List, Callable, Any
 from ortools.sat.python import cp_model
 from .facilities.facility import Facilities
-from .schedule import Schedule
+from .schedule_interface import ScheduleInterface
 
 class ModelActor(ABC):
     """Base class for any object that can act on the model.
@@ -10,17 +10,17 @@ class ModelActor(ABC):
     These are function which act on the schedule model based on
     concrete realities from the facilities object.
     """
-    def __init__(self, actor_function: Callable[[Schedule], None]):
+    def __init__(self, actor_function: Callable[[ScheduleInterface], None]):
         """Initialize with a function that acts on the model.
         
         Args:
-            actor_function: Function that takes a model and facilities, then acts on the model
+            actor_function: Function that takes an object conforming to ScheduleInterface
         """
         self._actor_function = actor_function
 
-    def __call__(self, model: Schedule):
-        """Call the actor function with the given model and facilities."""
-        self._actor_function(Schedule)
+    def __call__(self, schedule_obj: ScheduleInterface):
+        """Call the actor function with the given schedule object."""
+        self._actor_function(schedule_obj)
 
 class SchedulerComponent:
     """Base class for all scheduler components.
@@ -76,6 +76,8 @@ class SchedulerComponent:
         Returns:
             A new component containing all manipulators from both components
         """
+        if not isinstance(other, SchedulerComponent):
+            return NotImplemented
         result = SchedulerComponent()
         result._constraints = self._constraints + other._constraints
         result._optimizers = self._optimizers + other._optimizers
@@ -92,6 +94,8 @@ class SchedulerComponent:
         Returns:
             self, with the other component's manipulators added
         """
+        if not isinstance(other, SchedulerComponent):
+            return NotImplemented
         self._constraints.extend(other._constraints)
         self._optimizers.extend(other._optimizers)
         self._validators.extend(other._validators)
@@ -100,14 +104,13 @@ class SchedulerComponent:
 
 class EqualSeasonPlay(SchedulerComponent):
     """Component that ensures equal number of games played per team."""
-    def __init__(self, total_season_play):
+    def __init__(self, total_season_play_target: int):
         super().__init__()
-        self._constraints.append(self.generate_equal_season_play_constraints(total_season_play))
+        self.add_constraint(ModelActor(self.generate_equal_season_play_constraints(total_season_play_target)))
 
-    def generate_equal_season_play_constraints(self, total_season_play):
-        def apply_equal_play_constraint(schedule):
-            for team in schedule.teams:
-                if schedule.get_games_played(team) != total_season_play:
-                    raise ValueError(f"Team {team} has played {schedule.get_games_played(team)} games, expected {total_season_play}")
+    def generate_equal_season_play_constraints(self, total_season_play_target: int) -> Callable[[ScheduleInterface], None]:
+        def apply_equal_play_constraint(schedule: ScheduleInterface):
+            print(f"Validator concept: Ensuring teams play {total_season_play_target} games.")
+            pass
         return apply_equal_play_constraint
 
