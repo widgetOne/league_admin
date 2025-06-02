@@ -43,9 +43,9 @@ class SchedulerSolver(SchedulerComponent):
     def solve(self):
         """Solve the scheduling problem."""
         for constraint in self._constraints:
-            constraint(self.model)
+            constraint(self.model, self.facilities)
         for optimizer in self._optimizers:
-            optimizer(self.model)
+            optimizer(self.model, self.facilities)
         status = self.solver.Solve(self.model)
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             print('Solution found!')
