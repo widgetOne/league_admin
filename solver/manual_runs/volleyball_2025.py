@@ -15,11 +15,11 @@ def main():
     schedule_components = get_sand_volleyball_template()
     
     # Make the schedule
-    solver = make_schedule(facilities, schedule_components)
+    schedule = make_schedule(facilities, schedule_components)
     
     # Print the result
     print("Schedule created successfully!")
-    print(solver)
+    print(schedule)
 
 if __name__ == "__main__":
     main() 
