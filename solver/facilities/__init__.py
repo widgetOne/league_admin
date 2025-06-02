@@ -1,3 +1,3 @@
-from .facility import Facilities, GameSlot, TimeSlot
+from .facility import Facilities, Match, TimeSlot
 
-__all__ = ['Facilities', 'GameSlot', 'TimeSlot'] 
+__all__ = ['Facilities', 'Match', 'TimeSlot'] 

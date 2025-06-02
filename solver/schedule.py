@@ -44,6 +44,10 @@ class SchedulerSolver(SchedulerComponent):
         for component in components:
             self += component
     
+    @property
+    def matches(self):
+        return self.facilities.matches
+    
     def _apply_facilities_to_model(self):
         """Apply facility-level constraints and define core model variables based on facilities.
         Translates logic from Colab notebook.
