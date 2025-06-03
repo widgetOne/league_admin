@@ -25,6 +25,12 @@ class Match:
     def __str__(self):
         return f"Week {self.weekend_idx} ({self.date}) - Court {self.location + 1} at {self.time.strftime('%H:%M')}"
 
+    def __hash__(self):
+        return hash((self.weekend_idx, self.date, self.location, self.time, self.time_idx))
+    
+    def __eq__(self, other):
+        return (self.__hash__()) == (other.__hash__())
+
 class Facilities:
     """Represents the physical and temporal constraints of the facility."""
     
