@@ -4,7 +4,7 @@ from .facilities.facility import Facilities, Match
 from .schedule_component import SchedulerComponent
 from .schedule_interface import ScheduleInterface
 
-class SchedulerSolver(SchedulerComponent, ScheduleInterface):
+class Schedule(SchedulerComponent, ScheduleInterface):
     """A solver for scheduling games using constraint programming."""
     
     def __init__(self, facilities: Facilities, components: Iterable[SchedulerComponent] = [], model=None):
@@ -188,9 +188,9 @@ class SchedulerSolver(SchedulerComponent, ScheduleInterface):
             
     def __str__(self) -> str:
         """Return a string representation of the solution."""
-        return f"SchedulerSolver with {len(self._constraints)} constraints"
+        return f"Schedule with {len(self._constraints)} constraints"
 
-class ReffedSchedulerSolver(SchedulerSolver):
+class ReffedSchedule(Schedule):
     """A solver for scheduling games that includes referee assignments."""
     
     def __init__(self, facilities: Facilities, components: Iterable[SchedulerComponent] = [], model=None):
@@ -205,4 +205,4 @@ class ReffedSchedulerSolver(SchedulerSolver):
         
     def __str__(self) -> str:
         """Return a string representation of the solution."""
-        return f"ReffedSchedulerSolver with {len(self._constraints)} constraints"
+        return f"ReffedSchedule with {len(self._constraints)} constraints"
