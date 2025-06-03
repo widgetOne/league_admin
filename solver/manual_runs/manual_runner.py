@@ -16,8 +16,9 @@ def make_schedule(facilities: Facilities, components: Iterable[SchedulerComponen
     # Create schedule
     schedule = Schedule(facilities)
     
-    # Add all constraints
-    schedule.add_constraints(components)
+    # Add all constraints - use += operator or individual add_constraint calls
+    for component in components:
+        schedule += component  # This uses the __iadd__ method from SchedulerComponent
     
     # Solve the model
     schedule.solve()
