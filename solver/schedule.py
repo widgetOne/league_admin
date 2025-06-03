@@ -15,7 +15,6 @@ class Schedule(SchedulerComponent, ScheduleInterface):
             components: Optional iterable of SchedulerComponents to apply
             model: Optional OR-Tools model. If None, creates a new CpModel.
         """
-        super().__init__()
         self._facilities = facilities
         self._model = model if model is not None else cp_model.CpModel()
         self.solver = cp_model.CpSolver()
@@ -44,9 +43,12 @@ class Schedule(SchedulerComponent, ScheduleInterface):
         # Apply facility constraints to the model
         self._apply_facilities_to_model()
         
+        super().__init__()
         for component in components:
             self += component
-    
+
+        self._apply_facilities_to_model()
+
     @property
     def facilities(self) -> Facilities:
         return self._facilities
@@ -67,6 +69,8 @@ class Schedule(SchedulerComponent, ScheduleInterface):
         """Apply facility-level constraints and define core model variables based on facilities.
         Translates logic from Colab notebook.
         """
+        
+        self.teams = list(range(self.total_teams))
         
         calculated_total_teams = sum(self.facilities.team_counts)
         if calculated_total_teams <= 0:
