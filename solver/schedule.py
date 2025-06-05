@@ -161,11 +161,8 @@ class Schedule:
         
     def solve(self):
         """Solve the scheduling problem."""
-        for constraint_applier_actor in self._constraints:
-            constraint_applier_actor(self)
-        for optimizer_applier_actor in self._optimizers:
-            optimizer_applier_actor(self)
-        status = self.solver.Solve(self.model)
+
+        status = self.model.Solve(self.model)
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             print('Solution found!')
         else:
@@ -191,6 +188,3 @@ class ReffedSchedule(Schedule):
         """
         super().__init__(facilities, model)
         
-    def __str__(self) -> str:
-        """Return a string representation of the solution."""
-        return f"ReffedSchedule with {len(self._constraints)} constraints"
