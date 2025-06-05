@@ -58,17 +58,16 @@ class Schedule:
             raise ValueError("Scheduling requires at least one team. Please check team_counts in facilities.")
         self.total_teams = calculated_total_teams
         self.teams = list(range(self.total_teams))
-
-        team_div_list = []
+        self.team_div = []
         for div_idx, div_count in enumerate(self.facilities.team_counts):
             if div_count > 0: # Only add divisions that have teams
                 for _ in range(div_count):
-                    team_div_list.append(div_idx)
+                    self.team_div.append(div_idx)
         
         # This should not be an issue if calculated_total_teams > 0
         # and team_counts is structured correctly (i.e., sum of positive counts > 0)
-        if not team_div_list:
-             raise ValueError("team_div_list is empty despite total_teams > 0. Check team_counts structure.")
+        if not self.team_div:
+             raise ValueError("team_div is empty despite total_teams > 0. Check team_counts structure.")
 
         all_matches = self.facilities.matches
         if not all_matches:
@@ -95,8 +94,8 @@ class Schedule:
             self.home_div[m] = self.model.NewIntVar(0, num_divisions - 1, f"home_div_{name_suffix}")
             self.ref_div[m] = self.model.NewIntVar(0, num_divisions - 1, f"ref_div_{name_suffix}")
 
-            self.model.AddElement(self.home_team[m], team_div_list, self.home_div[m])
-            self.model.AddElement(self.ref[m], team_div_list, self.ref_div[m])
+            self.model.AddElement(self.home_team[m], self.team_div, self.home_div[m])
+            self.model.AddElement(self.ref[m], self.team_div, self.ref_div[m])
             
             self.model.Add(self.home_team[m] != self.away_team[m])
             self.model.Add(self.home_team[m] != self.ref[m])
