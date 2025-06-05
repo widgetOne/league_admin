@@ -94,6 +94,11 @@ class Facilities:
         """Set the list of locations."""
         self._locations = value
 
+    @property
+    def total_teams(self) -> int:
+        """Get the total number of teams across all divisions."""
+        return sum(self.team_counts)
+
     def __str__(self) -> str:
         """Return a comprehensive string representation of the facility configuration.
         
