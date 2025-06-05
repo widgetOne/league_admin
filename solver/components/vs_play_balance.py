@@ -107,8 +107,8 @@ class VsPlayBalanceConstraint(SchedulerComponent):
             games_per_season = schedule.facilities.games_per_season
 
             
-            # Get the vs play report
-            vs_report = schedule.get_vs_report()
+            # Get the team report which contains vs play data
+            team_report = schedule.get_team_report()
             
             for t1 in schedule.teams:
                 for t2 in schedule.teams:
@@ -128,8 +128,8 @@ class VsPlayBalanceConstraint(SchedulerComponent):
                         min_games = games_per_season // teams_in_division
                         max_games = math.ceil(games_per_season / teams_in_division)
                     
-                    # Check the actual games played
-                    actual_games = vs_report.loc[t1, t2] if t2 in vs_report.loc[t1] else 0
+                    # Check the actual games played using the vs column from team report
+                    actual_games = team_report.loc[t1, f'vs_{t2}']
                     
                     if actual_games < min_games or actual_games > max_games:
                         raise ValueError(
