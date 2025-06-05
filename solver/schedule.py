@@ -275,7 +275,7 @@ class Schedule:
 
     def __str__(self) -> str:
         """Return a string representation of the solution."""
-        return f"Schedule with {len(self._constraints)} constraints"
+        return f"Schedule with {len(self.matches)} matches for {self.total_teams} teams"
 
 class ReffedSchedule(Schedule):
     """A solver for scheduling games that includes referee assignments."""

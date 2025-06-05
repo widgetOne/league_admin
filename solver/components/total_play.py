@@ -58,11 +58,13 @@ class TotalPlayConstraint(SchedulerComponent):
                 ValueError: If any team's total games doesn't match the target
             """
             total_games = schedule.facilities.games_per_season
-            for team in schedule.teams:
-                games_played = schedule.get_games_played(team)
+            team_report = schedule.get_team_report()
+            
+            for team_idx in schedule.teams:
+                games_played = team_report.loc[team_idx, 'total_play']
                 if games_played != total_games:
                     raise ValueError(
-                        f"Team {team} has played {games_played} games, "
+                        f"Team {team_idx} has played {games_played} games, "
                         f"but should play exactly {total_games} games"
                     )
         return validate_total_play
