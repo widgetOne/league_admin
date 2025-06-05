@@ -1,8 +1,8 @@
 import pathlib
-from solver import Facilities, Schedule # Import Facilities and Schedule from solver package
-# from solver.components import TotalPlayConstraint # Removed this problematic import
-from solver.component_sets.sand_volleyball_template import get_sand_volleyball_template
-from solver.manual_runs.manual_runner import make_schedule # This seems unused now
+from .. import Facilities, Schedule # Import Facilities and Schedule from solver package
+# from ..components import TotalPlayConstraint # Removed this problematic import
+from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
+from .manual_runner import make_schedule # This seems unused now
 
 def main():
     """Load facilities and run the volleyball scheduler."""
