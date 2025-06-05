@@ -1,23 +1,20 @@
-from typing import List, Dict, Set, Any, Iterable, Tuple
+from typing import List, Dict, Set, Any, Iterable, Tuple, Optional
 from ortools.sat.python import cp_model
 from .facilities.facility import Facilities, Match
-from .schedule_component import SchedulerComponent
-from .schedule_interface import ScheduleInterface
+from .schedule_component import ModelActor
 
-class Schedule(SchedulerComponent, ScheduleInterface):
+class Schedule:
     """A solver for scheduling games using constraint programming."""
     
-    def __init__(self, facilities: Facilities, components: Iterable[SchedulerComponent] = [], model=None):
+    def __init__(self, facilities: Facilities, model: Optional[cp_model.CpModel]):
         """Initialize the solver with facility constraints.
         
         Args:
             facilities: The Facilities object containing all facility constraints
-            components: Optional iterable of SchedulerComponents to apply
             model: Optional OR-Tools model. If None, creates a new CpModel.
         """
-        self._facilities = facilities
-        self._model = model if model is not None else cp_model.CpModel()
-        self.solver = cp_model.CpSolver()
+        self.facilities = facilities
+        self.model = model
         
         # Initialize dictionaries for OR-Tools variables
         self.home_team: Dict[Any, Any] = {}
@@ -42,24 +39,14 @@ class Schedule(SchedulerComponent, ScheduleInterface):
 
         # Apply facility constraints to the model
         self._apply_facilities_to_model()
-        
-        super().__init__()
-        for component in components:
-            self += component
 
-        self._apply_facilities_to_model()
 
-    @property
-    def facilities(self) -> Facilities:
-        return self._facilities
 
-    @property
-    def model(self) -> cp_model.CpModel:
-        return self._model
+
 
     @property
     def total_teams(self) -> int:
-        return self._total_teams
+        return self.facilities.total_teams
 
     @property
     def matches(self):
@@ -69,8 +56,6 @@ class Schedule(SchedulerComponent, ScheduleInterface):
         """Apply facility-level constraints and define core model variables based on facilities.
         Translates logic from Colab notebook.
         """
-        
-        self.teams = list(range(self.total_teams))
         
         calculated_total_teams = sum(self.facilities.team_counts)
         if calculated_total_teams <= 0:
@@ -197,15 +182,14 @@ class Schedule(SchedulerComponent, ScheduleInterface):
 class ReffedSchedule(Schedule):
     """A solver for scheduling games that includes referee assignments."""
     
-    def __init__(self, facilities: Facilities, components: Iterable[SchedulerComponent] = [], model=None):
+    def __init__(self, facilities: Facilities, model: Optional[cp_model.CpModel] = None):
         """Initialize the solver with facility and referee constraints.
         
         Args:
             facilities: The Facilities object containing all facility constraints
-            components: Optional iterable of SchedulerComponents to apply
             model: Optional OR-Tools model. If None, creates a new CpModel.
         """
-        super().__init__(facilities, components, model)
+        super().__init__(facilities, model)
         
     def __str__(self) -> str:
         """Return a string representation of the solution."""
