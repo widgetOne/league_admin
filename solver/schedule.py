@@ -40,14 +40,6 @@ class Schedule:
         # Apply facility constraints to the model
         self._apply_facilities_to_model()
 
-
-
-
-
-    @property
-    def total_teams(self) -> int:
-        return self.facilities.total_teams
-
     @property
     def matches(self):
         return self.facilities.matches
