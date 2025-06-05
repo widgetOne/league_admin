@@ -35,6 +35,7 @@ class SchedulerComponent:
         self._optimizers: List[ModelActor] = []
         self._validators: List[ModelActor] = []
         self._post_processors: List[ModelActor] = []
+        self._component_classes: List[str] = [self.__class__.__name__]
 
     def add_constraint(self, constraint: ModelActor):
         """Add a constraint to the component.
@@ -68,6 +69,14 @@ class SchedulerComponent:
         """
         self._post_processors.append(post_processor)
 
+    def get_component_classes(self) -> List[str]:
+        """Get the list of component class names that make up this component.
+        
+        Returns:
+            List of class names
+        """
+        return self._component_classes.copy()
+
     def __add__(self, other: 'SchedulerComponent') -> 'SchedulerComponent':
         """Combine two components.
         
@@ -84,6 +93,7 @@ class SchedulerComponent:
         result._optimizers = self._optimizers + other._optimizers
         result._validators = self._validators + other._validators
         result._post_processors = self._post_processors + other._post_processors
+        result._component_classes = self._component_classes + other._component_classes
         return result
 
     def __iadd__(self, other: 'SchedulerComponent') -> 'SchedulerComponent':
@@ -101,6 +111,7 @@ class SchedulerComponent:
         self._optimizers.extend(other._optimizers)
         self._validators.extend(other._validators)
         self._post_processors.extend(other._post_processors)
+        self._component_classes.extend(other._component_classes)
         return self
 
 class EqualSeasonPlay(SchedulerComponent):
