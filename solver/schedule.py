@@ -1,5 +1,6 @@
 from typing import List, Dict, Set, Any, Iterable, Tuple, Optional
 import datetime
+import pandas as pd
 from ortools.sat.python import cp_model
 from .facilities.facility import Facilities, Match
 from .schedule_component import ModelActor
@@ -38,6 +39,7 @@ class Schedule:
         self.playing_at_time: Dict[Tuple[int, int, int], Any] = {}
         
         self._total_teams: int = 0
+        self._game_report: Optional[pd.DataFrame] = None
 
         # Apply facility constraints to the model
         self._apply_facilities_to_model()
@@ -153,7 +155,100 @@ class Schedule:
                     self.is_busy[key] = self.model.NewBoolVar(f"is_busy_{w_idx}_{ti_idx}_{t_idx}")
                     self.model.Add(self.busy_count[key] >= 1).OnlyEnforceIf(self.is_busy[key])
                     self.model.Add(self.busy_count[key] == 0).OnlyEnforceIf(self.is_busy[key].Not())
+    
+    def get_game_report(self):
+        """Get a DataFrame report of the solved schedule using singleton pattern.
         
+        Returns:
+            pd.DataFrame: Schedule report with columns for weekend_idx, date, location, 
+                         time, team1 (home), team2 (away), ref, time_idx
+                         
+        Raises:
+            RuntimeError: If called before solving or if no solution was found
+        """
+        # Return cached report if it exists
+        if self._game_report is not None:
+            return self._game_report
+            
+        # Check if we have a valid solution
+        if not hasattr(self, '_last_solve_status'):
+            raise RuntimeError("Must call solve() before generating game report")
+            
+        if self._last_solve_status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            raise RuntimeError(f"Cannot generate report - solver status: {self.solver.StatusName(self._last_solve_status)}")
+        
+        # Generate the report
+        schedule_rows = []
+        
+        for match in self.matches:
+            home_idx = self.solver.Value(self.home_team[match])
+            away_idx = self.solver.Value(self.away_team[match])
+            ref_idx = self.solver.Value(self.ref[match])
+            
+            schedule_rows.append({
+                "weekend_idx": match.weekend_idx,
+                "date": match.date,
+                "location": match.location,
+                "time": match.time,
+                "team1": home_idx,  # home team
+                "team2": away_idx,  # away team
+                "ref": ref_idx,     # ref team
+                "time_idx": match.time_idx,
+            })
+        
+        # Create DataFrame and sort
+        self._game_report = pd.DataFrame(schedule_rows)
+        self._game_report.sort_values(["weekend_idx", "date", "location", "time"], inplace=True)
+        self._game_report.reset_index(drop=True, inplace=True)
+        
+        return self._game_report
+    
+    def get_team_report(self):
+        """Generate a team-level report from the game schedule.
+        
+        Returns:
+            pd.DataFrame: Team report indexed by team_idx with columns:
+                         - total_play: total games played
+                         - total_ref: total games refereed  
+                         - vs_0, vs_1, ..., vs_N: games played against each team
+        """
+        # Get the game report first
+        game_report = self.get_game_report()
+        
+        # Initialize team report DataFrame
+        team_indices = list(range(self.total_teams))
+        team_report = pd.DataFrame(index=team_indices)
+        
+        # Count total play (team1 + team2 appearances)
+        play_counts = pd.Series(0, index=team_indices, name='total_play')
+        for _, row in game_report.iterrows():
+            play_counts[row['team1']] += 1
+            play_counts[row['team2']] += 1
+        team_report['total_play'] = play_counts
+        
+        # Count total ref
+        ref_counts = game_report['ref'].value_counts().reindex(team_indices, fill_value=0)
+        team_report['total_ref'] = ref_counts
+        
+        # Count vs play (games against each other team)
+        for opponent_idx in team_indices:
+            vs_count = pd.Series(0, index=team_indices, name=f'vs_{opponent_idx}')
+            
+            for _, row in game_report.iterrows():
+                team1, team2 = row['team1'], row['team2']
+                
+                # Count matchups where team1 plays against opponent_idx
+                if team2 == opponent_idx:
+                    vs_count[team1] += 1
+                    
+                # Count matchups where team2 plays against opponent_idx  
+                if team1 == opponent_idx:
+                    vs_count[team2] += 1
+                    
+            team_report[f'vs_{opponent_idx}'] = vs_count
+        
+        return team_report
+    
     def solve(self):
         """Solve the scheduling problem."""
         start = datetime.datetime.now()
@@ -174,6 +269,9 @@ class Schedule:
                 print("Model is infeasible.")
             elif status == cp_model.MODEL_INVALID:
                 print("Model is invalid. Check constraints and variable definitions.")
+
+        # Store the solve status for later reference
+        self._last_solve_status = status
 
     def __str__(self) -> str:
         """Return a string representation of the solution."""
