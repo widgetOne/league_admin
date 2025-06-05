@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import List, Callable, Any
-from ortools.sat.python import cp_model
-from .facilities.facility import Facilities
-from .schedule_interface import ScheduleInterface
+from typing import List, Callable, Any, TYPE_CHECKING
+
+# Use TYPE_CHECKING to avoid circular import
+if TYPE_CHECKING:
+    from .schedule import Schedule
 
 class ModelActor(ABC):
     """Base class for any object that can act on the model.
@@ -10,15 +11,15 @@ class ModelActor(ABC):
     These are function which act on the schedule model based on
     concrete realities from the facilities object.
     """
-    def __init__(self, actor_function: Callable[[ScheduleInterface], None]):
+    def __init__(self, actor_function: Callable[['Schedule'], None]):
         """Initialize with a function that acts on the model.
         
         Args:
-            actor_function: Function that takes an object conforming to ScheduleInterface
+            actor_function: Function that takes a Schedule object
         """
         self._actor_function = actor_function
 
-    def __call__(self, schedule_obj: ScheduleInterface):
+    def __call__(self, schedule_obj: 'Schedule'):
         """Call the actor function with the given schedule object."""
         self._actor_function(schedule_obj)
 
@@ -108,9 +109,10 @@ class EqualSeasonPlay(SchedulerComponent):
         super().__init__()
         self.add_constraint(ModelActor(self.generate_equal_season_play_constraints(total_season_play_target)))
 
-    def generate_equal_season_play_constraints(self, total_season_play_target: int) -> Callable[[ScheduleInterface], None]:
-        def apply_equal_play_constraint(schedule: ScheduleInterface):
+    def generate_equal_season_play_constraints(self, total_season_play_target: int) -> Callable[['Schedule'], None]:
+        def apply_equal_play_constraint(schedule: 'Schedule'):
             print(f"Validator concept: Ensuring teams play {total_season_play_target} games.")
+            # Example constraint implementation would go here
             pass
         return apply_equal_play_constraint
 

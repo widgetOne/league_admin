@@ -1,6 +1,7 @@
 from typing import Optional, Set, Any, Iterable
 from ..facilities import Facilities
 from ..schedule import Schedule
+from ..schedule_creator import ScheduleCreator
 from ..schedule_component import SchedulerComponent
 
 def make_schedule(facilities: Facilities, components: Iterable[SchedulerComponent]) -> Schedule:
@@ -13,14 +14,11 @@ def make_schedule(facilities: Facilities, components: Iterable[SchedulerComponen
     Returns:
         Schedule: The solved schedule
     """
-    # Create schedule
-    schedule = Schedule(facilities)
+    # Create schedule creator
+    creator = ScheduleCreator(facilities, components=components)
     
-    # Add all constraints - use += operator or individual add_constraint calls
-    for component in components:
-        schedule += component  # This uses the __iadd__ method from SchedulerComponent
+    # Create and configure the schedule
+    schedule = creator.create_schedule()
     
-    # Solve the model
-    schedule.solve()
-    
+
     return schedule 
