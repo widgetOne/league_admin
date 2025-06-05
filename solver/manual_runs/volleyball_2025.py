@@ -1,4 +1,5 @@
 import pathlib
+import os
 from .. import Facilities, Schedule # Import Facilities and Schedule from solver package
 # from ..components import TotalPlayConstraint # Removed this problematic import
 from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
@@ -26,6 +27,23 @@ def main():
     # Print the result
     print("Schedule created successfully!")
     print(schedule)
+    
+    # Get the human-readable schedule and write to file
+    debug_schedule = schedule.get_volleyball_debug_schedule()
+    
+    # Ensure the scratch directory exists
+    scratch_dir = current_dir / "scratch"
+    scratch_dir.mkdir(exist_ok=True)
+    
+    # Write to file
+    output_file = scratch_dir / "last_volleyball_schedule.txt"
+    with open(output_file, 'w') as f:
+        f.write("VOLLEYBALL SCHEDULE DEBUG OUTPUT\n")
+        f.write("="*50 + "\n")
+        f.write(debug_schedule)
+    
+    print(f"\nSchedule written to: {output_file}")
+
 
 if __name__ == "__main__":
     main() 
