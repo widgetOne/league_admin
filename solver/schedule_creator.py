@@ -60,7 +60,7 @@ class ScheduleCreator:
             for optimizer in component._optimizers:
                 optimizer(schedule)
         
-        self.model.solve()
+        schedule.solve()
 
         # Validate that that schedule meets all constraints
         for validator in component._validators:
