@@ -272,6 +272,54 @@ class Schedule:
         # Store the solve status for later reference
         self._last_solve_status = status
 
+    def get_volleyball_debug_schedule(self):
+        """Get a human-readable volleyball schedule string for debugging.
+        
+        Returns:
+            str: Formatted schedule string
+        
+        Format:
+        week_idx: 1
+        date: 2025-06-22
+        time 12:00
+        01 v 14 r 03 - 11 v 22 r 12 - 02 v ...
+        time 13:00
+        03 v 04 r 05 - ...
+        """
+        # Get the game report
+        game_report = self.get_game_report()
+        
+        lines = []
+        
+        # Group by weekend_idx and date first
+        for weekend_idx in sorted(game_report['weekend_idx'].unique()):
+            week_games = game_report[game_report['weekend_idx'] == weekend_idx]
+            
+            lines.append(f"\nweek_idx: {weekend_idx}")
+            
+            for date in sorted(week_games['date'].unique()):
+                date_games = week_games[week_games['date'] == date]
+                lines.append(f"date: {date}")
+                
+                # Group by time and format games
+                for time in sorted(date_games['time'].unique()):
+                    time_games = date_games[date_games['time'] == time]
+                    
+                    # Format each game as "team1 v team2 r ref"
+                    game_strings = []
+                    for _, game in time_games.iterrows():
+                        team1 = f"{game['team1']:02d}"  # Zero-pad to 2 digits
+                        team2 = f"{game['team2']:02d}"
+                        ref = f"{game['ref']:02d}"
+                        game_strings.append(f"{team1} v {team2} r {ref}")
+                    
+                    # Join games at same time with " - "
+                    games_line = " - ".join(game_strings)
+                    lines.append(f"time {time}")
+                    lines.append(games_line)
+        
+        return "\n".join(lines)
+
     def __str__(self) -> str:
         """Return a string representation of the solution."""
         return f"Schedule with {len(self.matches)} matches for {self.total_teams} teams"
