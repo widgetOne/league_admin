@@ -60,7 +60,8 @@ class Schedule:
         calculated_total_teams = sum(self.facilities.team_counts)
         if calculated_total_teams <= 0:
             raise ValueError("Scheduling requires at least one team. Please check team_counts in facilities.")
-        self._total_teams = calculated_total_teams
+        self.total_teams = calculated_total_teams
+        self.teams = list(range(self.total_teams))
 
         team_div_list = []
         for div_idx, div_count in enumerate(self.facilities.team_counts):
