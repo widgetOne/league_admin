@@ -1,4 +1,5 @@
 from typing import List, Dict, Set, Any, Iterable, Tuple, Optional
+import datetime
 from ortools.sat.python import cp_model
 from .facilities.facility import Facilities, Match
 from .schedule_component import ModelActor
@@ -15,6 +16,7 @@ class Schedule:
         """
         self.facilities = facilities
         self.model = model
+        self.solver = cp_model.CpSolver()
         
         # Initialize dictionaries for OR-Tools variables
         self.home_team: Dict[Any, Any] = {}
@@ -154,8 +156,16 @@ class Schedule:
         
     def solve(self):
         """Solve the scheduling problem."""
-
-        status = self.model.Solve(self.model)
+        start = datetime.datetime.now()
+        print(f"Starting solution process at {start}")
+        
+        status = self.solver.Solve(self.model)
+        
+        end = datetime.datetime.now()
+        delta = end - start
+        print(f"Solver status: {self.solver.StatusName(status)}")
+        print(f"Finished at {end}, duration: {delta}")
+        
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             print('Solution found!')
         else:
@@ -164,7 +174,7 @@ class Schedule:
                 print("Model is infeasible.")
             elif status == cp_model.MODEL_INVALID:
                 print("Model is invalid. Check constraints and variable definitions.")
-            
+
     def __str__(self) -> str:
         """Return a string representation of the solution."""
         return f"Schedule with {len(self._constraints)} constraints"
