@@ -57,7 +57,7 @@ class TotalPlayConstraint(SchedulerComponent):
             Raises:
                 ValueError: If any team's total games doesn't match the target
             """
-            total_games = schedule._model.GetVarByName('games_per_season')
+            total_games = schedule.facilities.games_per_season
             for team in schedule.teams:
                 games_played = schedule.get_games_played(team)
                 if games_played != total_games:
