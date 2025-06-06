@@ -108,4 +108,35 @@ class ScheduleCreator:
             unique_post_processor_classes = sorted(set(post_processor_classes))
             print(f"  - Post-processors from: {', '.join(unique_post_processor_classes)}")
         
-        return schedule 
+        return schedule
+
+    def generate_debug_reports(self, schedule: Schedule) -> str:
+        """Generate all debug reports from components using the solved schedule.
+        
+        Args:
+            schedule: The solved schedule to generate reports for
+            
+        Returns:
+            str: Combined debug reports from all components
+        """
+        # Collect debug reports from all components
+        debug_reports = []
+        for component in self.components:
+            debug_reports.extend(component._debug_reports)
+        
+        if not debug_reports:
+            return "No debug reports available."
+        
+        report_sections = []
+        report_sections.append("COMPONENT DEBUG REPORTS")
+        report_sections.append("=" * 60)
+        report_sections.append("")
+        
+        for debug_report in debug_reports:
+            report_sections.append(f"Component: {debug_report.component_name}")
+            report_sections.append("-" * 40)
+            report_sections.append(debug_report(schedule))
+            report_sections.append("")
+            report_sections.append("")
+        
+        return "\n".join(report_sections) 
