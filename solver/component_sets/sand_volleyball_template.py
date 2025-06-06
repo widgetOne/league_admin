@@ -3,6 +3,7 @@ from ..components.vs_play_balance import VsPlayBalanceConstraint
 from ..components.balance_reffing import BalanceReffingConstraint
 from ..components.play_near_ref import PlayNearRefConstraint
 from ..components.ref_same_division import RefSameDivisionConstraint
+from ..components.one_thing_at_a_time import OneThingAtATimeConstraint
 
 def get_sand_volleyball_template():
     """Get the template of components for sand volleyball scheduling.
@@ -15,6 +16,7 @@ def get_sand_volleyball_template():
         TotalPlayConstraint(), 
         VsPlayBalanceConstraint(), 
         BalanceReffingConstraint(),
+        OneThingAtATimeConstraint(),
         PlayNearRefConstraint(),
         RefSameDivisionConstraint()
     ]

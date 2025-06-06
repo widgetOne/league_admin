@@ -33,13 +33,10 @@ class PlayNearRefConstraint(SchedulerComponent):
             weekend_idxs = sorted(list(set(m.weekend_idx for m in schedule.matches)))
             max_time_idx = max(m.time_idx for m in schedule.matches) + 1
             
-            # Teams can only be busy with one thing at a time, and can only ref if playing around that time
+            # Teams can only ref if playing around that time
             for weekend_idx in weekend_idxs:
                 for time_idx in range(max_time_idx):
                     for t_idx in schedule.teams:
-                        # Busy count constraint: teams can only be busy with one thing at a time
-                        schedule.model.Add(schedule.busy_count[weekend_idx, time_idx, t_idx] <= 1)
-                        
                         # Implication: if reffing at time, must be playing around that time
                         schedule.model.AddImplication(
                             schedule.reffing_at_time[weekend_idx, time_idx, t_idx], 
