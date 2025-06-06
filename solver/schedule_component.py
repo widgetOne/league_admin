@@ -23,6 +23,28 @@ class ModelActor(ABC):
         """Call the actor function with the given schedule object."""
         self._actor_function(schedule_obj)
 
+class DebugReporter:
+    """Class for debug report functions that return strings instead of acting on the model."""
+    
+    def __init__(self, report_function: Callable[['Schedule'], str], component_name: str):
+        """Initialize with a function that generates a debug report.
+        
+        Args:
+            report_function: Function that takes a Schedule object and returns a debug string
+            component_name: Name of the component this report belongs to
+        """
+        self._report_function = report_function
+        self._component_name = component_name
+
+    def __call__(self, schedule_obj: 'Schedule') -> str:
+        """Call the report function with the given schedule object."""
+        return self._report_function(schedule_obj)
+    
+    @property
+    def component_name(self) -> str:
+        """Get the name of the component this report belongs to."""
+        return self._component_name
+
 class SchedulerComponent:
     """Base class for all scheduler components.
     
@@ -35,6 +57,7 @@ class SchedulerComponent:
         self._optimizers: List[ModelActor] = []
         self._validators: List[ModelActor] = []
         self._post_processors: List[ModelActor] = []
+        self._debug_reports: List[DebugReporter] = []
         self._component_classes: List[str] = [self.__class__.__name__]
 
     def add_constraint(self, constraint: ModelActor):
@@ -69,6 +92,14 @@ class SchedulerComponent:
         """
         self._post_processors.append(post_processor)
 
+    def add_debug_report(self, debug_report: DebugReporter):
+        """Add a debug report to the component.
+        
+        Args:
+            debug_report: The debug report function to add
+        """
+        self._debug_reports.append(debug_report)
+
     def get_component_classes(self) -> List[str]:
         """Get the list of component class names that make up this component.
         
@@ -93,6 +124,7 @@ class SchedulerComponent:
         result._optimizers = self._optimizers + other._optimizers
         result._validators = self._validators + other._validators
         result._post_processors = self._post_processors + other._post_processors
+        result._debug_reports = self._debug_reports + other._debug_reports
         result._component_classes = self._component_classes + other._component_classes
         return result
 
@@ -111,6 +143,7 @@ class SchedulerComponent:
         self._optimizers.extend(other._optimizers)
         self._validators.extend(other._validators)
         self._post_processors.extend(other._post_processors)
+        self._debug_reports.extend(other._debug_reports)
         self._component_classes.extend(other._component_classes)
         return self
 
