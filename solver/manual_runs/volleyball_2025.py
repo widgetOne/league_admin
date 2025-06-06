@@ -3,7 +3,7 @@ import os
 from .. import Facilities, Schedule # Import Facilities and Schedule from solver package
 # from ..components import TotalPlayConstraint # Removed this problematic import
 from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
-from .manual_runner import make_schedule # This seems unused now
+from .manual_runner import make_schedule, write_volleyball_debug_files
 
 def main():
     """Load facilities and run the volleyball scheduler."""
@@ -23,26 +23,13 @@ def main():
     schedule_components = get_sand_volleyball_template()
     
     # Make the schedule
-    schedule = make_schedule(facilities, schedule_components)
+    schedule, creator = make_schedule(facilities, schedule_components)
     # Print the result
     print("Schedule created successfully!")
     print(schedule)
     
-    # Get the human-readable schedule and write to file
-    debug_schedule = schedule.get_volleyball_debug_schedule()
-    
-    # Ensure the scratch directory exists
-    scratch_dir = current_dir / "scratch"
-    scratch_dir.mkdir(exist_ok=True)
-    
-    # Write to file
-    output_file = scratch_dir / "last_volleyball_schedule.txt"
-    with open(output_file, 'w') as f:
-        f.write("VOLLEYBALL SCHEDULE DEBUG OUTPUT\n")
-        f.write("="*50 + "\n")
-        f.write(debug_schedule)
-    
-    print(f"\nSchedule written to: {output_file}")
+    # Write debug files
+    write_volleyball_debug_files(schedule, creator, current_dir)
 
 
 if __name__ == "__main__":
