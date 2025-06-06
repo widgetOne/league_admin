@@ -320,6 +320,8 @@ class Schedule:
         
         return "\n".join(lines)
 
+
+
     def __str__(self) -> str:
         """Return a string representation of the solution."""
         return f"Schedule with {len(self.matches)} matches for {self.total_teams} teams"

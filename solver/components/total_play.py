@@ -1,4 +1,4 @@
-from ..schedule_component import SchedulerComponent, ModelActor
+from ..schedule_component import SchedulerComponent, ModelActor, DebugReporter
 from ..schedule import Schedule
 
 
@@ -17,6 +17,7 @@ class TotalPlayConstraint(SchedulerComponent):
         super().__init__()
         self.add_constraint(self._get_total_play_constraint())
         self.add_validator(self._get_total_play_validator())
+        self.add_debug_report(self._get_total_play_debug_report())
 
     def _get_total_play_constraint(self):
         """Create a constraint function for the OR-Tools model.
@@ -68,4 +69,45 @@ class TotalPlayConstraint(SchedulerComponent):
                         f"but should play exactly {total_games} games"
                     )
         return validate_total_play
+
+    def _get_total_play_debug_report(self):
+        """Create a debug report function to verify total play distribution.
+        
+        Returns:
+            DebugReporter: A debug reporter that shows total play per team
+        """
+        def generate_total_play_report(schedule):
+            """Generate a debug report showing total play per team.
+            
+            Args:
+                schedule: The solved schedule to report on
+                
+            Returns:
+                str: Debug report string
+            """
+            target_games = schedule.facilities.games_per_season
+            team_report = schedule.get_team_report()
+            
+            lines = []
+            lines.append("TOTAL PLAY DEBUG REPORT")
+            lines.append("=" * 40)
+            lines.append(f"Target games per team: {target_games}")
+            lines.append("")
+            lines.append("Team | Total Games | Status")
+            lines.append("-" * 30)
+            
+            for team_idx in schedule.teams:
+                total_games = team_report.loc[team_idx, 'total_play']
+                status = "✓" if total_games == target_games else "✗"
+                lines.append(f"{team_idx:4d} | {total_games:11d} | {status}")
+            
+            # Summary
+            all_correct = all(team_report.loc[team_idx, 'total_play'] == target_games 
+                             for team_idx in schedule.teams)
+            lines.append("")
+            lines.append(f"Overall Status: {'✓ PASS' if all_correct else '✗ FAIL'}")
+            
+            return "\n".join(lines)
+        
+        return DebugReporter(generate_total_play_report, "TotalPlayConstraint")
 
