@@ -1,4 +1,4 @@
-from ..schedule_component import SchedulerComponent, ModelActor
+from ..schedule_component import SchedulerComponent, ModelActor, DebugReporter
 from ..schedule import Schedule
 import math
 
@@ -17,6 +17,7 @@ class VsPlayBalanceConstraint(SchedulerComponent):
         super().__init__()
         self.add_constraint(self._get_vs_play_balance_constraint())
         self.add_validator(self._get_vs_play_balance_validator())
+        self.add_debug_report(self._get_vs_play_balance_debug_report())
 
     def _get_vs_play_balance_constraint(self):
         """Create a constraint function for the OR-Tools model.
@@ -137,4 +138,98 @@ class VsPlayBalanceConstraint(SchedulerComponent):
                             f"but should play between {min_games} and {max_games} games"
                         )
         
-        return validate_vs_play_balance 
+        return validate_vs_play_balance
+
+    def _get_vs_play_balance_debug_report(self):
+        """Create a debug report function to verify vs play balance.
+        
+        Returns:
+            DebugReporter: A debug reporter that shows vs play distribution
+        """
+        def generate_vs_play_balance_report(schedule):
+            """Generate a debug report showing vs play balance.
+            
+            Args:
+                schedule: The solved schedule to report on
+                
+            Returns:
+                str: Debug report string
+            """
+            games_per_season = schedule.facilities.games_per_season
+            team_report = schedule.get_team_report()
+            
+            lines = []
+            lines.append("VS PLAY BALANCE DEBUG REPORT")
+            lines.append("=" * 50)
+            lines.append(f"Games per season: {games_per_season}")
+            lines.append("")
+            
+            # Group teams by division for reporting
+            divisions = {}
+            for team in schedule.teams:
+                div_idx = schedule.team_div[team]
+                if div_idx not in divisions:
+                    divisions[div_idx] = []
+                divisions[div_idx].append(team)
+            
+            # Report by division
+            all_correct = True
+            for div_idx, div_teams in sorted(divisions.items()):
+                div_teams_sorted = sorted(div_teams)
+                lines.append(f"Division {div_idx} (Teams: {', '.join(map(str, div_teams_sorted))})")
+                lines.append("-" * 50)
+                
+                teams_in_division = len(div_teams)
+                min_games = games_per_season // teams_in_division
+                max_games = math.ceil(games_per_season / teams_in_division)
+                
+                lines.append(f"Expected range for same-division matchups: {min_games}-{max_games}")
+                lines.append("")
+                
+                # Create N×N matrix for this division
+                lines.append("VS Play Matrix:")
+                
+                # Header row with team numbers
+                header = "    "  # 4 spaces for left margin
+                for team in div_teams_sorted:
+                    header += f"{team:3d}"
+                lines.append(header)
+                
+                # Matrix rows
+                for t1 in div_teams_sorted:
+                    row = f"{t1:3d} "  # Left team number with space
+                    for t2 in div_teams_sorted:
+                        if t1 == t2:
+                            row += "  -"  # Diagonal (team vs itself)
+                        else:
+                            actual_games = team_report.loc[t1, f'vs_{t2}']
+                            row += f"{actual_games:3d}"
+                            # Check if within valid range
+                            if not (min_games <= actual_games <= max_games):
+                                all_correct = False
+                    lines.append(row)
+                
+                lines.append("")
+            
+            # Check cross-division (should all be 0)
+            lines.append("Cross-Division Matchups (should be 0):")
+            lines.append("-" * 30)
+            for div1, teams1 in sorted(divisions.items()):
+                for div2, teams2 in sorted(divisions.items()):
+                    if div1 >= div2:
+                        continue
+                    for t1 in teams1:
+                        for t2 in teams2:
+                            actual_games = team_report.loc[t1, f'vs_{t2}']
+                            status = "✓" if actual_games == 0 else "✗"
+                            if status == "✗":
+                                all_correct = False
+                            if actual_games > 0:  # Only show non-zero cross-division games
+                                lines.append(f"  {t1:2d} vs {t2:2d}: {actual_games} games {status}")
+            
+            lines.append("")
+            lines.append(f"Overall Status: {'✓ PASS' if all_correct else '✗ FAIL'}")
+            
+            return "\n".join(lines)
+        
+        return DebugReporter(generate_vs_play_balance_report, "VsPlayBalanceConstraint") 
