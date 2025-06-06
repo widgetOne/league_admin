@@ -37,6 +37,7 @@ class Schedule:
         self.is_busy: Dict[Tuple[int, int, int], Any] = {}
         self.reffing_at_time: Dict[Tuple[int, int, int], Any] = {}
         self.playing_at_time: Dict[Tuple[int, int, int], Any] = {}
+        self.playing_around_time: Dict[Tuple[int, int, int], Any] = {}
         
         self._total_teams: int = 0
         self._game_report: Optional[pd.DataFrame] = None
@@ -154,6 +155,25 @@ class Schedule:
                     self.is_busy[key] = self.model.NewBoolVar(f"is_busy_{w_idx}_{ti_idx}_{t_idx}")
                     self.model.Add(self.busy_count[key] >= 1).OnlyEnforceIf(self.is_busy[key])
                     self.model.Add(self.busy_count[key] == 0).OnlyEnforceIf(self.is_busy[key].Not())
+
+        # Add playing_around_time variables for adjacent time reffing constraints
+        # This must be done in a separate loop after playing_at_time is created
+        for w_idx in weekend_idxs:
+            for ti_idx in time_indices:
+                other_times = [other_time for other_time in time_indices if abs(other_time - ti_idx) == 1]
+                for t_idx in range(self.total_teams):
+                    key = (w_idx, ti_idx, t_idx)
+                    self.playing_around_time[key] = self.model.NewBoolVar(f"is_playing_in_adjacent_time_{w_idx}_{ti_idx}_{t_idx}")
+                    
+                    if other_times:
+                        other_time_keys = [(w_idx, other_time, t_idx) for other_time in other_times]
+                        other_playing_vars = [self.playing_at_time[other_key] for other_key in other_time_keys]
+                        
+                        self.model.AddBoolOr(other_playing_vars).OnlyEnforceIf(self.playing_around_time[key])
+                        self.model.AddBoolAnd([p.Not() for p in other_playing_vars]).OnlyEnforceIf(self.playing_around_time[key].Not())
+                    else:
+                        # No adjacent times, so always false
+                        self.model.Add(self.playing_around_time[key] == 0)
     
     def get_game_report(self):
         """Get a DataFrame report of the solved schedule using singleton pattern.
