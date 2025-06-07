@@ -4,6 +4,7 @@ from .. import Facilities, Schedule # Import Facilities and Schedule from solver
 # from ..components import TotalPlayConstraint # Removed this problematic import
 from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
 from .manual_runner import make_schedule, write_volleyball_debug_files
+from ..exports.gsheets_export import export_schedule_to_sheets, test_sheets_connection
 
 def main():
     """Load facilities and run the volleyball scheduler."""
@@ -30,6 +31,19 @@ def main():
     
     # Write debug files
     write_volleyball_debug_files(schedule, creator, current_dir)
+    
+    # Export to Google Sheets
+    try:
+        print("\nTesting Google Sheets connection...")
+        if test_sheets_connection():
+            print("\nExporting schedule to Google Sheets...")
+            export_schedule_to_sheets(schedule, creator)
+            print("Export completed successfully!")
+        else:
+            print("⚠️  Skipping Google Sheets export due to connection issues.")
+    except Exception as e:
+        print(f"⚠️  Google Sheets export failed: {e}")
+        print("   Local files were still created successfully.")
 
 
 if __name__ == "__main__":
