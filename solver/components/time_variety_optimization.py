@@ -26,9 +26,9 @@ class TimeVarietyOptimization(SchedulerComponent):
         def optimize_time_variety(schedule: Schedule):
             """Add time variety optimization to the OR-Tools model.
             
-            The heuristic: For each team-time combination, contribute
-            (games_per_season - games_at_this_time) to the objective.
-            This rewards teams that spread their games across time slots.
+            The heuristic: For each time slot, calculate target plays per team as
+            (games_at_that_time * 2) / total_teams. Then minimize the absolute
+            deviation of each team's actual plays from the target for each time slot.
             
             Args:
                 schedule: The schedule model to add the optimization to
@@ -37,16 +37,27 @@ class TimeVarietyOptimization(SchedulerComponent):
             weekend_idxs = sorted(list(set(m.weekend_idx for m in schedule.matches)))
             time_idxs = sorted(list(set(m.time_idx for m in schedule.matches)))
             
-            # Calculate total games per team (assuming 1 game per team per weekend)
-            games_per_season = len(weekend_idxs)
+            # Calculate target plays per team for each time slot dynamically from facilities
+            # For each time slot: target = (games_at_that_time * 2) / total_teams
+            time_slot_targets = {}
+            total_teams = len(schedule.teams)
+            
+            for time_idx in time_idxs:
+                # Count games at this time slot across all weekends
+                games_at_this_time = sum(1 for m in schedule.matches if m.time_idx == time_idx)
+                # Each game involves 2 teams, so total team-slots = games * 2
+                target_plays = (games_at_this_time * 2) / total_teams
+                time_slot_targets[time_idx] = target_plays
+                print(f"Time slot {time_idx}: {games_at_this_time} games, target {target_plays:.2f} plays per team")
             
             # Create variables to count how many times each team plays at each time slot
             team_time_counts = {}
+            max_possible_games = len(weekend_idxs)  # Maximum games any team could play at one time slot
             for t_idx in schedule.teams:
                 for time_idx in time_idxs:
                     var_name = f'team_{t_idx}_time_{time_idx}_count'
                     team_time_counts[t_idx, time_idx] = schedule.model.NewIntVar(
-                        0, games_per_season, var_name
+                        0, max_possible_games, var_name
                     )
             
             # Link the counting variables to actual game assignments
@@ -68,43 +79,44 @@ class TimeVarietyOptimization(SchedulerComponent):
                         # No games possible at this time for this team
                         schedule.model.Add(team_time_counts[t_idx, time_idx] == 0)
             
-            # Create time variety contribution variables
-            # For each team-time combination: 
-            # - contribute 0 if team plays 0 games at this time
-            # - contribute (games_per_season - games_at_this_time) if team plays > 0 games
-            time_variety_contributions = {}
+            # Create absolute deviation variables for each team-time combination
+            # For each team-time: |actual_plays - target_plays|
+            absolute_deviations = {}
             for t_idx in schedule.teams:
                 for time_idx in time_idxs:
-                    var_name = f'variety_contrib_team_{t_idx}_time_{time_idx}'
-                    time_variety_contributions[t_idx, time_idx] = schedule.model.NewIntVar(
-                        0, games_per_season, var_name
+                    target = time_slot_targets[time_idx]
+                    
+                    # Since OR-Tools works with integers, multiply target by 100 for precision
+                    target_times_100 = int(target * 100)
+                    max_deviation_times_100 = max_possible_games * 100
+                    
+                    # Create variable for the absolute deviation (scaled by 100)
+                    abs_dev_var_name = f'abs_dev_team_{t_idx}_time_{time_idx}'
+                    absolute_deviations[t_idx, time_idx] = schedule.model.NewIntVar(
+                        0, max_deviation_times_100, abs_dev_var_name
                     )
                     
-                    # Create boolean variable: is this team playing any games at this time?
-                    plays_at_time_var_name = f'plays_at_time_team_{t_idx}_time_{time_idx}'
-                    plays_at_time = schedule.model.NewBoolVar(plays_at_time_var_name)
+                    # Create variable for the signed deviation (actual - target) * 100
+                    signed_dev_var_name = f'signed_dev_team_{t_idx}_time_{time_idx}'
+                    signed_deviation = schedule.model.NewIntVar(
+                        -max_deviation_times_100, max_deviation_times_100, signed_dev_var_name
+                    )
                     
-                    # Link boolean to whether count > 0
-                    # plays_at_time == 1 iff team_time_counts > 0
-                    schedule.model.Add(team_time_counts[t_idx, time_idx] >= 1).OnlyEnforceIf(plays_at_time)
-                    schedule.model.Add(team_time_counts[t_idx, time_idx] == 0).OnlyEnforceIf(plays_at_time.Not())
+                    # Link signed deviation: signed_dev = (actual_count * 100) - target_times_100
+                    actual_times_100 = team_time_counts[t_idx, time_idx] * 100
+                    schedule.model.Add(signed_deviation == actual_times_100 - target_times_100)
                     
-                    # Set the contribution based on whether team plays at this time
-                    # If plays_at_time == 0: contribution = 0
-                    # If plays_at_time == 1: contribution = games_per_season - team_time_counts
-                    schedule.model.Add(time_variety_contributions[t_idx, time_idx] == 0).OnlyEnforceIf(plays_at_time.Not())
-                    schedule.model.Add(
-                        time_variety_contributions[t_idx, time_idx] == 
-                        games_per_season - team_time_counts[t_idx, time_idx]
-                    ).OnlyEnforceIf(plays_at_time)
+                    # Link absolute deviation: abs_dev = |signed_dev|
+                    schedule.model.Add(absolute_deviations[t_idx, time_idx] >= signed_deviation)
+                    schedule.model.Add(absolute_deviations[t_idx, time_idx] >= -signed_deviation)
             
-            # Calculate total time variety objective value
-            total_time_variety = sum(time_variety_contributions[t_idx, time_idx] 
-                                   for t_idx in schedule.teams 
-                                   for time_idx in time_idxs)
+            # Calculate total absolute deviation across all teams and time slots
+            total_absolute_deviation = sum(absolute_deviations[t_idx, time_idx] 
+                                         for t_idx in schedule.teams 
+                                         for time_idx in time_idxs)
             
-            # Maximize time variety (minimize negative time variety)
-            schedule.model.Maximize(total_time_variety)
+            # Minimize total absolute deviation from targets
+            schedule.model.Minimize(total_absolute_deviation)
         
         return ModelActor(optimize_time_variety)
 
