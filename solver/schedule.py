@@ -277,9 +277,12 @@ class Schedule:
         return team_report
     
     def solve(self):
-        """Solve the scheduling problem."""
+        """Solve the scheduling problem with a 20-second time limit."""
         start = datetime.datetime.now()
         print(f"Starting solution process at {start}")
+        
+        # Set solver parameters with 30-second time limit
+        self.solver.parameters.max_time_in_seconds = 30.0
         
         status = self.solver.Solve(self.model)
         
@@ -288,8 +291,10 @@ class Schedule:
         print(f"Solver status: {self.solver.StatusName(status)}")
         print(f"Finished at {end}, duration: {delta}")
         
-        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-            print('Solution found!')
+        if status == cp_model.OPTIMAL:
+            print('Optimal solution found!')
+        elif status == cp_model.FEASIBLE:
+            print('Feasible solution found (time limit reached)!')
         else:
             print('No solution found. Status:', status)
             if status == cp_model.INFEASIBLE:
