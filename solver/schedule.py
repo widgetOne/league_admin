@@ -200,9 +200,17 @@ class Schedule:
         schedule_rows = []
         
         for match in self.matches:
-            home_idx = self.solver.Value(self.home_team[match])
-            away_idx = self.solver.Value(self.away_team[match])
-            ref_idx = self.solver.Value(self.ref[match])
+            # Check if this match has been reassigned by post-processors
+            if hasattr(self, '_team_reassignments') and match in self._team_reassignments:
+                reassignment = self._team_reassignments[match]
+                home_idx = reassignment['home_team']
+                away_idx = reassignment['away_team']
+                ref_idx = reassignment['ref']
+            else:
+                # Use original solver values
+                home_idx = self.solver.Value(self.home_team[match])
+                away_idx = self.solver.Value(self.away_team[match])
+                ref_idx = self.solver.Value(self.ref[match])
             
             schedule_rows.append({
                 "weekend_idx": match.weekend_idx,
