@@ -133,7 +133,15 @@ def export_game_report_table(schedule, tab_name):
         schedule: The solved schedule object
         tab_name: The name of the Google Sheets tab to export to
     """
-    game_report = schedule.get_game_report()
+    game_report = schedule.get_game_report().copy()
+    
+    # Convert any time objects to strings for JSON serialization
+    for col in game_report.columns:
+        if game_report[col].dtype == 'object':
+            # Check if column contains time objects
+            sample_val = game_report[col].iloc[0]
+            if hasattr(sample_val, 'strftime'):  # It's a time-like object
+                game_report[col] = game_report[col].astype(str)
     
     # Get the sheet and set data
     sheet = get_gspread_sheet()
