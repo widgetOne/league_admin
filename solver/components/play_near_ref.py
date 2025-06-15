@@ -6,7 +6,6 @@ class PlayNearRefConstraint(SchedulerComponent):
     """A component that ensures teams can only ref when they're playing around that time.
     
     Ensures:
-    - Teams can only be busy with one thing at a time (busy_count <= 1)
     - Teams can only ref if they're playing before or after that time slot
     """
     
