@@ -275,8 +275,8 @@ class Schedule:
         start = datetime.datetime.now()
         print(f"Starting solution process at {start}")
         
-        # Set solver parameters with 30-second time limit
-        self.solver.parameters.max_time_in_seconds = 30.0
+        # Set solver parameters with 60-second time limit
+        self.solver.parameters.max_time_in_seconds = 60.0
         
         status = self.solver.Solve(self.model)
         
