@@ -12,7 +12,7 @@ games_per_day: 1
 # 1 indicates an active court, 0 indicates inactive
 time_slots:
   - time: "12:00"
-    courts: [1, 0, 0, 0]  # Court 1-4 layout for 01:00
+    courts: [1, 1, 0, 0]  # Court 1-4 layout for 01:00
   - time: "13:00"
     courts: [1, 1, 1, 1]  # Court 1-4 layout for 01:00
   - time: "14:00"
@@ -20,7 +20,7 @@ time_slots:
   - time: "15:00"
     courts: [1, 1, 1, 1]  # Court 1-4 layout for 03:00
   - time: "16:00"
-    courts: [1, 1, 1, 0]  # Court 1-4 layout for 04:00
+    courts: [1, 1, 0, 0]  # Court 1-4 layout for 04:00
 
 # Schedule configuration
 dates:
