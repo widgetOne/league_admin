@@ -6,7 +6,7 @@ class OneThingAtATimeConstraint(SchedulerComponent):
     """A component that ensures teams can only be busy with one thing at a time.
     
     Ensures:
-    - Teams cannot play and ref simultaneously (busy_count <= 1)
+    - Teams cannot play and ref simultaneously (busy_count_at_time <= 1)
     - At any given time slot, a team is either playing, reffing, or free
     """
     
@@ -38,7 +38,7 @@ class OneThingAtATimeConstraint(SchedulerComponent):
                 for time_idx in range(max_time_idx):
                     for t_idx in schedule.teams:
                         # Busy count constraint: teams can only be busy with one thing at a time
-                        schedule.model.Add(schedule.busy_count[weekend_idx, time_idx, t_idx] <= 1)
+                        schedule.model.Add(schedule.busy_count_at_time[weekend_idx, time_idx, t_idx] <= 1)
         
         return ModelActor(enforce_one_thing_at_a_time)
 
@@ -167,15 +167,15 @@ class OneThingAtATimeConstraint(SchedulerComponent):
                     # Report team activities and check for violations
                     for team, activities in team_activities.items():
                         activity_str = ''.join(activities)
-                        busy_count = len(activities)
+                        busy_count_at_time = len(activities)
                         
-                        if busy_count > 1:
+                        if busy_count_at_time > 1:
                             status = "✗"
-                            violations.append(f"Weekend {weekend_idx}, Time {time_idx}: Team {team} busy {busy_count} times")
+                            violations.append(f"Weekend {weekend_idx}, Time {time_idx}: Team {team} busy {busy_count_at_time} times")
                         else:
                             status = "✓"
                         
-                        lines.append(f"    Team {team:2d}: {activity_str} (busy={busy_count}) {status}")
+                        lines.append(f"    Team {team:2d}: {activity_str} (busy={busy_count_at_time}) {status}")
                     
                     # Show teams that are free (not playing or reffing)
                     busy_teams = set(team_activities.keys())
