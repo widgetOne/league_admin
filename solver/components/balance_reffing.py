@@ -35,11 +35,13 @@ class BalanceReffingConstraint(SchedulerComponent):
             total_weeks = len(weekend_idxs)
             games_per_day = schedule.facilities.games_per_season // total_weeks  # Should be 1 for volleyball
             
-            # Weekend play targets - each team plays exactly GAMES_PER_DAY per weekend
+            # Weekend play targets - each team plays 0-2 games per weekend
+            # This allows for double headers and byes to balance out over the season
             for w in weekend_idxs:
                 for t_idx in schedule.teams:
                     weekend_playing_vars = [schedule.is_playing[m, t_idx] for m in schedule.matches if m.weekend_idx == w]
-                    schedule.model.Add(sum(weekend_playing_vars) == games_per_day)
+                    schedule.model.Add(sum(weekend_playing_vars) <= 2)  # Allow up to 2 games per weekend
+                    schedule.model.Add(sum(weekend_playing_vars) >= 0)  # Allow byes
             
             # Weekend ref targets - each team refs 0-1 games per weekend
             for w in weekend_idxs:
@@ -87,10 +89,10 @@ class BalanceReffingConstraint(SchedulerComponent):
                 for t_idx in schedule.teams:
                     # Count how many games this team played this weekend
                     games_played = len(week_games[(week_games['team1'] == t_idx) | (week_games['team2'] == t_idx)])
-                    if games_played != games_per_day:
+                    if games_played > 2 or games_played < 0:  # Allow 0-2 games per weekend
                         raise ValueError(
                             f"Team {t_idx} played {games_played} games in weekend {w}, "
-                            f"but should play exactly {games_per_day} games"
+                            f"but should play between 0 and 2 games"
                         )
             
             # Check weekend ref targets (0-1 games per weekend)

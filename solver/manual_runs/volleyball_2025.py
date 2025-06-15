@@ -5,9 +5,18 @@ from .. import Facilities, Schedule # Import Facilities and Schedule from solver
 from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
 from .manual_runner import make_schedule, write_volleyball_debug_files
 from ..exports.gsheets_export import export_schedule_to_sheets, test_sheets_connection
+from ..components.total_play import TotalPlayConstraint
+from ..components.vs_play_balance import VsPlayBalanceConstraint
+from ..components.balance_reffing import BalanceReffingConstraint
+from ..components.one_thing_at_a_time import OneThingAtATimeConstraint
+from ..components.play_near_ref import PlayNearRefConstraint
+from ..components.ref_same_division import RefSameDivisionConstraint
+from ..components.time_variety_optimization import TimeVarietyOptimization
+from ..components.rec_in_low_courts import RecInLowCourtsProcessor
+from ..components.minimize_bye_weeks import MinimizeByeWeeks
 
 def main():
-    """Load facilities and run the volleyball scheduler."""
+    """Run the volleyball scheduler for 2025."""
     print("Running Volleyball Scheduler for 2025...")
     current_dir = pathlib.Path(__file__).parent.parent # Get the 'solver' directory
     facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball_2025.yaml"
@@ -22,6 +31,19 @@ def main():
 
      # Get the sand volleyball template components
     schedule_components = get_sand_volleyball_template()
+    
+    # Create schedule components
+    schedule_components = [
+        TotalPlayConstraint(),
+        VsPlayBalanceConstraint(),
+        BalanceReffingConstraint(),
+        OneThingAtATimeConstraint(),
+        PlayNearRefConstraint(),
+        RefSameDivisionConstraint(),
+        TimeVarietyOptimization(weight=1.0),
+        RecInLowCourtsProcessor(),
+        MinimizeByeWeeks(),
+    ]
     
     # Make the schedule
     schedule, creator = make_schedule(facilities, schedule_components)
