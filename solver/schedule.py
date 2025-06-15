@@ -38,6 +38,7 @@ class Schedule:
         self.reffing_at_time: Dict[Tuple[int, int, int], Any] = {}
         self.playing_at_time: Dict[Tuple[int, int, int], Any] = {}
         self.playing_around_time: Dict[Tuple[int, int, int], Any] = {}
+        self.games_per_weekend: Dict[Tuple[int, int], Any] = {}  # (weekend_idx, team_idx) -> games
         
         self._total_teams: int = 0
         self._game_report: Optional[pd.DataFrame] = None
@@ -168,7 +169,19 @@ class Schedule:
                     else:
                         # No adjacent times, so always false
                         self.model.Add(self.playing_around_time[key] == 0)
-    
+
+        
+        # Add games_per_weekend variables
+        weekend_idxs = sorted(list(set(m.weekend_idx for m in all_matches)))
+        self.games_per_weekend = {}
+        for w_idx in weekend_idxs:
+            for t_idx in range(self.total_teams):
+                key = (w_idx, t_idx)
+                # Count all games this team plays this weekend
+                weekend_playing_vars = [self.is_playing[m_obj, t_idx] for m_obj in all_matches if m_obj.weekend_idx == w_idx and (self.home_team[m_obj] == t_idx or self.away_team[m_obj] == t_idx)]
+                self.games_per_weekend[key] = self.model.NewIntVar(0, len(weekend_playing_vars), f"games_per_weekend_{w_idx}_{t_idx}")
+                self.model.Add(self.games_per_weekend[key] == sum(weekend_playing_vars))
+
     def get_game_report(self):
         """Get a DataFrame report of the solved schedule using singleton pattern.
         
@@ -274,7 +287,7 @@ class Schedule:
         """Solve the scheduling problem with a 20-second time limit."""
         start = datetime.datetime.now()
         print(f"Starting solution process at {start}")
-        
+
         # Set solver parameters with 60-second time limit
         self.solver.parameters.max_time_in_seconds = 60.0
         
@@ -346,8 +359,6 @@ class Schedule:
                     lines.append(games_line)
         
         return "\n".join(lines)
-
-
 
     def __str__(self) -> str:
         """Return a string representation of the solution."""
