@@ -24,6 +24,6 @@ def get_sand_volleyball_template():
         RefSameDivisionConstraint(),
         TimeVarietyOptimization(weight=1.0),
         RecInLowCourtsProcessor(),
-        ByeWeekOptimization(weight=1000.0),
-        TripleBusyOptimization(weight=10000.0),
+        ByeWeekOptimization(weight=10000.0),
+        TripleBusyOptimization(weight=1000000.0),
     ]
