@@ -83,6 +83,10 @@ class ScheduleCreator:
                 unique_optimizer_classes = sorted(set(optimizer_classes))
                 print(f"  - Optimizers from: {', '.join(unique_optimizer_classes)}")
         
+        # Minimize combined optimization terms if any exist
+        if hasattr(schedule, 'things_to_minimize'):
+            schedule.model.Minimize(sum(schedule.things_to_minimize))
+        
         schedule.solve()
 
         # Validate that that schedule meets all constraints

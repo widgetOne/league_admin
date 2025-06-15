@@ -11,9 +11,14 @@ class TimeVarietyOptimization(SchedulerComponent):
     uniform distribution as a proxy for entropy maximization.
     """
     
-    def __init__(self):
-        """Initialize the component."""
+    def __init__(self, weight=1.0):
+        """Initialize the component.
+        
+        Args:
+            weight: The relative weight of this optimization compared to others
+        """
         super().__init__()
+        self.weight = weight
         self.add_optimizer(self._get_time_variety_optimizer())
         self.add_debug_report(self._get_time_variety_debug_report())
 
@@ -115,8 +120,12 @@ class TimeVarietyOptimization(SchedulerComponent):
                                          for t_idx in schedule.teams 
                                          for time_idx in time_idxs)
             
-            # Minimize total absolute deviation from targets
-            schedule.model.Minimize(total_absolute_deviation)
+            # Store the optimization terms in the shared list
+            if not hasattr(schedule, 'things_to_minimize'):
+                schedule.things_to_minimize = []
+            
+            # Add the time variety terms with their weight
+            schedule.things_to_minimize.extend([d * self.weight for d in absolute_deviations.values()])
         
         return ModelActor(optimize_time_variety)
 
