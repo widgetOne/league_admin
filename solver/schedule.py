@@ -32,13 +32,15 @@ class Schedule:
         self.is_away: Dict[Tuple[Any, int], Any] = {}
         self.is_ref: Dict[Tuple[Any, int], Any] = {}
         self.is_playing: Dict[Tuple[Any, int], Any] = {}
+        self.is_busy: Dict[Tuple[Any, int], Any] = {}
 
-        self.busy_count: Dict[Tuple[int, int, int], Any] = {}
-        self.is_busy: Dict[Tuple[int, int, int], Any] = {}
+        self.busy_count_at_time: Dict[Tuple[int, int, int], Any] = {}
+        self.busy_at_time: Dict[Tuple[int, int, int], Any] = {}
         self.reffing_at_time: Dict[Tuple[int, int, int], Any] = {}
         self.playing_at_time: Dict[Tuple[int, int, int], Any] = {}
         self.playing_around_time: Dict[Tuple[int, int, int], Any] = {}
         self.games_per_weekend: Dict[Tuple[int, int], Any] = {}  # (weekend_idx, team_idx) -> games
+        self.busy_count_per_weekend: Dict[Tuple[int, int], Any] = {} # (weekend_idx, team_idx) -> games
         
         self._total_teams: int = 0
         self._game_report: Optional[pd.DataFrame] = None
@@ -123,6 +125,10 @@ class Schedule:
                 self.model.AddBoolOr([self.is_home[m, t_idx], self.is_away[m, t_idx]]).OnlyEnforceIf(self.is_playing[m, t_idx])
                 self.model.AddBoolAnd([self.is_home[m, t_idx].Not(), self.is_away[m, t_idx].Not()]).OnlyEnforceIf(self.is_playing[m, t_idx].Not())
 
+                self.is_busy[m, t_idx] = self.model.NewBoolVar(f"is_busy_{name_suffix}_{t_idx}")
+                self.model.AddBoolOr([self.is_playing[m, t_idx], self.is_ref[m, t_idx]]).OnlyEnforceIf(self.is_busy[m, t_idx])
+                self.model.AddBoolAnd([self.is_playing[m, t_idx].Not(), self.is_ref[m, t_idx].Not()]).OnlyEnforceIf(self.is_busy[m, t_idx].Not())
+
         weekend_idxs = sorted(list(set(m.weekend_idx for m in all_matches)))
         time_indices = sorted(list(set(m.time_idx for m in all_matches)))
         num_locations = len(self.facilities.locations) if self.facilities.locations else 0
@@ -136,8 +142,8 @@ class Schedule:
                     playing_vars_at_time = [self.is_playing[m_obj, t_idx] for m_obj in all_matches if m_obj.weekend_idx == w_idx and m_obj.time_idx == ti_idx]
                     reffing_vars_at_time = [self.is_ref[m_obj, t_idx] for m_obj in all_matches if m_obj.weekend_idx == w_idx and m_obj.time_idx == ti_idx]
 
-                    self.busy_count[key] = self.model.NewIntVar(0, max_busy_val, f"busy_count_{w_idx}_{ti_idx}_{t_idx}")
-                    self.model.Add(self.busy_count[key] == sum(playing_vars_at_time) + sum(reffing_vars_at_time))
+                    self.busy_count_at_time[key] = self.model.NewIntVar(0, max_busy_val, f"busy_count_at_time_{w_idx}_{ti_idx}_{t_idx}")
+                    self.model.Add(self.busy_count_at_time[key] == sum(playing_vars_at_time) + sum(reffing_vars_at_time))
                     
                     self.reffing_at_time[key] = self.model.NewBoolVar(f"reffing_at_{w_idx}_{ti_idx}_{t_idx}")
                     self.model.AddBoolOr(reffing_vars_at_time).OnlyEnforceIf(self.reffing_at_time[key])
@@ -147,9 +153,9 @@ class Schedule:
                     self.model.AddBoolOr(playing_vars_at_time).OnlyEnforceIf(self.playing_at_time[key])
                     self.model.AddBoolAnd([p.Not() for p in playing_vars_at_time]).OnlyEnforceIf(self.playing_at_time[key].Not())
 
-                    self.is_busy[key] = self.model.NewBoolVar(f"is_busy_{w_idx}_{ti_idx}_{t_idx}")
-                    self.model.Add(self.busy_count[key] >= 1).OnlyEnforceIf(self.is_busy[key])
-                    self.model.Add(self.busy_count[key] == 0).OnlyEnforceIf(self.is_busy[key].Not())
+                    self.busy_at_time[key] = self.model.NewBoolVar(f"busy_at_time_{w_idx}_{ti_idx}_{t_idx}")
+                    self.model.Add(self.busy_count_at_time[key] >= 1).OnlyEnforceIf(self.busy_at_time[key])
+                    self.model.Add(self.busy_count_at_time[key] == 0).OnlyEnforceIf(self.busy_at_time[key].Not())
 
         # Add playing_around_time variables for adjacent time reffing constraints
         # This must be done in a separate loop after playing_at_time is created
@@ -174,13 +180,19 @@ class Schedule:
         # Add games_per_weekend variables
         weekend_idxs = sorted(list(set(m.weekend_idx for m in all_matches)))
         self.games_per_weekend = {}
+        self.busy_count_per_weekend = {}
         for w_idx in weekend_idxs:
             for t_idx in range(self.total_teams):
                 key = (w_idx, t_idx)
                 # Count all games this team plays this weekend
-                weekend_playing_vars = [self.is_playing[m_obj, t_idx] for m_obj in all_matches if m_obj.weekend_idx == w_idx and (self.home_team[m_obj] == t_idx or self.away_team[m_obj] == t_idx)]
+                weekend_playing_vars = [self.is_playing[m_obj, t_idx] for m_obj in all_matches if m_obj.weekend_idx == w_idx]
                 self.games_per_weekend[key] = self.model.NewIntVar(0, len(weekend_playing_vars), f"games_per_weekend_{w_idx}_{t_idx}")
                 self.model.Add(self.games_per_weekend[key] == sum(weekend_playing_vars))
+                
+                # Count all busy times this team has this weekend
+                weekend_busy_vars = [self.is_busy[m_obj, t_idx] for m_obj in all_matches if m_obj.weekend_idx == w_idx]
+                self.busy_count_per_weekend[key] = self.model.NewIntVar(0, len(weekend_busy_vars), f"busy_count_per_weekend_{w_idx}_{t_idx}")
+                self.model.Add(self.busy_count_per_weekend[key] == sum(weekend_busy_vars))
 
     def get_game_report(self):
         """Get a DataFrame report of the solved schedule using singleton pattern.
