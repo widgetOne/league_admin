@@ -7,8 +7,10 @@ import pandas as pd
 
 
 def get_auth_token_path():
-    """Get the path to the authentication token."""
-    return os.path.join('auth', 'stonewall-volleyball-scheduler-gsheets-auth-token.json')
+    """Get the path to the Google Sheets authentication token."""
+    token_file_name = 'stonewall-volleyball-scheduler-gsheets-auth-token.json'
+    # Path relative to project root (where the script is executed from)
+    return os.path.join('auth', token_file_name)
 
 
 def get_sheets_config():
