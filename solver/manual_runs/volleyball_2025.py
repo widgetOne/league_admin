@@ -37,7 +37,7 @@ def main():
         print("\nTesting Google Sheets connection...")
         if test_sheets_connection():
             print("\nExporting schedule to Google Sheets...")
-            export_schedule_to_sheets(schedule, schedule_components)
+            export_schedule_to_sheets(schedule, creator)
             print("Export completed successfully!")
         else:
             print("⚠️  Skipping Google Sheets export due to connection issues.")
