@@ -7,10 +7,8 @@ import pandas as pd
 
 
 def get_auth_token_path():
-    """Get the path to the Google Sheets authentication token."""
-    token_file_name = 'stonewall-volleyball-scheduler-gsheets-auth-token.json'
-    # Path relative to project root (where the script is executed from)
-    return os.path.join('auth', token_file_name)
+    """Get the path to the authentication token."""
+    return os.path.join('auth', 'stonewall-volleyball-scheduler-gsheets-auth-token.json')
 
 
 def get_sheets_config():
@@ -20,6 +18,116 @@ def get_sheets_config():
     config_path = os.path.join('auth', config_file_name)
     with open(config_path, 'r') as config_file:
         return yaml.safe_load(config_file)
+
+
+def get_team_name_mapping():
+    """Create a mapping from team index to team name using gsheets_config.yaml."""
+    config = get_sheets_config()
+    team_names = config.get('team_names', {})
+    
+    team_mapping = {}
+    team_idx = 0
+    
+    # Map teams in order: division_1, division_2, division_3
+    for div_name in ['division_1', 'division_2', 'division_3']:
+        if div_name in team_names:
+            for team_name in team_names[div_name]:
+                team_mapping[team_idx] = team_name
+                team_idx += 1
+    
+    return team_mapping
+
+
+def format_schedule_as_csv(schedule):
+    """Format the schedule in the CSV format matching the example.
+    
+    Args:
+        schedule: The solved schedule object
+        
+    Returns:
+        list: List of lists representing CSV rows
+    """
+    game_report = schedule.get_game_report()
+    team_mapping = get_team_name_mapping()
+    
+    # Group by weekend and time
+    csv_data = []
+    
+    # Get unique weekends and sort them
+    weekends = sorted(game_report['weekend_idx'].unique())
+    
+    for weekend_idx in weekends:
+        weekend_games = game_report[game_report['weekend_idx'] == weekend_idx]
+        
+        # Get unique times for this weekend and sort them
+        times = sorted(weekend_games['time'].unique())
+        
+        # Create header row
+        header_row = ['Time', 'Court 1 Team 1', 'Court 1 Team 2', 'Up Ref', 'Line Ref',
+                      'Court 2 Team 1', 'Court 2 Team 2', 'Up Ref', 'Line Ref',
+                      'Court 3 Team 1', 'Court 3 Team 2', 'Up Ref', 'Line Ref',
+                      'Court 4 Team 1', 'Court 4 Team 2', 'Up Ref', 'Line Ref']
+        csv_data.append(header_row)
+        
+        for time in times:
+            time_games = weekend_games[weekend_games['time'] == time]
+            
+            # Convert time to display format (e.g., "12:00" -> "12pm")
+            time_str = format_time_display(time)
+            
+            # Initialize row with time
+            row = [time_str]
+            
+            # Get games by location (court)
+            courts = sorted(time_games['location'].unique())
+            
+            # Fill in up to 4 courts
+            for court_idx in range(4):
+                if court_idx < len(courts):
+                    court_games = time_games[time_games['location'] == courts[court_idx]]
+                    if len(court_games) > 0:
+                        game = court_games.iloc[0]  # Should only be one game per court per time
+                        
+                        # Get team names
+                        team1_name = team_mapping.get(game['team1'], f"Team {game['team1']}")
+                        team2_name = team_mapping.get(game['team2'], f"Team {game['team2']}")
+                        ref_name = team_mapping.get(game['ref'], f"Team {game['ref']}")
+                        
+                        # Add team1, team2, up_ref, line_ref (using same ref for both for now)
+                        row.extend([team1_name, team2_name, ref_name, ref_name])
+                    else:
+                        row.extend(['NO PLAY', 'NO PLAY', 'NO PLAY', 'NO PLAY'])
+                else:
+                    row.extend(['NO PLAY', 'NO PLAY', 'NO PLAY', 'NO PLAY'])
+            
+            csv_data.append(row)
+        
+        # Add blank row between weekends
+        csv_data.append([''] * len(header_row))
+    
+    return csv_data
+
+
+def format_time_display(time_obj):
+    """Convert time object to display format (e.g., "12:00" -> "12pm")."""
+    if hasattr(time_obj, 'hour'):
+        hour = time_obj.hour
+    else:
+        # Try to parse string time
+        try:
+            if ':' in str(time_obj):
+                hour = int(str(time_obj).split(':')[0])
+            else:
+                hour = int(str(time_obj))
+        except:
+            return str(time_obj)
+    
+    if hour == 12:
+        return "12pm"
+    elif hour > 12:
+        return f"{hour - 12}pm"
+    else:
+        return f"{hour}pm"
 
 
 def get_gspread_sheet():
@@ -44,8 +152,8 @@ def export_schedule_to_sheets(schedule, creator):
     """
     config = get_sheets_config()
     
-    # Export the schedule
-    export_schedule_data(schedule, config['schedule_tab'])
+    # Export the schedule in CSV format
+    export_schedule_csv_format(schedule, config['schedule_tab'])
     
     # Export the debug reports
     debug_reports = creator.generate_debug_reports(schedule)
@@ -63,6 +171,35 @@ def export_schedule_to_sheets(schedule, creator):
     print(f"   - Debug reports in tab: '{config['debug_report_tab']}'")
     if 'schedule' in worksheet_names:
         print(f"   - Structured game report in tab: 'schedule'")
+
+
+def export_schedule_csv_format(schedule, tab_name):
+    """Export the schedule data in CSV format to a specific Google Sheets tab.
+    
+    Args:
+        schedule: The solved schedule object
+        tab_name: The name of the Google Sheets tab to export to
+    """
+    # Get the CSV formatted data
+    csv_data = format_schedule_as_csv(schedule)
+    
+    # Get the sheet and set data
+    sheet = get_gspread_sheet()
+    sheet.open_sheet(tab_name)
+    worksheet = sheet.sheet
+    
+    # Clear existing content first
+    worksheet.clear()
+    
+    # Update the entire range at once
+    if csv_data:
+        rows = len(csv_data)
+        cols = len(csv_data[0])
+        
+        # Convert column number to letter (A, B, C, ..., P for 16 columns)
+        end_col = chr(ord('A') + cols - 1)
+        cell_range = f'A1:{end_col}{rows}'
+        worksheet.update(cell_range, csv_data)
 
 
 def export_schedule_data(schedule, tab_name):
