@@ -1,9 +1,46 @@
 from typing import List, Dict, Set, Any, Iterable, Tuple, Optional
 import datetime
+import time
 import pandas as pd
 from ortools.sat.python import cp_model
 from .facilities.facility import Facilities, Match
 from .schedule_component import ModelActor
+
+
+class SolutionStatusCallback(cp_model.CpSolverSolutionCallback):
+    """A callback to print solver status at regular intervals."""
+
+    def __init__(self, schedule: 'Schedule', interval: float = 10.0):
+        """
+        Initializes the callback.
+
+        Args:
+            schedule: The schedule object being solved.
+            interval: The interval in seconds at which to print status updates.
+        """
+        super().__init__()
+        self._schedule = schedule
+        self._interval = interval
+        self._start_time = time.time()
+        self._last_print_time = time.time()
+        self._solution_count = 0
+
+    def on_solution_callback(self):
+        """Called by the solver when a new solution is found."""
+        current_time = time.time()
+        self._solution_count += 1
+        first_schedule_found = self._solution_count == 1
+        if current_time - self._last_print_time >= self._interval or first_schedule_found:
+            elapsed_time = current_time - self._start_time
+            objective_value = self.ObjectiveValue()
+
+            if self._solution_count == 1:
+                print(f"[{elapsed_time:6.2f}s] First valid schedule found! Objective: {objective_value:,.2f}")
+            else:
+                print(f"[{elapsed_time:6.2f}s] Improved schedule found ({self._solution_count}). Objective: {objective_value:,.2f}")
+
+            self._last_print_time = current_time
+
 
 class Schedule:
     """A solver for scheduling games using constraint programming."""
@@ -296,20 +333,22 @@ class Schedule:
         return team_report
     
     def solve(self):
-        """Solve the scheduling problem with a 20-second time limit."""
+        """Solve the scheduling problem with a 600-second time limit."""
         start = datetime.datetime.now()
         print(f"Starting solution process at {start}")
 
-        # Set solver parameters with 60-second time limit
-        self.solver.parameters.max_time_in_seconds = 60.0
+        # Set solver parameters with 600-second time limit
+        self.solver.parameters.max_time_in_seconds = 1200.0
+        #self.solver.parameters.enumerate_all_solutions = True
         
-        status = self.solver.Solve(self.model)
+        solution_callback = SolutionStatusCallback(self, interval=10.0)
+        status = self.solver.Solve(self.model, solution_callback)
         
         end = datetime.datetime.now()
         delta = end - start
         print(f"Solver status: {self.solver.StatusName(status)}")
         print(f"Finished at {end}, duration: {delta}")
-        
+
         if status == cp_model.OPTIMAL:
             print('Optimal solution found!')
         elif status == cp_model.FEASIBLE:
@@ -321,6 +360,9 @@ class Schedule:
             elif status == cp_model.MODEL_INVALID:
                 print("Model is invalid. Check constraints and variable definitions.")
 
+
+        if self.solver.ObjectiveValue() > 80000:
+            raise Exception('Objective value is higher than my last saved schedule')
         # Store the solve status for later reference
         self._last_solve_status = status
 
