@@ -7,7 +7,7 @@ from ..components.one_thing_at_a_time import OneThingAtATimeConstraint
 from ..components.rec_in_low_courts import RecInLowCourtsProcessor
 from ..components.time_variety_optimization import TimeVarietyOptimization
 from ..components.bye_week_optimization import ByeWeekOptimization
-from ..components.triple_busy_optimization import TripleBusyOptimization
+from ..components.no_three_hours_days import NoThreeHoursDays
 
 def get_sand_volleyball_template():
     """Get the sand volleyball template components.
@@ -25,5 +25,5 @@ def get_sand_volleyball_template():
         TimeVarietyOptimization(weight=1.0),
         RecInLowCourtsProcessor(),
         ByeWeekOptimization(weight=10000.0),
-        TripleBusyOptimization(weight=1000000.0),
+        NoThreeHoursDays(),
     ]
