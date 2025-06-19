@@ -337,8 +337,8 @@ class Schedule:
         start = datetime.datetime.now()
         print(f"Starting solution process at {start}")
 
-        # Set solver parameters with 600-second time limit
-        self.solver.parameters.max_time_in_seconds = 1200.0
+        # Set solver parameters with 240-second time limit
+        self.solver.parameters.max_time_in_seconds = 240.0
         #self.solver.parameters.enumerate_all_solutions = True
         
         solution_callback = SolutionStatusCallback(self, interval=10.0)
@@ -361,8 +361,6 @@ class Schedule:
                 print("Model is invalid. Check constraints and variable definitions.")
 
 
-        if self.solver.ObjectiveValue() > 80000:
-            raise Exception('Objective value is higher than my last saved schedule')
         # Store the solve status for later reference
         self._last_solve_status = status
 
