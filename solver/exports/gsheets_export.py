@@ -40,6 +40,35 @@ def get_team_name_mapping():
     return team_mapping
 
 
+def get_available_line_ref(schedule, time_games, up_ref_team_idx, team_mapping):
+    """Find an available team for Line Ref duty that's not playing or up reffing.
+    
+    Args:
+        schedule: The solved schedule object
+        time_games: Games at this specific time
+        up_ref_team_idx: The team index doing Up Ref
+        team_mapping: Mapping from team index to team name
+        
+    Returns:
+        str: Team name for Line Ref duty
+    """
+    # Get all teams that are busy at this time (playing or up reffing)
+    busy_teams = set()
+    
+    for _, game in time_games.iterrows():
+        busy_teams.add(game['team1'])  # Team 1 playing
+        busy_teams.add(game['team2'])  # Team 2 playing
+        busy_teams.add(game['ref'])    # Up ref team
+    
+    # Find an available team for line ref
+    for team_idx in team_mapping.keys():
+        if team_idx not in busy_teams:
+            return team_mapping[team_idx]
+    
+    # If no team is available (shouldn't happen), use the up ref team
+    return team_mapping.get(up_ref_team_idx, f"Team {up_ref_team_idx}")
+
+
 def format_schedule_as_csv(schedule):
     """Format the schedule in the CSV format matching the example.
     
@@ -71,6 +100,9 @@ def format_schedule_as_csv(schedule):
                       'Court 4 Team 1', 'Court 4 Team 2', 'Up Ref', 'Line Ref']
         csv_data.append(header_row)
         
+        # Check if this is the first time slot of the day (12pm)
+        first_time = times[0] if times else None
+        
         for time in times:
             time_games = weekend_games[weekend_games['time'] == time]
             
@@ -83,6 +115,9 @@ def format_schedule_as_csv(schedule):
             # Get games by location (court)
             courts = sorted(time_games['location'].unique())
             
+            # Determine if this is the first game of the day
+            is_first_game = (time == first_time)
+            
             # Fill in up to 4 courts
             for court_idx in range(4):
                 if court_idx < len(courts):
@@ -93,10 +128,17 @@ def format_schedule_as_csv(schedule):
                         # Get team names
                         team1_name = team_mapping.get(game['team1'], f"Team {game['team1']}")
                         team2_name = team_mapping.get(game['team2'], f"Team {game['team2']}")
-                        ref_name = team_mapping.get(game['ref'], f"Team {game['ref']}")
+                        up_ref_name = team_mapping.get(game['ref'], f"Team {game['ref']}")
                         
-                        # Add team1, team2, up_ref, line_ref (using same ref for both for now)
-                        row.extend([team1_name, team2_name, ref_name, ref_name])
+                        # For first game of day, use same team for both refs
+                        # For other games, find a different team for line ref
+                        if is_first_game:
+                            line_ref_name = up_ref_name  # Same as up ref for first game
+                        else:
+                            line_ref_name = get_available_line_ref(schedule, time_games, game['ref'], team_mapping)
+                        
+                        # Add team1, team2, up_ref, line_ref
+                        row.extend([team1_name, team2_name, up_ref_name, line_ref_name])
                     else:
                         row.extend(['NO PLAY', 'NO PLAY', 'NO PLAY', 'NO PLAY'])
                 else:
@@ -328,6 +370,50 @@ def test_sheets_connection():
     except Exception as e:
         print(f"❌ Google Sheets connection failed: {e}")
         return False
+
+
+def get_best_objective_score():
+    """Get the best objective score from the 'scratch' tab, cell A1.
+    
+    Returns:
+        float: The best objective score, or float('inf') if not found or error
+    """
+    try:
+        sheet = get_gspread_sheet()
+        sheet.open_sheet('scratch')
+        worksheet = sheet.sheet
+        
+        # Get value from cell A1
+        cell_value = worksheet.acell('A1').value
+        
+        if cell_value is None or cell_value == '':
+            return float('inf')  # No previous score
+        
+        # Try to convert to float
+        return float(cell_value)
+        
+    except Exception as e:
+        print(f"Warning: Could not read best objective score from scratch tab: {e}")
+        return float('inf')  # Default to infinity if we can't read
+
+
+def save_best_objective_score(objective_score):
+    """Save the best objective score to the 'scratch' tab, cell A1.
+    
+    Args:
+        objective_score (float): The objective score to save
+    """
+    try:
+        sheet = get_gspread_sheet()
+        sheet.open_sheet('scratch')
+        worksheet = sheet.sheet
+        
+        # Update cell A1 with the objective score
+        worksheet.update('A1', [[objective_score]])
+        print(f"✅ Saved best objective score {objective_score:,.2f} to scratch tab")
+        
+    except Exception as e:
+        print(f"Warning: Could not save best objective score to scratch tab: {e}")
 
 
 if __name__ == '__main__':
