@@ -333,12 +333,15 @@ class Schedule:
         return team_report
     
     def solve(self):
-        """Solve the scheduling problem with a 600-second time limit."""
+        """Solve the scheduling problem with optimized solver parameters."""
         start = datetime.datetime.now()
         print(f"Starting solution process at {start}")
 
-        # Set solver parameters with 240-second time limit
+        # Set solver parameters optimized for performance
         self.solver.parameters.max_time_in_seconds = 240.0
+        self.solver.parameters.num_search_workers = 8  # Use multicore
+        self.solver.parameters.linearization_level = 0  # Disable linearization for speed
+        self.solver.parameters.cp_model_presolve = True  # Enable presolve optimizations
         #self.solver.parameters.enumerate_all_solutions = True
         
         solution_callback = SolutionStatusCallback(self, interval=10.0)
