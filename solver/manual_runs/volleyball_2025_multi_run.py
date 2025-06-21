@@ -15,8 +15,13 @@ from ..exports.gsheets_export import export_schedule_to_sheets, get_best_objecti
 from .make_teamwise_schedules_2025 import make_teamwise_schedules
 
 
-def main():
-    """Run the volleyball scheduler multiple times and track the best result."""
+def generate_multiple_schedules(update_schedule=True):
+    """Run the volleyball scheduler multiple times and track the best result.
+    
+    Args:
+        update_schedule (bool): Whether to update Google Sheets during runs. 
+                               If False, only tracks best score without uploading.
+    """
     print("Running Multi-Run Volleyball Scheduler for 2025...")
     
     # Load facilities
@@ -59,20 +64,23 @@ def main():
                 best_score = current_score
                 improved_runs += 1
                 
-                # Immediately upload the improved schedule
-                print(f"🚀 Uploading improved schedule to Google Sheets...")
-                try:
-                    export_schedule_to_sheets(schedule, creator)
-                    save_best_objective_score(current_score)
-                    print(f"✅ Upload complete! New best score saved: {current_score:,.2f}")
-                    
-                    # Generate teamwise schedules immediately
-                    print(f"📋 Generating individual team schedules...")
-                    make_teamwise_schedules()
-                    print(f"✅ Individual team schedules generated!")
-                    
-                except Exception as e:
-                    print(f"⚠️  Failed to upload/generate schedules: {e}")
+                # Upload the improved schedule if update_schedule is True
+                if update_schedule:
+                    print(f"🚀 Uploading improved schedule to Google Sheets...")
+                    try:
+                        export_schedule_to_sheets(schedule, creator)
+                        save_best_objective_score(current_score)
+                        print(f"✅ Upload complete! New best score saved: {current_score:,.2f}")
+                        
+                        # Generate teamwise schedules immediately
+                        print(f"📋 Generating individual team schedules...")
+                        make_teamwise_schedules()
+                        print(f"✅ Individual team schedules generated!")
+                        
+                    except Exception as e:
+                        print(f"⚠️  Failed to upload/generate schedules: {e}")
+                else:
+                    print(f"📝 Skipping upload (update_schedule=False)")
                 
                 # Check for early stop condition
                 if current_score <= 80000:
@@ -102,20 +110,26 @@ def main():
         improvement = current_best_score - best_score
         improvement_pct = (improvement / current_best_score) * 100
         print(f"Total improvement: {improvement:,.2f} ({improvement_pct:.2f}%)")
-        print(f"✅ All improvements were uploaded immediately during the runs.")
+        if update_schedule:
+            print(f"✅ All improvements were uploaded immediately during the runs.")
+        else:
+            print(f"📝 Improvements were found but not uploaded (update_schedule=False).")
     else:
         print(f"No improvement found across all runs.")
         
         # Generate teamwise schedules even if no improvement (using current best schedule)
-        print(f"\n📋 Generating individual team schedules from current best...")
-        try:
-            make_teamwise_schedules()
-            print(f"✅ Individual team schedules generated successfully!")
-        except Exception as e:
-            print(f"⚠️  Failed to generate team schedules: {e}")
+        if update_schedule:
+            print(f"\n📋 Generating individual team schedules from current best...")
+            try:
+                make_teamwise_schedules()
+                print(f"✅ Individual team schedules generated successfully!")
+            except Exception as e:
+                print(f"⚠️  Failed to generate team schedules: {e}")
+        else:
+            print(f"📝 Skipping teamwise schedule generation (update_schedule=False).")
     
     print(f"\nMulti-run optimization complete!")
 
 
 if __name__ == "__main__":
-    main() 
+    generate_multiple_schedules() 
