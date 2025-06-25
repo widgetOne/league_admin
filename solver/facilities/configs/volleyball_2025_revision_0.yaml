@@ -1,0 +1,100 @@
+# Facility configuration for volleyball league
+name: "Volleyball League 2025"
+
+# Team configuration
+team_counts: [13, 10, 9]  # Number of teams in each division
+# team_counts: [12, 12, 8]  # Number of teams in each division
+games_per_season: 6
+games_per_day: 1
+
+# Schedule configuration with dates and their time slots
+dates:
+  - date: "6/22/2025"
+    time_slots:
+      - time: "11:00"
+        courts: [0, 0, 0, 0]  # Court 1-4 layout
+      - time: "12:00"
+        courts: [1, 0, 0, 0]  # Court 1-4 layout
+      - time: "13:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "14:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "15:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "16:00"
+        courts: [1, 1, 1, 0]  # Court 1-4 layout
+        
+  - date: "6/29/2025"
+    time_slots:
+      - time: "11:00"
+        courts: [0, 0, 0, 0]  # Court 1-4 layout
+      - time: "12:00"
+        courts: [1, 0, 0, 0]  # Court 1-4 layout
+      - time: "13:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "14:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "15:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "16:00"
+        courts: [1, 1, 1, 0]  # Court 1-4 layout
+        
+  - date: "7/13/2025"
+    time_slots:
+      - time: "11:00"
+        courts: [0, 0, 0, 0]  # Court 1-4 layout
+      - time: "12:00"
+        courts: [1, 0, 0, 0]  # Court 1-4 layout
+      - time: "13:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "14:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "15:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "16:00"
+        courts: [1, 1, 1, 0]  # Court 1-4 layout
+        
+  - date: "7/27/2025"
+    time_slots:
+      - time: "11:00"
+        courts: [0, 0, 0, 0]  # Court 1-4 layout
+      - time: "12:00"
+        courts: [1, 0, 0, 0]  # Court 1-4 layout
+      - time: "13:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "14:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "15:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "16:00"
+        courts: [1, 1, 1, 0]  # Court 1-4 layout
+        
+  - date: "8/3/2025"
+    time_slots:
+      - time: "11:00"
+        courts: [0, 0, 0, 0]  # Court 1-4 layout
+      - time: "12:00"
+        courts: [1, 0, 0, 0]  # Court 1-4 layout
+      - time: "13:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "14:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "15:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "16:00"
+        courts: [1, 1, 1, 0]  # Court 1-4 layout
+        
+  - date: "8/10/2025"
+    time_slots:
+      - time: "11:00"
+        courts: [0, 0, 0, 0]  # Court 1-4 layout
+      - time: "12:00"
+        courts: [1, 0, 0, 0]  # Court 1-4 layout
+      - time: "13:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "14:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "15:00"
+        courts: [1, 1, 1, 1]  # Court 1-4 layout
+      - time: "16:00"
+        courts: [1, 1, 1, 0]  # Court 1-4 layout 

@@ -158,6 +158,10 @@ class Facilities:
     def from_yaml(cls, yaml_path: str) -> 'Facilities':
         """Create a Facilities instance from a YAML configuration file.
         
+        Supports two formats:
+        1. Legacy format: global time_slots + separate dates list
+        2. New format: dates list with embedded time_slots per date
+        
         Args:
             yaml_path: Path to the YAML configuration file
             
@@ -166,32 +170,71 @@ class Facilities:
         """
         with open(yaml_path, 'r') as f:
             config = yaml.safe_load(f)
-            
-        # Extract times from time_slots
-        times = [datetime.strptime(ts['time'], '%H:%M').time() for ts in config['time_slots']]
+        
+        # Detect format and normalize to new format
+        if 'time_slots' in config and isinstance(config['dates'], list) and isinstance(config['dates'][0], str):
+            # Legacy format: global time_slots + string dates
+            normalized_dates = []
+            for date_str in config['dates']:
+                normalized_dates.append({
+                    'date': date_str,
+                    'time_slots': config['time_slots']
+                })
+        else:
+            # New format: dates with embedded time_slots
+            normalized_dates = config['dates']
+        
+        # Extract all unique times across all dates (maintaining order)
+        # Only include times where at least one court is active
+        all_times = []
+        time_set = set()
+        for date_entry in normalized_dates:
+            for time_slot in date_entry['time_slots']:
+                # Only include this time if at least one court is active
+                if any(court == 1 for court in time_slot['courts']):
+                    time_str = time_slot['time']
+                    if time_str not in time_set:
+                        all_times.append(datetime.strptime(time_str, '%H:%M').time())
+                        time_set.add(time_str)
+        
+        # Create time index mapping
+        time_to_idx = {t: idx for idx, t in enumerate(all_times)}
         
         # Generate game slots from the configuration
         matches = []
-        for idx, date in enumerate(config['dates']):
+        date_strings = []
+        
+        for idx, date_entry in enumerate(normalized_dates):
             week_idx = idx + 1
-            for time_idx, time_slot in enumerate(config['time_slots']):
-                t_obj = datetime.strptime(time_slot['time'], '%H:%M').time()
-                for court_idx, court_active in enumerate(time_slot['courts']):
-                    if court_active == 1:
-                        matches.append(Match(
-                            weekend_idx=week_idx,
-                            date=date,
-                            location=court_idx,
-                            time=t_obj,
-                            time_idx=time_idx
-                        ))
+            date_str = date_entry['date']
+            date_strings.append(date_str)
+            
+            for time_slot in date_entry['time_slots']:
+                # Only process time slots where at least one court is active
+                if any(court == 1 for court in time_slot['courts']):
+                    t_obj = datetime.strptime(time_slot['time'], '%H:%M').time()
+                    time_idx = time_to_idx[t_obj]
+                    
+                    for court_idx, court_active in enumerate(time_slot['courts']):
+                        if court_active == 1:
+                            matches.append(Match(
+                                weekend_idx=week_idx,
+                                date=date_str,
+                                location=court_idx,
+                                time=t_obj,
+                                time_idx=time_idx
+                            ))
+        
+        # Determine number of courts from first time slot
+        first_time_slots = normalized_dates[0]['time_slots']
+        num_courts = len(first_time_slots[0]['courts']) if first_time_slots else 4
             
         return cls(
             team_counts=config['team_counts'],
             games_per_season=config.get('games_per_season', 6),
             games_per_day=config.get('games_per_day', 1),
-            times=times,
-            dates=config['dates'],
-            locations=list(range(len(config['time_slots'][0]['courts']))),  # Generate locations based on court count
+            times=all_times,
+            dates=date_strings,
+            locations=list(range(num_courts)),
             matches=matches
         ) 
