@@ -7,7 +7,7 @@ from .make_league_apps_schedule_2025 import read_schedule_from_sheets, parse_sch
 
 
 def parse_schedule_for_teamwise(schedule_data, dates):
-    """Parse the schedule data for teamwise schedules (ignoring line refs).
+    """Parse the schedule data for teamwise schedules (including both up and line refs).
     
     Args:
         schedule_data: Raw schedule data from Google Sheets
@@ -30,7 +30,7 @@ def parse_schedule_for_teamwise(schedule_data, dates):
         team1_name = game['team1']
         team2_name = game['team2']
         up_ref_name = game['up_ref']
-        # Ignore line_ref_name = game['line_ref'] for teamwise schedules
+        line_ref_name = game['line_ref']
         
         # Add playing entries for team1 and team2
         if team1_name in name_to_idx:
@@ -53,13 +53,24 @@ def parse_schedule_for_teamwise(schedule_data, dates):
                 'opponent': team1_name
             })
         
-        # Add reffing entry for up ref (ignore line ref for teamwise schedules)
+        # Add reffing entry for up ref
         if up_ref_name in name_to_idx:
             team_idx = name_to_idx[up_ref_name]
             team_schedules[team_idx].append({
                 'date': game['date'],
                 'time': game['time'],
-                'activity': 'Ref',
+                'activity': 'Up Ref',
+                'court': game['court'],
+                'opponent': None
+            })
+        
+        # Add reffing entry for line ref
+        if line_ref_name in name_to_idx:
+            team_idx = name_to_idx[line_ref_name]
+            team_schedules[team_idx].append({
+                'date': game['date'],
+                'time': game['time'],
+                'activity': 'Line Ref',
                 'court': game['court'],
                 'opponent': None
             })
@@ -97,8 +108,12 @@ def format_team_schedule(team_schedule, dates):
             for entry in date_entries:
                 if entry['activity'] == 'Play':
                     line = f"{entry['time']} - Play Court {entry['court']} vs {entry['opponent']}"
-                else:  # Ref
-                    line = f"{entry['time']} - Ref Court {entry['court']}"
+                elif entry['activity'] == 'Up Ref':
+                    line = f"{entry['time']} - Up Ref Court {entry['court']}"
+                elif entry['activity'] == 'Line Ref':
+                    line = f"{entry['time']} - Line Ref Court {entry['court']}"
+                else:  # Fallback for any other activity type
+                    line = f"{entry['time']} - {entry['activity']} Court {entry['court']}"
                 formatted_lines.append(line)
         else:
             formatted_lines.append("Bye week")
