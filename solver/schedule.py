@@ -415,6 +415,156 @@ class Schedule:
         
         return "\n".join(lines)
 
+    @staticmethod
+    def parse_canned_schedule(file_path: str):
+        """Parse a canned schedule file and return a Schedule-like object with dataframes.
+        
+        Args:
+            file_path: Path to the schedule file in the format:
+                      week_idx: 1
+                      date: 6/22/2025
+                      time 12:00:00
+                      26 v 29 r 23
+                      time 13:00:00
+                      08 v 01 r 03 - 18 v 13 r 16 - ...
+        
+        Returns:
+            object: An object with game_report and team_report DataFrames
+        """
+        import re
+        from datetime import datetime
+        
+        # Read the file
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        # Parse the content
+        schedule_rows = []
+        current_week_idx = None
+        current_date = None
+        current_time = None
+        
+        lines = content.strip().split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith('=') or line == 'VOLLEYBALL SCHEDULE DEBUG OUTPUT':
+                continue
+                
+            # Parse week_idx
+            if line.startswith('week_idx:'):
+                current_week_idx = int(line.split(':')[1].strip())
+                continue
+                
+            # Parse date
+            if line.startswith('date:'):
+                date_str = line.split(':', 1)[1].strip()
+                current_date = date_str
+                continue
+                
+            # Parse time
+            if line.startswith('time '):
+                time_str = line.split(' ', 1)[1].strip()
+                # Convert time format (e.g., "12:00:00" -> "12:00:00")
+                current_time = time_str
+                continue
+                
+            # Parse games (format: "26 v 29 r 23" or "08 v 01 r 03 - 18 v 13 r 16 - ...")
+            if ' v ' in line and ' r ' in line:
+                # Split by " - " to get individual games
+                games = line.split(' - ')
+                
+                for i, game in enumerate(games):
+                    game = game.strip()
+                    # Parse game format: "team1 v team2 r ref"
+                    match = re.match(r'(\d+)\s+v\s+(\d+)\s+r\s+(\d+)', game)
+                    if match:
+                        team1 = int(match.group(1))
+                        team2 = int(match.group(2))
+                        ref = int(match.group(3))
+                        
+                        # Create time_idx based on time
+                        time_mapping = {
+                            "12:00:00": 0,
+                            "13:00:00": 1, 
+                            "14:00:00": 2,
+                            "15:00:00": 3,
+                            "16:00:00": 4
+                        }
+                        time_idx = time_mapping.get(current_time, 0)
+                        
+                        schedule_rows.append({
+                            "weekend_idx": current_week_idx,
+                            "date": current_date,
+                            "location": "Highland Park",  # Default location
+                            "time": current_time,
+                            "team1": team1,  # home team
+                            "team2": team2,  # away team
+                            "ref": ref,      # ref team
+                            "time_idx": time_idx,
+                        })
+        
+        # Create game report DataFrame
+        game_report = pd.DataFrame(schedule_rows)
+        game_report.sort_values(["weekend_idx", "date", "time"], inplace=True)
+        game_report.reset_index(drop=True, inplace=True)
+        
+        # Generate team report
+        if not schedule_rows:
+            team_report = pd.DataFrame()
+        else:
+            # Find max team index to determine total teams
+            all_teams = set()
+            for row in schedule_rows:
+                all_teams.add(row['team1'])
+                all_teams.add(row['team2'])
+                all_teams.add(row['ref'])
+            
+            team_indices = sorted(list(all_teams))
+            team_report = pd.DataFrame(index=team_indices)
+            
+            # Count total play (team1 + team2 appearances)
+            play_counts = pd.Series(0, index=team_indices, name='total_play')
+            for _, row in game_report.iterrows():
+                play_counts[row['team1']] += 1
+                play_counts[row['team2']] += 1
+            team_report['total_play'] = play_counts
+            
+            # Count total ref
+            ref_counts = game_report['ref'].value_counts().reindex(team_indices, fill_value=0)
+            team_report['total_ref'] = ref_counts
+            
+            # Count vs play (games against each other team)
+            for opponent_idx in team_indices:
+                vs_count = pd.Series(0, index=team_indices, name=f'vs_{opponent_idx}')
+                
+                for _, row in game_report.iterrows():
+                    team1, team2 = row['team1'], row['team2']
+                    
+                    # Count matchups where team1 plays against opponent_idx
+                    if team2 == opponent_idx:
+                        vs_count[team1] += 1
+                        
+                    # Count matchups where team2 plays against opponent_idx  
+                    if team1 == opponent_idx:
+                        vs_count[team2] += 1
+                        
+                team_report[f'vs_{opponent_idx}'] = vs_count
+        
+        # Create a simple object to hold the dataframes
+        class ParsedSchedule:
+            def __init__(self, game_report, team_report):
+                self.game_report = game_report
+                self.team_report = team_report
+                
+            def get_game_report(self):
+                return self.game_report
+                
+            def get_team_report(self):
+                return self.team_report
+        
+        return ParsedSchedule(game_report, team_report)
+
     def __str__(self) -> str:
         """Return a string representation of the solution."""
         return f"Schedule with {len(self.matches)} matches for {self.total_teams} teams"
