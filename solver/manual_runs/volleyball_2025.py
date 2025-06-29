@@ -2,7 +2,7 @@ import pathlib
 import os
 from .. import Facilities, Schedule
 from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
-from .manual_runner import make_schedule, write_volleyball_debug_files
+from .manual_runner import make_schedule_and_debug_files
 from ..exports.gsheets_export import export_schedule_to_sheets, test_sheets_connection
 
 def main():
@@ -22,15 +22,12 @@ def main():
      # Get the sand volleyball template components
     schedule_components = get_sand_volleyball_template()
     
-    # Create and solve the schedule
-    schedule, creator = make_schedule(facilities, schedule_components)
-    
-    # Print the result
-    print("Schedule created successfully!")
-    print(schedule)
-    
-    # Write debug files
-    write_volleyball_debug_files(schedule, creator, current_dir)
+    # Create schedule and write debug files using the new top-level function
+    schedule, creator = make_schedule_and_debug_files(
+        facilities,
+        base_dir=current_dir,
+        components=schedule_components
+    )
     
     # Export to Google Sheets
     try:
