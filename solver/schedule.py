@@ -81,9 +81,18 @@ class Schedule:
         
         self._total_teams: int = 0
         self._game_report: Optional[pd.DataFrame] = None
+        self._debug_report: Optional[str] = None
 
         # Apply facility constraints to the model
         self._apply_facilities_to_model()
+
+    def set_debug_report(self, report: str):
+        """Store the debug report string on the schedule object."""
+        self._debug_report = report
+
+    def get_debug_report(self) -> Optional[str]:
+        """Retrieve the stored debug report."""
+        return self._debug_report
 
     @property
     def matches(self):
