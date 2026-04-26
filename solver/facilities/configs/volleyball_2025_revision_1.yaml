@@ -12,89 +12,119 @@ dates:
   - date: "6/22/2025"
     time_slots:
       - time: "11:00"
-        courts: [0, 0, 0, 0]  # Court 1-4 layout
+        courts: [0, 0, 0, 0]
       - time: "12:00"
-        courts: [1, 0, 0, 0]  # Court 1-4 layout
+        courts: [1, 0, 0, 0]
       - time: "13:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "14:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "15:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "16:00"
-        courts: [1, 1, 1, 0]  # Court 1-4 layout
-        
+        courts: [1, 1, 1, 0]
+
   - date: "6/29/2025"
     time_slots:
       - time: "11:00"
-        courts: [0, 0, 0, 0]  # Court 1-4 layout
+        courts: [0, 0, 0, 0]
       - time: "12:00"
-        courts: [1, 0, 0, 0]  # Court 1-4 layout
+        courts: [1, 0, 0, 0]
       - time: "13:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "14:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "15:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "16:00"
-        courts: [1, 1, 1, 0]  # Court 1-4 layout
-        
+        courts: [1, 1, 1, 0]
+
+  - date: "7/6/2025"
+    time_slots:
+      - time: "11:00"
+        courts: [0, 0, 0, 0]
+      - time: "12:00"
+        courts: [1, 0, 0, 0]
+      - time: "13:00"
+        courts: [1, 1, 1, 1]
+      - time: "14:00"
+        courts: [1, 1, 1, 1]
+      - time: "15:00"
+        courts: [1, 1, 1, 1]
+      - time: "16:00"
+        courts: [1, 1, 1, 0]
+
   - date: "7/13/2025"
     time_slots:
       - time: "11:00"
-        courts: [0, 0, 0, 0]  # Court 1-4 layout
+        courts: [0, 0, 0, 0]
       - time: "12:00"
-        courts: [1, 0, 0, 0]  # Court 1-4 layout
+        courts: [1, 0, 0, 0]
       - time: "13:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "14:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "15:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "16:00"
-        courts: [1, 1, 1, 0]  # Court 1-4 layout
-        
+        courts: [1, 1, 1, 0]
+
+  - date: "7/20/2025"
+    time_slots:
+      - time: "11:00"
+        courts: [0, 0, 0, 0]
+      - time: "12:00"
+        courts: [1, 0, 0, 0]
+      - time: "13:00"
+        courts: [1, 1, 1, 1]
+      - time: "14:00"
+        courts: [1, 1, 1, 1]
+      - time: "15:00"
+        courts: [1, 1, 1, 1]
+      - time: "16:00"
+        courts: [1, 1, 1, 0]
+
   - date: "7/27/2025"
     time_slots:
       - time: "11:00"
-        courts: [0, 0, 0, 0]  # Court 1-4 layout
+        courts: [0, 0, 0, 0]
       - time: "12:00"
-        courts: [1, 0, 0, 0]  # Court 1-4 layout
+        courts: [1, 1, 0, 0]
       - time: "13:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "14:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "15:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "16:00"
-        courts: [1, 1, 1, 0]  # Court 1-4 layout
-        
+        courts: [1, 1, 1, 0]
+
   - date: "8/3/2025"
     time_slots:
       - time: "11:00"
-        courts: [0, 0, 0, 0]  # Court 1-4 layout
+        courts: [0, 0, 0, 0]
       - time: "12:00"
-        courts: [1, 1, 0, 0]  # Court 1-4 layout
+        courts: [1, 1, 0, 0]
       - time: "13:00"
-        courts: [1, 1, 1, 0]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "14:00"
-        courts: [1, 1, 1, 0]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "15:00"
-        courts: [1, 1, 1, 0]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "16:00"
-        courts: [1, 1, 1, 0]  # Court 1-4 layout
-        
+        courts: [1, 1, 1, 1]
+
   - date: "8/10/2025"
     time_slots:
       - time: "11:00"
-        courts: [0, 0, 0, 0]  # Court 1-4 layout
+        courts: [0, 0, 0, 0]
       - time: "12:00"
-        courts: [1, 1, 0, 0]  # Court 1-4 layout
+        courts: [1, 1, 0, 0]
       - time: "13:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "14:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "15:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout
+        courts: [1, 1, 1, 1]
       - time: "16:00"
-        courts: [1, 1, 1, 1]  # Court 1-4 layout 
+        courts: [1, 1, 1, 1] 
