@@ -13,6 +13,7 @@ from ..schedule import Schedule
 from ..facilities.facility import Facilities
 from .manual_runner import write_volleyball_debug_files, make_schedule_and_debug_files
 from ..component_sets.sand_volleyball_template import get_sand_volleyball_template
+from ..components.preserve_old_schedule import PreserveOldSchedule
 
 
 def load_canned_volleyball_schedule():
@@ -57,30 +58,40 @@ def main():
     """Main function to generate a new schedule from revision 1 facilities."""
     print("Generating new volleyball schedule from revision 1 facilities...")
     
-    # Path to the facilities configuration
     current_dir = pathlib.Path(__file__).parent.parent
-    facilities_file_path = current_dir / "facilities" / "configs" / "volleyball_2025_revision_1.yaml"
     
+    # --- Step 1: Load the 'canned' schedule to use as a base ---
+    canned_schedule = load_canned_volleyball_schedule()
+    if canned_schedule is None:
+        print("❌ Cannot proceed without a canned schedule to lock games.")
+        return
+
+    # --- Step 2: Load the new facility configuration ---
+    facilities_file_path = current_dir / "facilities" / "configs" / "volleyball_2025_revision_1.yaml"
     if not facilities_file_path.exists():
         print(f"❌ Facilities file not found: {facilities_file_path}")
         return
     
     print(f"📁 Loading facilities from: {facilities_file_path}")
-    
-    # Load facilities
     facilities = Facilities.from_yaml(str(facilities_file_path))
     
-    # Get the sand volleyball template components
+    # --- Step 3: Prepare the component list ---
+    # Get the standard set of components
     schedule_components = get_sand_volleyball_template()
     
-    # Create schedule and write debug files using the new top-level function
+    # Create and add the new component to preserve the first 4 weekends
+    weekends_to_lock = [1, 2, 3, 4]
+    preserve_component = PreserveOldSchedule(canned_schedule, weekends_to_lock)
+    schedule_components.append(preserve_component)
+    
+    # --- Step 4: Generate the new schedule ---
     schedule, _ = make_schedule_and_debug_files(
         facilities,
         base_dir=current_dir,
         components=schedule_components
     )
     
-    if schedule is not None:
+    if schedule:
         print(f"\n🎯 Schedule object ready for further analysis!")
     else:
         print(f"❌ Failed to generate schedule.")
