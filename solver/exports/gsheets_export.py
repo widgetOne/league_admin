@@ -22,20 +22,65 @@ def get_sheets_config():
         return yaml.safe_load(config_file)
 
 
+def get_team_data_from_sheets():
+    """Read team data from the 'team_input' tab in Google Sheets.
+    
+    Returns:
+        dict: Keys are 'rec', 'intermediate', 'competitive' with lists of team names.
+              Empty strings are filtered out.
+    """
+    sheet = get_gspread_sheet()
+    sheet.open_sheet('team_input')
+    worksheet = sheet.sheet
+    
+    # Read all values from the sheet
+    all_values = worksheet.get_all_values()
+    
+    if not all_values or len(all_values) < 2:
+        raise ValueError("'team_input' tab is empty or has no team data")
+    
+    # First row is headers: rec, intermediate, competitive
+    headers = [h.strip().lower() for h in all_values[0]]
+    
+    result = {}
+    for col_idx, header in enumerate(headers):
+        if not header:
+            continue
+        teams = []
+        for row in all_values[1:]:
+            if col_idx < len(row) and row[col_idx].strip():
+                teams.append(row[col_idx].strip())
+        result[header] = teams
+    
+    return result
+
+
+def get_team_counts_from_sheets():
+    """Get team counts per division from the 'team_input' Google Sheets tab.
+    
+    Returns:
+        list: Team counts in order [rec, intermediate, competitive]
+    """
+    team_data = get_team_data_from_sheets()
+    return [
+        len(team_data.get('rec', [])),
+        len(team_data.get('intermediate', [])),
+        len(team_data.get('competitive', [])),
+    ]
+
+
 def get_team_name_mapping():
-    """Create a mapping from team index to team name using gsheets_config.yaml."""
-    config = get_sheets_config()
-    team_names = config.get('team_names', {})
+    """Create a mapping from team index to team name from the 'team_input' sheet tab."""
+    team_data = get_team_data_from_sheets()
     
     team_mapping = {}
     team_idx = 0
     
-    # Map teams in order: division_1, division_2, division_3
-    for div_name in ['division_1', 'division_2', 'division_3']:
-        if div_name in team_names:
-            for team_name in team_names[div_name]:
-                team_mapping[team_idx] = team_name
-                team_idx += 1
+    # Map teams in order: rec (division_1), intermediate (division_2), competitive (division_3)
+    for div_key in ['rec', 'intermediate', 'competitive']:
+        for team_name in team_data.get(div_key, []):
+            team_mapping[team_idx] = team_name
+            team_idx += 1
     
     return team_mapping
 
