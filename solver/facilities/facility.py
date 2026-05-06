@@ -155,7 +155,7 @@ class Facilities:
         } for slot in self.matches])
     
     @classmethod
-    def from_yaml(cls, yaml_path: str) -> 'Facilities':
+    def from_yaml(cls, yaml_path: str, team_counts: List[int] = None) -> 'Facilities':
         """Create a Facilities instance from a YAML configuration file.
         
         Supports two formats:
@@ -164,12 +164,23 @@ class Facilities:
         
         Args:
             yaml_path: Path to the YAML configuration file
+            team_counts: Optional team counts per division. If provided, overrides
+                        the value from the YAML file. Use this to pull counts from
+                        an external source like Google Sheets.
             
         Returns:
             A new Facilities instance configured according to the YAML file
         """
         with open(yaml_path, 'r') as f:
             config = yaml.safe_load(f)
+        
+        # Use provided team_counts, fall back to YAML
+        resolved_team_counts = team_counts if team_counts is not None else config.get('team_counts')
+        if resolved_team_counts is None:
+            raise ValueError(
+                f"No team_counts provided and none found in {yaml_path}. "
+                "Either add team_counts to the YAML or pass them explicitly."
+            )
         
         # Detect format and normalize to new format
         if 'time_slots' in config and isinstance(config['dates'], list) and isinstance(config['dates'][0], str):
@@ -230,7 +241,7 @@ class Facilities:
         num_courts = len(first_time_slots[0]['courts']) if first_time_slots else 4
             
         return cls(
-            team_counts=config['team_counts'],
+            team_counts=resolved_team_counts,
             games_per_season=config.get('games_per_season', 6),
             games_per_day=config.get('games_per_day', 1),
             times=all_times,
