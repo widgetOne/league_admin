@@ -4,6 +4,8 @@ from typing import List, Dict, NamedTuple, Set
 import pandas as pd
 from datetime import datetime, time
 
+from .validate_facilities import validate_facilities
+
 @dataclass
 class TimeSlot:
     """Represents a time slot with its court layout."""
@@ -63,6 +65,9 @@ class Facilities:
         
         # Create time index mapping for maintaining original order
         self.time_idx = {t: idx for idx, t in enumerate(times)}
+        
+        # Validate that the facility configuration is structurally sound
+        validate_facilities(self)
 
     @property
     def times(self) -> List[time]:
