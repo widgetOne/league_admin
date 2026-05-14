@@ -64,11 +64,13 @@ class Schedule:
         self.match_loc: Dict[Any, Any] = {}
         self.home_div: Dict[Any, Any] = {}
         self.ref_div: Dict[Any, Any] = {}
+        self.match_active: Dict[Any, Any] = {}
 
         self.is_home: Dict[Tuple[Any, int], Any] = {}
         self.is_away: Dict[Tuple[Any, int], Any] = {}
         self.is_ref: Dict[Tuple[Any, int], Any] = {}
         self.is_playing: Dict[Tuple[Any, int], Any] = {}
+        self.is_official_play: Dict[Tuple[Any, int], Any] = {}
         self.is_busy: Dict[Tuple[Any, int], Any] = {}
 
         self.busy_count_at_time: Dict[Tuple[int, int, int], Any] = {}
@@ -107,12 +109,16 @@ class Schedule:
         if calculated_total_teams <= 0:
             raise ValueError("Scheduling requires at least one team. Please check team_counts in facilities.")
         self.total_teams = calculated_total_teams
+        self.NO_PLAY = self.total_teams  # NO_PLAY uses the index equal to total_teams
         self.teams = list(range(self.total_teams))
         self.team_div = []
         for div_idx, div_count in enumerate(self.facilities.team_counts):
             if div_count > 0: # Only add divisions that have teams
                 for _ in range(div_count):
                     self.team_div.append(div_idx)
+        
+        self.NO_PLAY_DIV = len(self.facilities.team_counts)
+        self.team_div.append(self.NO_PLAY_DIV)  # Append dummy division for NO_PLAY team
         
         # This should not be an issue if calculated_total_teams > 0
         # and team_counts is structured correctly (i.e., sum of positive counts > 0)
@@ -131,13 +137,23 @@ class Schedule:
             m = m_obj
             name_suffix = f"{m_obj.weekend_idx}_{m_obj.date}_{m_obj.location}_{m_obj.time_idx}"
 
-            self.home_team[m] = self.model.NewIntVar(0, self.total_teams - 1, f"home_team_{name_suffix}")
-            self.away_team[m] = self.model.NewIntVar(0, self.total_teams - 1, f"away_team_{name_suffix}")
-            self.ref[m] = self.model.NewIntVar(0, self.total_teams - 1, f"ref_team_{name_suffix}")
+            self.home_team[m] = self.model.NewIntVar(0, self.total_teams, f"home_team_{name_suffix}")
+            self.away_team[m] = self.model.NewIntVar(0, self.total_teams, f"away_team_{name_suffix}")
+            self.ref[m] = self.model.NewIntVar(0, self.total_teams, f"ref_team_{name_suffix}")
+            self.match_active[m] = self.model.NewBoolVar(f"match_active_{name_suffix}")
+            
+            # Constrain NO_PLAY logic
+            self.model.Add(self.home_team[m] != self.NO_PLAY).OnlyEnforceIf(self.match_active[m])
+            self.model.Add(self.away_team[m] != self.NO_PLAY).OnlyEnforceIf(self.match_active[m])
+            self.model.Add(self.ref[m] != self.NO_PLAY).OnlyEnforceIf(self.match_active[m])
+
+            self.model.Add(self.home_team[m] == self.NO_PLAY).OnlyEnforceIf(self.match_active[m].Not())
+            self.model.Add(self.away_team[m] == self.NO_PLAY).OnlyEnforceIf(self.match_active[m].Not())
+            self.model.Add(self.ref[m] == self.NO_PLAY).OnlyEnforceIf(self.match_active[m].Not())
             
             # len(self.facilities.team_counts) should be > 0 if total_teams > 0
             # and team_counts is not empty. Assume team_counts is a non-empty list.
-            num_divisions = len(self.facilities.team_counts)
+            num_divisions = len(self.facilities.team_counts) + 1 # +1 for NO_PLAY_DIV
             self.match_div[m] = self.model.NewIntVar(0, num_divisions - 1, f"division_of_{name_suffix}")
             self.match_loc[m] = self.model.NewConstant(m_obj.location)
 
@@ -170,6 +186,9 @@ class Schedule:
                 self.is_playing[m, t_idx] = self.model.NewBoolVar(f"is_playing_{name_suffix}_{t_idx}")
                 self.model.AddBoolOr([self.is_home[m, t_idx], self.is_away[m, t_idx]]).OnlyEnforceIf(self.is_playing[m, t_idx])
                 self.model.AddBoolAnd([self.is_home[m, t_idx].Not(), self.is_away[m, t_idx].Not()]).OnlyEnforceIf(self.is_playing[m, t_idx].Not())
+
+                self.is_official_play[m, t_idx] = self.model.NewBoolVar(f"is_official_{name_suffix}_{t_idx}")
+                self.model.AddImplication(self.is_official_play[m, t_idx], self.is_playing[m, t_idx])
 
                 self.is_busy[m, t_idx] = self.model.NewBoolVar(f"is_busy_{name_suffix}_{t_idx}")
                 self.model.AddBoolOr([self.is_playing[m, t_idx], self.is_ref[m, t_idx]]).OnlyEnforceIf(self.is_busy[m, t_idx])
@@ -271,11 +290,20 @@ class Schedule:
                 home_idx = reassignment['home_team']
                 away_idx = reassignment['away_team']
                 ref_idx = reassignment['ref']
+                team1_exhibition = False
+                team2_exhibition = False
             else:
                 # Use original solver values
                 home_idx = self.solver.Value(self.home_team[match])
                 away_idx = self.solver.Value(self.away_team[match])
                 ref_idx = self.solver.Value(self.ref[match])
+                
+                team1_exhibition = False
+                team2_exhibition = False
+                if home_idx != self.NO_PLAY:
+                    team1_exhibition = self.solver.Value(self.is_official_play[match, home_idx]) == 0
+                if away_idx != self.NO_PLAY:
+                    team2_exhibition = self.solver.Value(self.is_official_play[match, away_idx]) == 0
             
             schedule_rows.append({
                 "weekend_idx": match.weekend_idx,
@@ -285,6 +313,8 @@ class Schedule:
                 "team1": home_idx,  # home team
                 "team2": away_idx,  # away team
                 "ref": ref_idx,     # ref team
+                "team1_exhibition": team1_exhibition,
+                "team2_exhibition": team2_exhibition,
                 "time_idx": match.time_idx,
             })
         
@@ -313,10 +343,18 @@ class Schedule:
         
         # Count total play (team1 + team2 appearances)
         play_counts = pd.Series(0, index=team_indices, name='total_play')
+        official_play_counts = pd.Series(0, index=team_indices, name='official_play')
         for _, row in game_report.iterrows():
-            play_counts[row['team1']] += 1
-            play_counts[row['team2']] += 1
+            if row['team1'] != self.NO_PLAY:
+                play_counts[row['team1']] += 1
+                if not row['team1_exhibition']:
+                    official_play_counts[row['team1']] += 1
+            if row['team2'] != self.NO_PLAY:
+                play_counts[row['team2']] += 1
+                if not row['team2_exhibition']:
+                    official_play_counts[row['team2']] += 1
         team_report['total_play'] = play_counts
+        team_report['official_play'] = official_play_counts
         
         # Count total ref
         ref_counts = game_report['ref'].value_counts().reindex(team_indices, fill_value=0)
