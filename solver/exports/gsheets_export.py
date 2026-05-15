@@ -170,20 +170,29 @@ def format_schedule_as_csv(schedule):
                     if len(court_games) > 0:
                         game = court_games.iloc[0]  # Should only be one game per court per time
                         
-                        # Get team names
-                        team1_name = team_mapping.get(game['team1'], f"Team {game['team1']}")
-                        team2_name = team_mapping.get(game['team2'], f"Team {game['team2']}")
-                        up_ref_name = team_mapping.get(game['ref'], f"Team {game['ref']}")
-                        
-                        # For first game of day, use same team for both refs
-                        # For other games, find a different team for line ref
-                        if is_first_game:
-                            line_ref_name = up_ref_name  # Same as up ref for first game
+                        if game['team1'] == schedule.NO_PLAY:
+                            row.extend(['NO PLAY', 'NO PLAY', 'NO PLAY', 'NO PLAY'])
                         else:
-                            line_ref_name = get_available_line_ref(schedule, time_games, game['ref'], team_mapping)
-                        
-                        # Add team1, team2, up_ref, line_ref
-                        row.extend([team1_name, team2_name, up_ref_name, line_ref_name])
+                            # Get team names
+                            team1_name = team_mapping.get(game['team1'], f"Team {game['team1']}")
+                            team2_name = team_mapping.get(game['team2'], f"Team {game['team2']}")
+                            up_ref_name = team_mapping.get(game['ref'], f"Team {game['ref']}")
+                            
+                            # Add exhibition markers
+                            if game.get('team1_exhibition', False):
+                                team1_name += '*'
+                            if game.get('team2_exhibition', False):
+                                team2_name += '*'
+                            
+                            # For first game of day, use same team for both refs
+                            # For other games, find a different team for line ref
+                            if is_first_game:
+                                line_ref_name = up_ref_name  # Same as up ref for first game
+                            else:
+                                line_ref_name = get_available_line_ref(schedule, time_games, game['ref'], team_mapping)
+                            
+                            # Add team1, team2, up_ref, line_ref
+                            row.extend([team1_name, team2_name, up_ref_name, line_ref_name])
                     else:
                         row.extend(['NO PLAY', 'NO PLAY', 'NO PLAY', 'NO PLAY'])
                 else:
