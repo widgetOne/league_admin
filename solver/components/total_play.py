@@ -35,9 +35,31 @@ class TotalPlayConstraint(SchedulerComponent):
                 schedule: The schedule model to add the constraint to
             """
             total_games = schedule.facilities.games_per_season
+            # 1. Official games must exactly match the target total_games for each team
             for team in schedule.teams:
-                games_played = sum(schedule.is_playing[m, team] for m in schedule.matches)
-                schedule.model.Add(games_played == total_games)
+                official_games_played = sum(schedule.is_official_play[m, team] for m in schedule.matches)
+                schedule.model.Add(official_games_played == total_games)
+                
+            # 2. Hard constraint on exactly how many exhibition games must happen per division
+            # If there's an odd number of games AND an odd number of teams in a division,
+            # that division MUST have exactly 1 exhibition game to make the math work.
+            # Otherwise, it must have 0 exhibition games.
+            for div_idx, count in enumerate(schedule.facilities.team_counts):
+                if count <= 0:
+                    continue
+                
+                expected_exhibition = 1 if (total_games % 2 == 1 and count % 2 == 1) else 0
+                
+                div_exhibitions = []
+                for team in schedule.teams:
+                    if schedule.team_div[team] == div_idx:
+                        for m in schedule.matches:
+                            exhibition_var = schedule.model.NewIntVar(0, 1, f"exhibition_{m}_{team}")
+                            schedule.model.Add(exhibition_var == schedule.is_playing[m, team] - schedule.is_official_play[m, team])
+                            div_exhibitions.append(exhibition_var)
+                            
+                schedule.model.Add(sum(div_exhibitions) == expected_exhibition)
+                    
         return ModelActor(enforce_total_play)
 
     def _get_total_play_validator(self):
@@ -62,11 +84,12 @@ class TotalPlayConstraint(SchedulerComponent):
             team_report = schedule.get_team_report()
             
             for team_idx in schedule.teams:
-                games_played = team_report.loc[team_idx, 'total_play']
+                games_played = team_report.loc[team_idx, 'official_play']
                 if games_played != total_games:
                     raise ValueError(
-                        f"Team {team_idx} has played {games_played} games, "
-                        f"but should play exactly {total_games} games"
+                        f"Team {team_idx} has played {games_played} official games, "
+                        f"but should play exactly {total_games} official games. "
+                        f"(Total physical games: {team_report.loc[team_idx, 'total_play']})"
                     )
         return validate_total_play
 
