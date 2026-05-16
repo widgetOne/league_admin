@@ -50,11 +50,18 @@ class BalanceReffingConstraint(SchedulerComponent):
                     schedule.model.Add(sum(weekend_reffing_vars) <= 1)
                     schedule.model.Add(sum(weekend_reffing_vars) >= 0)
             
-            # Total ref in a season - each team refs exactly total_weeks // 2
-            season_ref_target = total_weeks // 2
+            # Total refs in a season: each team should ref about half the games they play.
+            # If games_per_season is even, everyone refs exactly half.
+            # If odd, half is X.5 — floor gives min, ceil gives max.
+            games_per_season = schedule.facilities.games_per_season
+            min_refs = games_per_season // 2
+            max_refs = (games_per_season + 1) // 2
+            
             for t_idx in schedule.teams:
                 season_reffing_vars = [schedule.is_ref[m, t_idx] for m in schedule.matches]
-                schedule.model.Add(sum(season_reffing_vars) == season_ref_target)
+                total_refs_assigned = sum(season_reffing_vars)
+                schedule.model.Add(total_refs_assigned >= min_refs)
+                schedule.model.Add(total_refs_assigned <= max_refs)
         
         return ModelActor(enforce_balance_reffing)
 
@@ -107,13 +114,17 @@ class BalanceReffingConstraint(SchedulerComponent):
                             f"but should ref at most 1 game per weekend"
                         )
             
-            # Check season ref totals
+            # Check season ref totals: should be games_per_season / 2 (floor to ceil)
+            games_per_season = schedule.facilities.games_per_season
+            min_refs = games_per_season // 2
+            max_refs = (games_per_season + 1) // 2
+            
             for t_idx in schedule.teams:
                 total_refs = team_report.loc[t_idx, 'total_ref']
-                if total_refs != season_ref_target:
+                if total_refs < min_refs or total_refs > max_refs:
                     raise ValueError(
                         f"Team {t_idx} reffed {total_refs} games in the season, "
-                        f"but should ref exactly {season_ref_target} games"
+                        f"but should ref between {min_refs} and {max_refs} games"
                     )
         
         return validate_balance_reffing
@@ -138,15 +149,15 @@ class BalanceReffingConstraint(SchedulerComponent):
             
             # Get weekend indices and targets
             weekend_idxs = sorted(game_report['weekend_idx'].unique())
-            total_weeks = len(weekend_idxs)
-            games_per_day = schedule.facilities.games_per_season // total_weeks
-            season_ref_target = total_weeks // 2
+            games_per_season = schedule.facilities.games_per_season
+            min_refs = games_per_season // 2
+            max_refs = (games_per_season + 1) // 2
             
             lines = []
             lines.append("REFEREE BALANCE DEBUG REPORT")
             lines.append("=" * 50)
-            lines.append(f"Games per day target: {games_per_day}")
-            lines.append(f"Season ref target: {season_ref_target}")
+            lines.append(f"Games per season: {games_per_season}")
+            lines.append(f"Season ref target: {min_refs}-{max_refs}")
             lines.append("")
             
             # Weekend play report
@@ -193,7 +204,7 @@ class BalanceReffingConstraint(SchedulerComponent):
                         all_ref_correct = False
                     row += f"{games_reffed}{status} | "
                 
-                total_status = "✓" if total_refs == season_ref_target else "✗"
+                total_status = "✓" if min_refs <= total_refs <= max_refs else "✗"
                 if total_status == "✗":
                     all_ref_correct = False
                 row += f"{total_refs}{total_status}"
