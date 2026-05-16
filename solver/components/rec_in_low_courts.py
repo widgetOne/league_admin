@@ -17,6 +17,32 @@ class RecInLowCourtsProcessor(SchedulerComponent):
         super().__init__()
         self.add_post_processor(self._get_rec_in_low_courts_post_processor())
         self.add_debug_report(self._get_rec_in_low_courts_debug_report())
+        self.add_debug_summary(self._get_rec_in_low_courts_debug_summary())
+
+    def _get_rec_in_low_courts_debug_summary(self):
+        def generate_rec_in_low_courts_summary(schedule):
+            game_report = schedule.get_game_report()
+            violations = 0
+            
+            for weekend_idx in sorted(game_report['weekend_idx'].unique()):
+                weekend_games = game_report[game_report['weekend_idx'] == weekend_idx]
+                for time_idx in sorted(weekend_games['time_idx'].unique()):
+                    time_games = weekend_games[weekend_games['time_idx'] == time_idx]
+                    time_games = time_games.sort_values('location')
+                    
+                    prev_division = -1
+                    for _, game in time_games.iterrows():
+                        division = schedule.team_div[game['team1']]
+                        if division < prev_division:
+                            violations += 1
+                        prev_division = division
+                        
+            if violations == 0:
+                return "100% of games are properly ordered by division (lower divisions on lower courts)"
+            else:
+                return f"⚠️ {violations} ordering violations detected across courts"
+                
+        return DebugReporter(generate_rec_in_low_courts_summary, "RecInLowCourtsProcessor")
 
     def _get_rec_in_low_courts_post_processor(self):
         """Create a post-processor function to reorder games by division.

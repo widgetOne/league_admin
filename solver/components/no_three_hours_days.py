@@ -15,6 +15,37 @@ class NoThreeHoursDays(SchedulerComponent):
         self.add_constraint(self._get_no_three_hours_constraint())
         self.add_validator(self._get_no_three_hours_validator())
         self.add_debug_report(self._get_no_three_hours_debug_report())
+        self.add_debug_summary(self._get_no_three_hours_debug_summary())
+
+    def _get_no_three_hours_debug_summary(self) -> DebugReporter:
+        def generate_no_three_hours_summary(schedule: Schedule) -> str:
+            if not hasattr(schedule, '_last_solve_status'):
+                return "NoThreeHoursDays: No solution found."
+                
+            weekend_idxs = sorted(list(set(m.weekend_idx for m in schedule.matches)))
+            time_indices = sorted(list(set(m.time_idx for m in schedule.matches)))
+            
+            violations = 0
+            for t_idx in range(schedule.total_teams):
+                for w_idx in weekend_idxs:
+                    busy_times = []
+                    for time_idx in time_indices:
+                        key = (w_idx, time_idx, t_idx)
+                        if key in schedule.busy_at_time and schedule.solver.Value(schedule.busy_at_time[key]):
+                            busy_times.append(time_idx)
+                            
+                    if len(busy_times) >= 2:
+                        earliest_time = min(busy_times)
+                        latest_time = max(busy_times)
+                        if latest_time - earliest_time + 1 >= 3:
+                            violations += 1
+                            
+            if violations == 0:
+                return "0 violations of the 3-hour limit rule"
+            else:
+                return f"⚠️ {violations} violations of the 3-hour limit rule"
+                
+        return DebugReporter(generate_no_three_hours_summary, "NoThreeHoursDays")
     
     def _get_no_three_hours_constraint(self) -> ModelActor:
         """Get the constraint that prevents 3+ hour busy periods."""

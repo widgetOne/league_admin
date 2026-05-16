@@ -18,6 +18,29 @@ class VsPlayBalanceConstraint(SchedulerComponent):
         self.add_constraint(self._get_vs_play_balance_constraint())
         self.add_validator(self._get_vs_play_balance_validator())
         self.add_debug_report(self._get_vs_play_balance_debug_report())
+        self.add_debug_summary(self._get_vs_play_balance_debug_summary())
+
+    def _get_vs_play_balance_debug_summary(self):
+        def generate_vs_play_balance_summary(schedule):
+            team_report = schedule.get_team_report()
+            
+            # Count the distribution of games played against same opponent
+            vs_counts = {}
+            for t1 in schedule.teams:
+                for t2 in schedule.teams:
+                    if t1 >= t2:
+                        continue
+                    actual_games = team_report.loc[t1, f'vs_{t2}']
+                    if actual_games > 0:
+                        vs_counts[actual_games] = vs_counts.get(actual_games, 0) + 1
+            
+            summary_parts = []
+            for games, pair_count in sorted(vs_counts.items()):
+                summary_parts.append(f"{pair_count} pairs play each other {games} times")
+                
+            return "Vs play balance: " + ", ".join(summary_parts)
+            
+        return DebugReporter(generate_vs_play_balance_summary, "VsPlayBalanceConstraint")
 
     def _get_vs_play_balance_constraint(self):
         """Create a constraint function for the OR-Tools model.

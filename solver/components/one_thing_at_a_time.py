@@ -16,6 +16,36 @@ class OneThingAtATimeConstraint(SchedulerComponent):
         self.add_constraint(self._get_one_thing_at_a_time_constraint())
         self.add_validator(self._get_one_thing_at_a_time_validator())
         self.add_debug_report(self._get_one_thing_at_a_time_debug_report())
+        self.add_debug_summary(self._get_one_thing_at_a_time_debug_summary())
+
+    def _get_one_thing_at_a_time_debug_summary(self):
+        def generate_one_thing_at_a_time_summary(schedule):
+            game_report = schedule.get_game_report()
+            violations = 0
+            
+            for weekend_idx in game_report['weekend_idx'].unique():
+                for time_idx in game_report['time_idx'].unique():
+                    time_slot_games = game_report[
+                        (game_report['weekend_idx'] == weekend_idx) & 
+                        (game_report['time_idx'] == time_idx)
+                    ]
+                    
+                    team_activities = {}
+                    for _, game in time_slot_games.iterrows():
+                        team1, team2, ref = game['team1'], game['team2'], game['ref']
+                        for team in [team1, team2, ref]:
+                            team_activities[team] = team_activities.get(team, 0) + 1
+                            
+                    for count in team_activities.values():
+                        if count > 1:
+                            violations += 1
+                            
+            if violations == 0:
+                return "0 conflicts (no team playing and reffing simultaneously)"
+            else:
+                return f"⚠️ {violations} conflicts detected (teams doing multiple things simultaneously)"
+                
+        return DebugReporter(generate_one_thing_at_a_time_summary, "OneThingAtATimeConstraint")
 
     def _get_one_thing_at_a_time_constraint(self):
         """Create a constraint function for the OR-Tools model.

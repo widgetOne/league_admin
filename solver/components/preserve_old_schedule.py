@@ -24,6 +24,13 @@ class PreserveOldSchedule(SchedulerComponent):
         self.add_constraint(ModelActor(self.preserve_weekend_games))
         self.add_validator(ModelActor(self.validate_preserved_games))
         self.add_debug_report(DebugReporter(self.generate_preservation_report, self.__class__.__name__))
+        self.add_debug_summary(DebugReporter(self._generate_preservation_summary, self.__class__.__name__))
+
+    def _generate_preservation_summary(self, solved_schedule: Schedule) -> str:
+        games_to_preserve = self._get_games_to_preserve()
+        count = len(games_to_preserve)
+        weekends = ", ".join(str(w) for w in sorted(self.weekends_to_preserve))
+        return f"{count} matches preserved from baseline schedule (weekends: {weekends})"
 
     def preserve_weekend_games(self, new_schedule: Schedule):
         """Applies constraints to match games from the old schedule."""

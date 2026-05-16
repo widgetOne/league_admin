@@ -58,6 +58,7 @@ class SchedulerComponent:
         self._validators: List[ModelActor] = []
         self._post_processors: List[ModelActor] = []
         self._debug_reports: List[DebugReporter] = []
+        self._debug_summaries: List[DebugReporter] = []
         self._component_classes: List[str] = [self.__class__.__name__]
 
     def add_constraint(self, constraint: ModelActor):
@@ -100,6 +101,14 @@ class SchedulerComponent:
         """
         self._debug_reports.append(debug_report)
 
+    def add_debug_summary(self, debug_summary: DebugReporter):
+        """Add a debug summary to the component.
+        
+        Args:
+            debug_summary: The debug summary function to add
+        """
+        self._debug_summaries.append(debug_summary)
+
     def get_component_classes(self) -> List[str]:
         """Get the list of component class names that make up this component.
         
@@ -125,6 +134,7 @@ class SchedulerComponent:
         result._validators = self._validators + other._validators
         result._post_processors = self._post_processors + other._post_processors
         result._debug_reports = self._debug_reports + other._debug_reports
+        result._debug_summaries = self._debug_summaries + other._debug_summaries
         result._component_classes = self._component_classes + other._component_classes
         return result
 
@@ -144,6 +154,7 @@ class SchedulerComponent:
         self._validators.extend(other._validators)
         self._post_processors.extend(other._post_processors)
         self._debug_reports.extend(other._debug_reports)
+        self._debug_summaries.extend(other._debug_summaries)
         self._component_classes.extend(other._component_classes)
         return self
 

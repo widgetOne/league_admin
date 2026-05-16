@@ -133,13 +133,33 @@ class ScheduleCreator:
         """
         # Collect debug reports from all components
         debug_reports = []
+        debug_summaries = []
         for component in self.components:
             debug_reports.extend(component._debug_reports)
+            debug_summaries.extend(component._debug_summaries)
         
-        if not debug_reports:
+        if not debug_reports and not debug_summaries:
             return "No debug reports available."
         
         report_sections = []
+        
+        # Build Executive Summary Block
+        summary_sections = []
+        if debug_summaries:
+            summary_sections.append("EXECUTIVE SUMMARY")
+            summary_sections.append("=" * 60)
+            for debug_summary in debug_summaries:
+                summary_text = debug_summary(schedule)
+                if summary_text:
+                    summary_sections.append(f"[{debug_summary.component_name}]")
+                    summary_sections.append(summary_text)
+                    summary_sections.append("")
+            summary_sections.append("=" * 60)
+            summary_sections.append("")
+            
+            # Prepend summary block
+            report_sections.extend(summary_sections)
+            
         report_sections.append("COMPONENT DEBUG REPORTS")
         report_sections.append("=" * 60)
         report_sections.append("")
@@ -150,5 +170,10 @@ class ScheduleCreator:
             report_sections.append(debug_report(schedule))
             report_sections.append("")
             report_sections.append("")
+            
+        # Append summary block again at the end
+        if debug_summaries:
+            report_sections.append("")
+            report_sections.extend(summary_sections)
         
         return "\n".join(report_sections) 

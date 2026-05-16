@@ -19,6 +19,29 @@ class TotalPlayConstraint(SchedulerComponent):
         self.add_constraint(self._get_total_play_constraint())
         self.add_validator(self._get_total_play_validator())
         self.add_debug_report(self._get_total_play_debug_report())
+        self.add_debug_summary(self._get_total_play_debug_summary())
+
+    def _get_total_play_debug_summary(self):
+        def generate_total_play_summary(schedule):
+            total_games = schedule.facilities.games_per_season
+            team_report = schedule.get_team_report()
+            official_plays = team_report['official_play'].value_counts().to_dict()
+            exhibition_plays = team_report['exhibition_play'].value_counts().to_dict() if 'exhibition_play' in team_report else {}
+            
+            summary_parts = []
+            for games, count in sorted(official_plays.items()):
+                if games == total_games:
+                    summary_parts.append(f"All {count} teams play exactly {games} official games")
+                else:
+                    summary_parts.append(f"{count} teams play {games} official games")
+                    
+            exhibition_count = sum(team_report.get('exhibition_play', [])) // 2 if 'exhibition_play' in team_report else 0
+            if exhibition_count > 0:
+                summary_parts.append(f"plus {exhibition_count} exhibition games scheduled")
+                
+            return "Total Play: " + ", ".join(summary_parts)
+            
+        return DebugReporter(generate_total_play_summary, "TotalPlayConstraint")
 
     def _get_total_play_constraint(self):
         """Create a constraint function for the OR-Tools model.

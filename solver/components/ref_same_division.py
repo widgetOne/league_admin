@@ -15,6 +15,30 @@ class RefSameDivisionConstraint(SchedulerComponent):
         self.add_constraint(self._get_ref_same_division_constraint())
         self.add_validator(self._get_ref_same_division_validator())
         self.add_debug_report(self._get_ref_same_division_debug_report())
+        self.add_debug_summary(self._get_ref_same_division_debug_summary())
+
+    def _get_ref_same_division_debug_summary(self):
+        def generate_ref_same_division_summary(schedule):
+            game_report = schedule.get_game_report()
+            
+            same_div = 0
+            diff_div = 0
+            
+            for _, game in game_report.iterrows():
+                home_team = game['team1']
+                ref_team = game['ref']
+                if schedule.team_div[home_team] == schedule.team_div[ref_team]:
+                    same_div += 1
+                else:
+                    diff_div += 1
+                    
+            total = same_div + diff_div
+            if total > 0:
+                percent = (same_div / total) * 100
+                return f"{percent:.1f}% of matches ({same_div}/{total}) are reffed by a team in the same division"
+            return "No matches scheduled"
+            
+        return DebugReporter(generate_ref_same_division_summary, "RefSameDivisionConstraint")
 
     def _get_ref_same_division_constraint(self):
         """Create a constraint function for the OR-Tools model.

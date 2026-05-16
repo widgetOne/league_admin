@@ -21,6 +21,27 @@ class TimeVarietyOptimization(SchedulerComponent):
         self.weight = weight
         self.add_optimizer(self._get_time_variety_optimizer())
         self.add_debug_report(self._get_time_variety_debug_report())
+        self.add_debug_summary(self._get_time_variety_debug_summary())
+
+    def _get_time_variety_debug_summary(self):
+        def generate_time_variety_summary(schedule):
+            game_report = schedule.get_game_report()
+            time_idxs = sorted(game_report['time_idx'].unique())
+            teams = sorted(schedule.teams)
+            
+            distinct_slots = []
+            for team in teams:
+                team_games = game_report[(game_report['team1'] == team) | (game_report['team2'] == team)]
+                unique_slots = team_games['time_idx'].nunique()
+                distinct_slots.append(unique_slots)
+            
+            if distinct_slots:
+                min_slots = min(distinct_slots)
+                max_slots = max(distinct_slots)
+                return f"Teams play in {min_slots} to {max_slots} distinct time slots"
+            return "No games scheduled"
+            
+        return DebugReporter(generate_time_variety_summary, "TimeVarietyOptimization")
 
     def _get_time_variety_optimizer(self):
         """Create an optimizer function for time variety.

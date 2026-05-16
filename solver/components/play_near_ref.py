@@ -15,6 +15,36 @@ class PlayNearRefConstraint(SchedulerComponent):
         self.add_constraint(self._get_play_near_ref_constraint())
         self.add_validator(self._get_play_near_ref_validator())
         self.add_debug_report(self._get_play_near_ref_debug_report())
+        self.add_debug_summary(self._get_play_near_ref_debug_summary())
+
+    def _get_play_near_ref_debug_summary(self):
+        def generate_play_near_ref_summary(schedule):
+            game_report = schedule.get_game_report()
+            
+            good_refs = 0
+            bad_refs = 0
+            
+            for weekend_idx in game_report['weekend_idx'].unique():
+                weekend_games = game_report[game_report['weekend_idx'] == weekend_idx]
+                for time_idx in weekend_games['time_idx'].unique():
+                    time_games = weekend_games[weekend_games['time_idx'] == time_idx]
+                    for _, game in time_games.iterrows():
+                        ref_team = game['ref']
+                        ref_plays = weekend_games[
+                            (weekend_games['team1'] == ref_team) | (weekend_games['team2'] == ref_team)
+                        ]['time_idx'].tolist()
+                        
+                        if time_idx - 1 in ref_plays or time_idx + 1 in ref_plays:
+                            good_refs += 1
+                        else:
+                            bad_refs += 1
+                            
+            if bad_refs == 0:
+                return f"All {good_refs} ref assignments are adjacent to the team's game"
+            else:
+                return f"⚠️ {bad_refs} ref assignments have a gap, {good_refs} are adjacent to games"
+                
+        return DebugReporter(generate_play_near_ref_summary, "PlayNearRefConstraint")
 
     def _get_play_near_ref_constraint(self):
         """Create a constraint function for the OR-Tools model.

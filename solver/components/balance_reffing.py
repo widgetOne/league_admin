@@ -17,6 +17,21 @@ class BalanceReffingConstraint(SchedulerComponent):
         self.add_constraint(self._get_balance_reffing_constraint())
         self.add_validator(self._get_balance_reffing_validator())
         self.add_debug_report(self._get_balance_reffing_debug_report())
+        self.add_debug_summary(self._get_balance_reffing_debug_summary())
+
+    def _get_balance_reffing_debug_summary(self):
+        def generate_balance_reffing_summary(schedule):
+            team_report = schedule.get_team_report()
+            ref_counts = team_report['total_ref'].value_counts().to_dict()
+            
+            summary_parts = []
+            for refs, count in sorted(ref_counts.items()):
+                summary_parts.append(f"{count} teams ref {refs} games")
+                
+            avg_refs = team_report['total_ref'].mean()
+            return f"Reffing distribution: {', '.join(summary_parts)} (Avg {avg_refs:.1f})"
+            
+        return DebugReporter(generate_balance_reffing_summary, "BalanceReffingConstraint")
 
     def _get_balance_reffing_constraint(self):
         """Create a constraint function for the OR-Tools model.

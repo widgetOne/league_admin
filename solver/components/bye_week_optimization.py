@@ -19,6 +19,29 @@ class ByeWeekOptimization(SchedulerComponent):
         self.weight = weight
         self.add_optimizer(self._get_bye_weeks_optimizer())
         self.add_debug_report(self._get_bye_weeks_debug_report())
+        self.add_debug_summary(self._get_bye_weeks_debug_summary())
+
+    def _get_bye_weeks_debug_summary(self):
+        def generate_bye_weeks_summary(schedule):
+            game_report = schedule.get_game_report()
+            weekend_idxs = sorted(game_report['weekend_idx'].unique())
+            bye_counts = {}
+            for t_idx in schedule.teams:
+                byes = 0
+                for w in weekend_idxs:
+                    week_games = game_report[game_report['weekend_idx'] == w]
+                    games_played = len(week_games[(week_games['team1'] == t_idx) | (week_games['team2'] == t_idx)])
+                    if games_played == 0:
+                        byes += 1
+                bye_counts[byes] = bye_counts.get(byes, 0) + 1
+            
+            summary_parts = []
+            for byes in sorted(bye_counts.keys()):
+                summary_parts.append(f"{bye_counts[byes]} teams with {byes} byes")
+            
+            return "Bye distribution: " + ", ".join(summary_parts)
+            
+        return DebugReporter(generate_bye_weeks_summary, "ByeWeekOptimization")
 
     def _get_bye_weeks_optimizer(self):
         """Create an optimizer function to minimize bye weeks.
