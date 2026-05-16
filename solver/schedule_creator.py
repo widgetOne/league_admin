@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Optional, Iterable
 from ortools.sat.python import cp_model
 from .facilities.facility import Facilities
@@ -41,9 +42,12 @@ class ScheduleCreator:
         """
         self.components.extend(components)
     
-    def create_schedule(self) -> Schedule:
+    def create_schedule(self, solve_time_seconds: float = 240.0) -> Schedule:
         """Create and configure a Schedule instance.
         
+        Args:
+            solve_time_seconds: Maximum time in seconds for the solver to run.
+            
         Returns:
             Schedule: A fully configured Schedule instance ready for solving
         """
@@ -87,7 +91,7 @@ class ScheduleCreator:
         if hasattr(schedule, 'things_to_minimize'):
             schedule.model.Minimize(sum(schedule.things_to_minimize))
         
-        schedule.solve()
+        schedule.solve(solve_time_seconds=solve_time_seconds)
         
         # Only run validators and post-processors if a solution was found
         if schedule._last_solve_status not in (
@@ -147,6 +151,7 @@ class ScheduleCreator:
         summary_sections = []
         if debug_summaries:
             summary_sections.append("EXECUTIVE SUMMARY")
+            summary_sections.append(f"Schedule generated at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             summary_sections.append("=" * 60)
             for debug_summary in debug_summaries:
                 summary_text = debug_summary(schedule)
