@@ -156,7 +156,21 @@ class Schedule:
         inactive_matches = set(sorted_for_deactivation[:slots_to_deactivate])
         active_matches = set(all_matches) - inactive_matches
         
-        print(f"Pre-assigned slots: {len(active_matches)} active, {len(inactive_matches)} NO_PLAY")
+        # Detect fully-packed schedule: when every slot has a game, NO_PLAY is
+        # impossible and we can tighten all variable domains substantially.
+        is_fully_packed = (slots_to_deactivate == 0)
+        if is_fully_packed:
+            print(f"Pre-assigned slots: {len(active_matches)} active, 0 NO_PLAY (fully packed — tightened domains)")
+        else:
+            print(f"Pre-assigned slots: {len(active_matches)} active, {len(inactive_matches)} NO_PLAY")
+
+        # When fully packed, team variables never take the NO_PLAY sentinel value,
+        # so we can shrink the domain from [0, total_teams] to [0, total_teams-1].
+        # This eliminates the NO_PLAY branch from every Element constraint and
+        # removes 3 explicit != constraints per active match.
+        team_var_upper = self.total_teams - 1 if is_fully_packed else self.total_teams
+        num_divisions = len(self.facilities.team_counts) + 1  # +1 for NO_PLAY_DIV
+        div_var_upper = len(self.facilities.team_counts) - 1 if is_fully_packed else num_divisions - 1
 
         for m_obj in all_matches:
             m = m_obj
@@ -171,23 +185,21 @@ class Schedule:
             else:
                 # This slot is active — create solver variables
                 self.match_active[m] = self.model.NewConstant(1)
-                self.home_team[m] = self.model.NewIntVar(0, self.total_teams, f"home_team_{name_suffix}")
-                self.away_team[m] = self.model.NewIntVar(0, self.total_teams, f"away_team_{name_suffix}")
-                self.ref[m] = self.model.NewIntVar(0, self.total_teams, f"ref_team_{name_suffix}")
+                self.home_team[m] = self.model.NewIntVar(0, team_var_upper, f"home_team_{name_suffix}")
+                self.away_team[m] = self.model.NewIntVar(0, team_var_upper, f"away_team_{name_suffix}")
+                self.ref[m] = self.model.NewIntVar(0, team_var_upper, f"ref_team_{name_suffix}")
                 
-                # Active slots must NOT use NO_PLAY
-                self.model.Add(self.home_team[m] != self.NO_PLAY)
-                self.model.Add(self.away_team[m] != self.NO_PLAY)
-                self.model.Add(self.ref[m] != self.NO_PLAY)
+                # Active slots must NOT use NO_PLAY — only needed when domain includes NO_PLAY
+                if not is_fully_packed:
+                    self.model.Add(self.home_team[m] != self.NO_PLAY)
+                    self.model.Add(self.away_team[m] != self.NO_PLAY)
+                    self.model.Add(self.ref[m] != self.NO_PLAY)
             
-            # len(self.facilities.team_counts) should be > 0 if total_teams > 0
-            # and team_counts is not empty. Assume team_counts is a non-empty list.
-            num_divisions = len(self.facilities.team_counts) + 1 # +1 for NO_PLAY_DIV
             self.match_div[m] = self.model.NewIntVar(0, num_divisions - 1, f"division_of_{name_suffix}")
             self.match_loc[m] = self.model.NewConstant(m_obj.location)
 
-            self.home_div[m] = self.model.NewIntVar(0, num_divisions - 1, f"home_div_{name_suffix}")
-            self.ref_div[m] = self.model.NewIntVar(0, num_divisions - 1, f"ref_div_{name_suffix}")
+            self.home_div[m] = self.model.NewIntVar(0, div_var_upper, f"home_div_{name_suffix}")
+            self.ref_div[m] = self.model.NewIntVar(0, div_var_upper, f"ref_div_{name_suffix}")
 
             self.model.AddElement(self.home_team[m], self.team_div, self.home_div[m])
             self.model.AddElement(self.ref[m], self.team_div, self.ref_div[m])
@@ -199,9 +211,26 @@ class Schedule:
                 self.model.Add(self.home_team[m] != self.ref[m])
                 self.model.Add(self.away_team[m] != self.ref[m])
 
+        # Create per-team indicator variables.
+        # For inactive matches, use false constants instead of solver variables
+        # to avoid creating tens of thousands of trivially-false boolean vars.
+        false_var = self.model.NewConstant(0)
+        
         for m_obj in all_matches:
             m = m_obj
             name_suffix = f"{m_obj.weekend_idx}_{m_obj.date}_{m_obj.location}_{m_obj.time_idx}"
+            
+            if m in inactive_matches:
+                # Inactive match: all per-team indicators are trivially false
+                for t_idx in range(self.total_teams):
+                    self.is_home[m, t_idx] = false_var
+                    self.is_away[m, t_idx] = false_var
+                    self.is_ref[m, t_idx] = false_var
+                    self.is_playing[m, t_idx] = false_var
+                    self.is_official_play[m, t_idx] = false_var
+                    self.is_busy[m, t_idx] = false_var
+                continue
+            
             for t_idx in range(self.total_teams):
                 self.is_home[m, t_idx] = self.model.NewBoolVar(f"is_home_{name_suffix}_{t_idx}")
                 self.model.Add(self.home_team[m] == t_idx).OnlyEnforceIf(self.is_home[m, t_idx])
@@ -416,13 +445,17 @@ class Schedule:
         
         return team_report
     
-    def solve(self):
-        """Solve the scheduling problem with optimized solver parameters."""
+    def solve(self, solve_time_seconds: float = 240.0):
+        """Solve the scheduling problem with optimized solver parameters.
+        
+        Args:
+            solve_time_seconds: Maximum time in seconds for the solver to run.
+        """
         start = datetime.datetime.now()
         print(f"Starting solution process at {start}")
 
         # Set solver parameters optimized for performance
-        self.solver.parameters.max_time_in_seconds = 240.0
+        self.solver.parameters.max_time_in_seconds = solve_time_seconds
         self.solver.parameters.num_search_workers = 8  # Use multicore
         self.solver.parameters.log_search_progress = True  # Added for debugging
         self.solver.parameters.linearization_level = 0  # Disable linearization for speed
