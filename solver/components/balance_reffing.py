@@ -174,7 +174,7 @@ class BalanceReffingConstraint(SchedulerComponent):
                     week_games = game_report[game_report['weekend_idx'] == w]
                     games_played = len(week_games[(week_games['team1'] == t_idx) | (week_games['team2'] == t_idx)])
                     total_games += games_played
-                    status = "✓" if games_played == games_per_day else "✗"
+                    status = "✓" if games_played == schedule.facilities.games_per_day else "✗"
                     if status == "✗":
                         all_play_correct = False
                     row += f"{games_played}{status} | "
