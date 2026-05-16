@@ -203,11 +203,11 @@ def export_teamwise_schedules(team_schedules, dates):
 
 def make_teamwise_schedules():
     """Main function to generate teamwise schedules."""
-    print("Generating teamwise schedules for 2026...")
+    print("Generating teamwise schedules for the season...")
     
     # Load facilities to get dates
     current_dir = pathlib.Path(__file__).parent.parent
-    facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball_2026.yaml"
+    facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball.yaml"
     team_counts = get_team_counts_from_sheets()
     facilities = Facilities.from_yaml(str(facilities_yaml_path), team_counts=team_counts)
     dates = facilities.dates

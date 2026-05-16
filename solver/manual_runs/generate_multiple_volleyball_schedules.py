@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Multi-run volleyball scheduler for 2026.
+Multi-run volleyball scheduler for the season.
 
 This script runs the volleyball scheduler multiple times to escape local minima,
 tracks the best objective score in Google Sheets, and only uploads improved schedules.
@@ -23,11 +23,11 @@ def generate_multiple_schedules():
     This script runs the scheduler to escape local minima and saves all valid
     schedules to the local file cache. It does not upload to Google Sheets.
     """
-    print("Running Multi-Run Volleyball Scheduler for 2026...")
+    print("Running Multi-Run Volleyball Scheduler...")
     
     # Load facilities
     current_dir = pathlib.Path(__file__).parent.parent # Get the 'solver' directory
-    facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball_2026.yaml"
+    facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball.yaml"
     
     # Fetch team counts from Google Sheets team_input tab
     print("Fetching team counts from Google Sheets...")
@@ -96,7 +96,7 @@ def generate_multiple_schedules():
         print(f"Completed runs: 20")
     print(f"Session best score: {best_score if best_score != float('inf') else 'None'}")
     
-    print(f"\nMulti-run optimization and caching complete! Run get_volleyball_2026_schedule.py to upload the best cached result.")
+    print(f"\nMulti-run optimization and caching complete! Run get_volleyball_schedule.py to upload the best cached result.")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 # Facility configuration for volleyball league
-name: "Volleyball League 2026"
+name: "Volleyball League"
 
 # Team configuration — team_counts are loaded from the 'team_input' Google Sheets tab
 

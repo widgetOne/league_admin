@@ -18,7 +18,7 @@ from ..component_sets.sand_volleyball_template import get_sand_volleyball_templa
 from ..exports.gsheets_export import get_team_counts_from_sheets
 
 # ---------- configuration ----------
-YAML_PATH = "solver/facilities/configs/volleyball_2026.yaml"
+YAML_PATH = "solver/facilities/configs/volleyball.yaml"
 TIMEOUT_SECONDS = 30  # short timeout per probe
 TEST_PAIRS = True      # also test all 2-component combos
 # -----------------------------------

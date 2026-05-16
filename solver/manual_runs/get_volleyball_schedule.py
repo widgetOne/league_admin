@@ -6,10 +6,10 @@ from .manual_runner import make_schedule_and_debug_files
 from ..exports.gsheets_export import export_schedule_to_sheets, test_sheets_connection, get_team_counts_from_sheets
 
 def main():
-    """Run the volleyball scheduler for 2026."""
-    print("Running Volleyball Scheduler for 2026...")
+    """Run the volleyball scheduler for the season."""
+    print("Running Volleyball Scheduler...")
     current_dir = pathlib.Path(__file__).parent.parent # Get the 'solver' directory
-    facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball_2026.yaml"
+    facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball.yaml"
     
     # Fetch team counts from Google Sheets team_input tab
     print("Fetching team counts from Google Sheets...")
@@ -37,7 +37,7 @@ def main():
                 export_cached_schedule_to_sheets(csv_path, debug_path)
                 
                 print("\n📋 Generating individual team schedules...")
-                from .make_teamwise_schedules_2026 import make_teamwise_schedules
+                from .make_teamwise_schedules import make_teamwise_schedules
                 make_teamwise_schedules()
                 print("✅ Individual team schedules generated!")
             else:
@@ -78,7 +78,7 @@ def main():
                     print("Export completed successfully!")
                     
                     print("\n📋 Generating individual team schedules...")
-                    from .make_teamwise_schedules_2026 import make_teamwise_schedules
+                    from .make_teamwise_schedules import make_teamwise_schedules
                     make_teamwise_schedules()
                     print("✅ Individual team schedules generated!")
                 else:

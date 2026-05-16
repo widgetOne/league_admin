@@ -7,11 +7,11 @@ from .make_league_apps_schedule_2025 import read_schedule_from_sheets, parse_sch
 
 def make_league_apps_schedule():
     """Main function to generate League Apps schedule format."""
-    print("Generating League Apps schedule for 2026...")
+    print("Generating League Apps schedule for the season...")
     
     # Load facilities to get dates
     current_dir = pathlib.Path(__file__).parent.parent
-    facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball_2026.yaml"
+    facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball.yaml"
     
     from .. import Facilities
     team_counts = get_team_counts_from_sheets()
