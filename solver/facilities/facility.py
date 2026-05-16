@@ -1,4 +1,5 @@
 import yaml
+import hashlib
 from dataclasses import dataclass
 from typing import List, Dict, NamedTuple, Set
 import pandas as pd
@@ -69,6 +70,13 @@ class Facilities:
         # Validate that the facility configuration is structurally sound
         validate_facilities(self)
 
+    def get_short_hash(self) -> str:
+        """Generate a short (8-char) deterministic hash of the full facility configuration.
+        
+        Derived from __str__, which must include all salient substructures.
+        """
+        return hashlib.sha256(str(self).encode('utf-8')).hexdigest()[:8]
+
     @property
     def times(self) -> List[time]:
         """Get the list of unique times in the schedule."""
@@ -107,6 +115,11 @@ class Facilities:
     def __str__(self) -> str:
         """Return a comprehensive string representation of the facility configuration.
         
+        IMPORTANT: This must include all salient substructures of the facility
+        (team_counts, games_per_season, games_per_day, dates, locations, and
+        the full match grid). get_short_hash() derives its hash from this output,
+        so any structural change to the facility must be reflected here.
+        
         Returns:
             A formatted string containing all facility information
         """
@@ -118,6 +131,18 @@ class Facilities:
             lines.append(f"  Division {div_idx + 1}: {count} teams")
         lines.append(f"Games per season: {self.games_per_season}")
         lines.append(f"Games per day: {self.games_per_day}")
+        lines.append("")
+        
+        # Dates
+        lines.append("Dates:")
+        for date in self._dates:
+            lines.append(f"  {date}")
+        lines.append("")
+        
+        # Locations
+        lines.append("Locations:")
+        for loc in self._locations:
+            lines.append(f"  {loc}")
         lines.append("")
         
         # Game Slots Summary
