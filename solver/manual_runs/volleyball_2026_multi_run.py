@@ -15,6 +15,9 @@ from ..exports.gsheets_export import export_schedule_to_sheets, get_best_objecti
 from .make_teamwise_schedules_2026 import make_teamwise_schedules
 
 
+from datetime import datetime
+from ..cache_manager import save_schedule_to_cache
+
 def generate_multiple_schedules(update_schedule=True):
     """Run the volleyball scheduler multiple times and track the best result.
     
@@ -57,10 +60,17 @@ def generate_multiple_schedules(update_schedule=True):
         
         try:
             # Generate schedule
+            run_start_time = datetime.now()
             schedule, creator = make_schedule(facilities, schedule_components)
             current_score = schedule.solver.ObjectiveValue()
             
             print(f"Run {run_num} completed with objective score: {current_score:,.2f}")
+            
+            # Save EVERY valid schedule locally to the cache
+            # try:
+            #     save_schedule_to_cache(schedule, run_start_time, current_score)
+            # except Exception as e:
+            #     print(f"⚠️ Failed to cache schedule locally: {e}")
             
             # Check if this is better than our current best
             if current_score < best_score:
