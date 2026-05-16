@@ -82,3 +82,6 @@ env.sh
 client_secret.json
 gmail_metrics_auth.json
 auth/*
+
+# Schedule cache
+local_cache/
