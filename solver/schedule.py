@@ -387,6 +387,7 @@ class Schedule:
         # Set solver parameters optimized for performance
         self.solver.parameters.max_time_in_seconds = 240.0
         self.solver.parameters.num_search_workers = 8  # Use multicore
+        self.solver.parameters.log_search_progress = True  # Added for debugging
         self.solver.parameters.linearization_level = 0  # Disable linearization for speed
         self.solver.parameters.cp_model_presolve = True  # Enable presolve optimizations
         #self.solver.parameters.enumerate_all_solutions = True
