@@ -13,8 +13,8 @@ To ensure that cached schedules correspond to the exact constraints they were ge
 
 **Directory Naming Convention:**
 * Caches will be stored in a local directory, such as `local_cache/`.
-* Level 1 (Facilities Hash): The short hash of the facilities, e.g., `local_cache/a1b2c3d4/`
-* Level 2 (Team Counts): A readable format of the team counts, e.g., `local_cache/a1b2c3d4/14_10_10/`
+* Level 1 (Facilities Configuration): A readable schedule name that includes the number of days, teams per day (average courts per day * 2), and the short hash, e.g., `local_cache/7d_32.0_tpd_a1b2c3d4/`
+* Level 2 (Team Counts): A readable format of the team counts, e.g., `local_cache/7d_32.0_tpd_a1b2c3d4/14_10_10/`
 
 ## 2. File Contents and Naming
 
