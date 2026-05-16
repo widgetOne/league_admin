@@ -51,16 +51,27 @@ def make_schedule_and_debug_files(
         # Mode 1: Use ScheduleCreator with components
         print("Running schedule generation with components...")
         schedule, creator = make_schedule(facilities, components)
-        write_volleyball_debug_files(schedule, base_dir, creator=creator)
+        
+        if schedule.has_solution:
+            write_volleyball_debug_files(schedule, base_dir, creator=creator)
+        else:
+            status_name = schedule.solver.StatusName(schedule._last_solve_status)
+            print(f"\n❌ No solution found (status: {status_name}). Debug files not written.")
     else:
         # Mode 2: Direct schedule generation
         print("Running direct schedule generation (no components)...")
         model = cp_model.CpModel()
         schedule = Schedule(facilities, model)
         schedule.solve()
-        write_volleyball_debug_files(schedule, base_dir, creator=None)
+        
+        if schedule.has_solution:
+            write_volleyball_debug_files(schedule, base_dir, creator=None)
+        else:
+            status_name = schedule.solver.StatusName(schedule._last_solve_status)
+            print(f"\n❌ No solution found (status: {status_name}). Debug files not written.")
 
-    print("\n✅ Top-level schedule generation complete!")
+    if schedule.has_solution:
+        print("\n✅ Top-level schedule generation complete!")
     return schedule, creator
 
 

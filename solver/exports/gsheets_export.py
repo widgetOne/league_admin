@@ -271,6 +271,53 @@ def export_schedule_to_sheets(schedule, creator):
         print(f"   - Structured game report in tab: 'schedule'")
 
 
+def export_cached_schedule_to_sheets(csv_path, debug_path=None):
+    """Export a cached schedule (CSV format) directly to Google Sheets.
+    
+    Args:
+        csv_path: Path to the cached CSV file
+        debug_path: Optional path to the cached debug report text file
+    """
+    import csv
+    config = get_sheets_config()
+    
+    # 1. Read and export CSV data
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.reader(f)
+        csv_data = list(reader)
+        
+    sheet = get_gspread_sheet()
+    
+    schedule_tab = config['schedule_tab']
+    sheet.open_sheet(schedule_tab)
+    worksheet = sheet.sheet
+    worksheet.clear()
+    
+    if csv_data:
+        rows = len(csv_data)
+        cols = max(len(row) for row in csv_data) if csv_data else 0
+        if cols > 0:
+            # Ensure all rows have the same number of columns
+            for row in csv_data:
+                while len(row) < cols:
+                    row.append("")
+            
+            end_col = chr(ord('A') + cols - 1)
+            cell_range = f'A1:{end_col}{rows}'
+            worksheet.update(cell_range, csv_data)
+            
+    # 2. Read and export Debug Reports if provided
+    if debug_path and debug_path.exists():
+        with open(debug_path, 'r', encoding='utf-8') as f:
+            debug_text = f.read()
+        export_debug_reports(debug_text, config['debug_report_tab'])
+        
+    print(f"✅ Cached schedule exported to Google Sheets: {config['sheet_url']}")
+    print(f"   - Schedule data from {csv_path.name} pushed to tab: '{schedule_tab}'")
+    if debug_path and debug_path.exists():
+        print(f"   - Debug reports from {debug_path.name} pushed to tab: '{config['debug_report_tab']}'")
+
+
 def export_schedule_csv_format(schedule, tab_name):
     """Export the schedule data in CSV format to a specific Google Sheets tab.
     

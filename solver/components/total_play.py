@@ -1,5 +1,6 @@
 from ..schedule_component import SchedulerComponent, ModelActor, DebugReporter
 from ..schedule import Schedule
+from ..exhibition import exhibition_games_by_division, has_exhibition_games
 
 
 class TotalPlayConstraint(SchedulerComponent):
@@ -35,21 +36,25 @@ class TotalPlayConstraint(SchedulerComponent):
                 schedule: The schedule model to add the constraint to
             """
             total_games = schedule.facilities.games_per_season
-            # 1. Official games must exactly match the target total_games for each team
+            
+            # 1. Official games must exactly match the target for each team.
+            #    When no exhibitions exist, is_official_play is already aliased
+            #    to is_playing in schedule.py, so this just constrains total plays.
             for team in schedule.teams:
                 official_games_played = sum(schedule.is_official_play[m, team] for m in schedule.matches)
                 schedule.model.Add(official_games_played == total_games)
                 
-            # 2. Hard constraint on exactly how many exhibition games must happen per division
-            # If there's an odd number of games AND an odd number of teams in a division,
-            # that division MUST have exactly 1 exhibition game to make the math work.
-            # Otherwise, it must have 0 exhibition games.
-            for div_idx, count in enumerate(schedule.facilities.team_counts):
-                if count <= 0:
+            # 2. Exhibition constraints — only needed when the parity math requires them.
+            #    Skip entirely for even team counts to avoid creating thousands of extra variables.
+            if not has_exhibition_games(schedule.facilities.team_counts, total_games):
+                return
+            
+            expected_by_div = exhibition_games_by_division(schedule.facilities.team_counts, total_games)
+            
+            for div_idx, expected_exhibition in enumerate(expected_by_div):
+                if schedule.facilities.team_counts[div_idx] <= 0:
                     continue
-                
-                expected_exhibition = 1 if (total_games % 2 == 1 and count % 2 == 1) else 0
-                
+                    
                 div_exhibitions = []
                 for team in schedule.teams:
                     if schedule.team_div[team] == div_idx:

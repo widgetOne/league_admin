@@ -88,6 +88,14 @@ class ScheduleCreator:
             schedule.model.Minimize(sum(schedule.things_to_minimize))
         
         schedule.solve()
+        
+        # Only run validators and post-processors if a solution was found
+        if schedule._last_solve_status not in (
+            cp_model.OPTIMAL, cp_model.FEASIBLE
+        ):
+            status_name = schedule.solver.StatusName(schedule._last_solve_status)
+            print(f"\n⚠️  Solver returned {status_name} — skipping validators and post-processors.")
+            return schedule
 
         # Validate that that schedule meets all constraints
         validator_classes = []

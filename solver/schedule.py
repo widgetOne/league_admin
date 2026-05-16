@@ -5,6 +5,7 @@ import pandas as pd
 from ortools.sat.python import cp_model
 from .facilities.facility import Facilities, Match
 from .schedule_component import ModelActor
+from .exhibition import has_exhibition_games
 
 
 class SolutionStatusCallback(cp_model.CpSolverSolutionCallback):
@@ -85,6 +86,11 @@ class Schedule:
         self._game_report: Optional[pd.DataFrame] = None
         self._debug_report: Optional[str] = None
 
+        # Precompute whether exhibitions are needed for this configuration
+        self._has_exhibitions = has_exhibition_games(
+            facilities.team_counts, facilities.games_per_season
+        )
+
         # Apply facility constraints to the model
         self._apply_facilities_to_model()
 
@@ -133,23 +139,46 @@ class Schedule:
             print("Warning: No matches found in facilities. Model variables related to matches will not be created.")
             return # Exit early if no matches, as loops below depend on them
 
+        # Pre-compute which match slots are active vs NO_PLAY.
+        # Instead of making the solver discover which slots are empty, we fix them
+        # deterministically. This avoids a massive combinatorial explosion.
+        total_games_needed = sum(self.facilities.team_counts) * self.facilities.games_per_season // 2
+        total_slots = len(all_matches)
+        slots_to_deactivate = total_slots - total_games_needed
+        
+        # Group matches by (weekend_idx, time_idx), then deactivate from the
+        # highest court numbers first (i.e., the "extra" courts in each time slot).
+        # Sort matches so highest-location slots come first for easy deactivation.
+        sorted_for_deactivation = sorted(
+            all_matches,
+            key=lambda m: (-m.location, -m.time_idx, -m.weekend_idx)
+        )
+        inactive_matches = set(sorted_for_deactivation[:slots_to_deactivate])
+        active_matches = set(all_matches) - inactive_matches
+        
+        print(f"Pre-assigned slots: {len(active_matches)} active, {len(inactive_matches)} NO_PLAY")
+
         for m_obj in all_matches:
             m = m_obj
             name_suffix = f"{m_obj.weekend_idx}_{m_obj.date}_{m_obj.location}_{m_obj.time_idx}"
 
-            self.home_team[m] = self.model.NewIntVar(0, self.total_teams, f"home_team_{name_suffix}")
-            self.away_team[m] = self.model.NewIntVar(0, self.total_teams, f"away_team_{name_suffix}")
-            self.ref[m] = self.model.NewIntVar(0, self.total_teams, f"ref_team_{name_suffix}")
-            self.match_active[m] = self.model.NewBoolVar(f"match_active_{name_suffix}")
-            
-            # Constrain NO_PLAY logic
-            self.model.Add(self.home_team[m] != self.NO_PLAY).OnlyEnforceIf(self.match_active[m])
-            self.model.Add(self.away_team[m] != self.NO_PLAY).OnlyEnforceIf(self.match_active[m])
-            self.model.Add(self.ref[m] != self.NO_PLAY).OnlyEnforceIf(self.match_active[m])
-
-            self.model.Add(self.home_team[m] == self.NO_PLAY).OnlyEnforceIf(self.match_active[m].Not())
-            self.model.Add(self.away_team[m] == self.NO_PLAY).OnlyEnforceIf(self.match_active[m].Not())
-            self.model.Add(self.ref[m] == self.NO_PLAY).OnlyEnforceIf(self.match_active[m].Not())
+            if m in inactive_matches:
+                # This slot is pre-assigned as inactive — use constants, no solver variables needed
+                self.match_active[m] = self.model.NewConstant(0)
+                self.home_team[m] = self.model.NewConstant(self.NO_PLAY)
+                self.away_team[m] = self.model.NewConstant(self.NO_PLAY)
+                self.ref[m] = self.model.NewConstant(self.NO_PLAY)
+            else:
+                # This slot is active — create solver variables
+                self.match_active[m] = self.model.NewConstant(1)
+                self.home_team[m] = self.model.NewIntVar(0, self.total_teams, f"home_team_{name_suffix}")
+                self.away_team[m] = self.model.NewIntVar(0, self.total_teams, f"away_team_{name_suffix}")
+                self.ref[m] = self.model.NewIntVar(0, self.total_teams, f"ref_team_{name_suffix}")
+                
+                # Active slots must NOT use NO_PLAY
+                self.model.Add(self.home_team[m] != self.NO_PLAY)
+                self.model.Add(self.away_team[m] != self.NO_PLAY)
+                self.model.Add(self.ref[m] != self.NO_PLAY)
             
             # len(self.facilities.team_counts) should be > 0 if total_teams > 0
             # and team_counts is not empty. Assume team_counts is a non-empty list.
@@ -163,9 +192,12 @@ class Schedule:
             self.model.AddElement(self.home_team[m], self.team_div, self.home_div[m])
             self.model.AddElement(self.ref[m], self.team_div, self.ref_div[m])
             
-            self.model.Add(self.home_team[m] != self.away_team[m])
-            self.model.Add(self.home_team[m] != self.ref[m])
-            self.model.Add(self.away_team[m] != self.ref[m])
+            # home/away/ref must all be different — but only for active matches.
+            # Inactive matches have all three set to NO_PLAY (same constant).
+            if m not in inactive_matches:
+                self.model.Add(self.home_team[m] != self.away_team[m])
+                self.model.Add(self.home_team[m] != self.ref[m])
+                self.model.Add(self.away_team[m] != self.ref[m])
 
         for m_obj in all_matches:
             m = m_obj
@@ -187,8 +219,13 @@ class Schedule:
                 self.model.AddBoolOr([self.is_home[m, t_idx], self.is_away[m, t_idx]]).OnlyEnforceIf(self.is_playing[m, t_idx])
                 self.model.AddBoolAnd([self.is_home[m, t_idx].Not(), self.is_away[m, t_idx].Not()]).OnlyEnforceIf(self.is_playing[m, t_idx].Not())
 
-                self.is_official_play[m, t_idx] = self.model.NewBoolVar(f"is_official_{name_suffix}_{t_idx}")
-                self.model.AddImplication(self.is_official_play[m, t_idx], self.is_playing[m, t_idx])
+                # Only create separate is_official_play variables when exhibitions exist.
+                # When there are no exhibitions, official play == playing (no extra vars needed).
+                if self._has_exhibitions:
+                    self.is_official_play[m, t_idx] = self.model.NewBoolVar(f"is_official_{name_suffix}_{t_idx}")
+                    self.model.AddImplication(self.is_official_play[m, t_idx], self.is_playing[m, t_idx])
+                else:
+                    self.is_official_play[m, t_idx] = self.is_playing[m, t_idx]
 
                 self.is_busy[m, t_idx] = self.model.NewBoolVar(f"is_busy_{name_suffix}_{t_idx}")
                 self.model.AddBoolOr([self.is_playing[m, t_idx], self.is_ref[m, t_idx]]).OnlyEnforceIf(self.is_busy[m, t_idx])
@@ -300,9 +337,9 @@ class Schedule:
                 
                 team1_exhibition = False
                 team2_exhibition = False
-                if home_idx != self.NO_PLAY:
+                if self._has_exhibitions and home_idx != self.NO_PLAY:
                     team1_exhibition = self.solver.Value(self.is_official_play[match, home_idx]) == 0
-                if away_idx != self.NO_PLAY:
+                if self._has_exhibitions and away_idx != self.NO_PLAY:
                     team2_exhibition = self.solver.Value(self.is_official_play[match, away_idx]) == 0
             
             schedule_rows.append({
@@ -414,6 +451,11 @@ class Schedule:
 
         # Store the solve status for later reference
         self._last_solve_status = status
+
+    @property
+    def has_solution(self) -> bool:
+        """Check if the solver found a feasible or optimal solution."""
+        return self._last_solve_status in (cp_model.OPTIMAL, cp_model.FEASIBLE)
 
     def get_volleyball_debug_schedule(self):
         """Get a human-readable volleyball schedule string for debugging.
