@@ -15,7 +15,7 @@ def save_schedule_to_cache(schedule, start_time: datetime, score: float):
     """
     # 1. Determine cache hierarchy paths
     facilities = schedule.facilities
-    fac_hash = facilities.get_hash()
+    fac_hash = facilities.get_short_hash()
     
     # Format team counts readable: "14_10_10"
     team_counts_str = "_".join(str(c) for c in facilities.team_counts)
