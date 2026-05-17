@@ -52,32 +52,55 @@ class ByeWeekOptimization(SchedulerComponent):
         def optimize_bye_weeks(schedule: Schedule):
             """Add bye weeks optimization to the OR-Tools model.
             
-            For each team-weekend combination, we want to minimize the number of
-            weekends where a team has 0 games (bye weeks).
+            Penalty escalates 10× per additional bye for the same team:
+              1 bye  →  1 × weight
+              2 byes → 11 × weight  (1 + 10)
+              3 byes → 111 × weight (1 + 10 + 100)
+            This makes it extremely expensive for any team to accumulate
+            multiple byes.
             
             Args:
                 schedule: The schedule model to add the optimization to
             """
-            # Get unique weekend indices
             weekend_idxs = sorted(list(set(m.weekend_idx for m in schedule.matches)))
+            total_weeks = len(weekend_idxs)
             
-            # Create variables to track bye weeks
+            # Create per-weekend bye indicators
             bye_week_vars = {}
             for w_idx in weekend_idxs:
                 for t_idx in schedule.teams:
                     key = (w_idx, t_idx)
-                    # Create a boolean variable that is true if team has a bye this weekend
                     bye_week_vars[key] = schedule.model.NewBoolVar(f"bye_week_{w_idx}_{t_idx}")
-                    # Link to games_per_weekend: bye = (games == 0)
                     schedule.model.Add(schedule.games_per_weekend[key] == 0).OnlyEnforceIf(bye_week_vars[key])
                     schedule.model.Add(schedule.games_per_weekend[key] > 0).OnlyEnforceIf(bye_week_vars[key].Not())
             
-            # Store the optimization terms in the shared list
             if not hasattr(schedule, 'things_to_minimize'):
                 schedule.things_to_minimize = []
             
-            # Add the bye week terms with their weight
-            schedule.things_to_minimize.extend([d * self.weight for d in bye_week_vars.values()])
+            # Escalating penalty: cumulative target is N * 10^(N-1) x weight.
+            # - N=1 (1 bye): target = 1
+            # - N=2 (2 byes): target = 20
+            # - N=3 (3 byes): target = 300
+            # - N=4 (4 byes): target = 4000
+            def get_cumulative_target(n):
+                if n <= 0:
+                    return 0
+                return n * (10 ** (n - 1))
+            
+            for t_idx in schedule.teams:
+                team_bye_vars = [bye_week_vars[(w_idx, t_idx)] for w_idx in weekend_idxs]
+                total_byes = schedule.model.NewIntVar(0, total_weeks, f"total_byes_{t_idx}")
+                schedule.model.Add(total_byes == sum(team_bye_vars))
+                
+                # Create threshold bools and add escalating penalties
+                for k in range(1, total_weeks + 1):
+                    has_k_byes = schedule.model.NewBoolVar(f"has_ge_{k}_byes_{t_idx}")
+                    schedule.model.Add(total_byes >= k).OnlyEnforceIf(has_k_byes)
+                    schedule.model.Add(total_byes < k).OnlyEnforceIf(has_k_byes.Not())
+                    
+                    incremental_multiplier = get_cumulative_target(k) - get_cumulative_target(k - 1)
+                    
+                    schedule.things_to_minimize.append(has_k_byes * int(self.weight * incremental_multiplier))
         
         return ModelActor(optimize_bye_weeks)
 
