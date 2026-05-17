@@ -1,7 +1,9 @@
 # Facility configuration for volleyball league
 name: "Volleyball League"
 
-# Team configuration — team_counts are loaded from the 'team_input' Google Sheets tab
+# Team configuration
+# For final schedule prep, team_counts can be loaded from the 'team_input' Google Sheets tab instead
+team_counts: [16, 14, 8]
 
 games_per_season: 7
 games_per_day: 1
@@ -10,8 +12,10 @@ games_per_day: 1
 # Each entry contains a time and the court layout for that time slot
 # 1 indicates an active court, 0 indicates inactive
 time_slots:
+  - time: "11:00"
+    courts: [1, 0, 0, 0]  # Court 1-4 layout for 11:00
   - time: "12:00"
-    courts: [1, 0, 0, 0]  # Court 1-4 layout for 12:00
+    courts: [1, 1, 0, 0]  # Court 1-4 layout for 12:00
   - time: "13:00"
     courts: [1, 1, 1, 1]  # Court 1-4 layout for 01:00
   - time: "14:00"
@@ -19,7 +23,7 @@ time_slots:
   - time: "15:00"
     courts: [1, 1, 1, 1]  # Court 1-4 layout for 03:00
   - time: "16:00"
-    courts: [1, 1, 1, 0]  # Court 1-4 layout for 04:00
+    courts: [1, 1, 1, 1]  # Court 1-4 layout for 04:00
 
 # Schedule configuration — 7 regular season Sundays (July 5 skipped for July 4th weekend)
 dates:

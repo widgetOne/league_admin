@@ -80,8 +80,8 @@ class Facilities:
     def get_schedule_name(self) -> str:
         """Generate a readable schedule name based on facility properties and hash.
         
-        Format: [num_days]d_[teams_per_day]_tpd_[short_hash]
-        Example: 7d_32.0_tpd_23fihf2f
+        Format: [num_days]d__[teams_per_day]_tpd__[team_counts]__[short_hash]
+        Example: 7d__38.0_tpd__14_14_10__23fihf2f
         """
         num_days = len(self._dates)
         if num_days == 0:
@@ -90,8 +90,9 @@ class Facilities:
             avg_courts_per_day = len(self.matches) / num_days
             
         teams_per_day = avg_courts_per_day * 2
+        tc_str = "_".join(str(c) for c in self.team_counts)
         
-        return f"{num_days}d_{teams_per_day:.1f}_tpd_{self.get_short_hash()}"
+        return f"{num_days}d__{teams_per_day:.1f}_tpd__{tc_str}__{self.get_short_hash()}"
 
     @property
     def times(self) -> List[time]:

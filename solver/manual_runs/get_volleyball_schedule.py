@@ -11,14 +11,31 @@ def main():
     current_dir = pathlib.Path(__file__).parent.parent # Get the 'solver' directory
     facilities_yaml_path = current_dir / "facilities" / "configs" / "volleyball.yaml"
     
-    # Fetch team counts from Google Sheets team_input tab
-    print("Fetching team counts from Google Sheets...")
-    team_counts = get_team_counts_from_sheets()
-    print(f"Team counts from sheet: {team_counts}")
-    
-    facilities = Facilities.from_yaml(str(facilities_yaml_path), team_counts=team_counts)
+    # For final schedule prep, uncomment to fetch team_counts from Google Sheets:
+    # team_counts = get_team_counts_from_sheets()
+    # facilities = Facilities.from_yaml(str(facilities_yaml_path), team_counts=team_counts)
 
+    facilities = Facilities.from_yaml(str(facilities_yaml_path))
+    print(f"Team counts from YAML: {facilities.team_counts}")
 
+    # Validate that YAML team_counts match Google Sheets before exporting
+    print("Validating team counts against Google Sheets...")
+    sheet_team_counts = get_team_counts_from_sheets()
+    if list(facilities.team_counts) != list(sheet_team_counts):
+        print()
+        print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
+        print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
+        print()
+        print(
+            f"  TEAM COUNT MISMATCH! YAML has {facilities.team_counts} but "
+            f"Google Sheet has {sheet_team_counts}. Update one to match the other."
+        )
+        print()
+        print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
+        print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
+        print()
+        raise ValueError("Team count mismatch — see above.")
+    print(f"✅ Team counts validated: YAML and Sheet both have {facilities.team_counts}")
     print("Facilities loaded.")
 
     from ..cache_manager import get_best_cached_schedule, save_schedule_to_cache

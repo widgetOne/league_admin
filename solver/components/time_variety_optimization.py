@@ -38,7 +38,12 @@ class TimeVarietyOptimization(SchedulerComponent):
             if distinct_slots:
                 min_slots = min(distinct_slots)
                 max_slots = max(distinct_slots)
-                return f"Teams play in {min_slots} to {max_slots} distinct time slots"
+                avg_slots = sum(distinct_slots) / len(distinct_slots)
+                variance = sum((s - avg_slots) ** 2 for s in distinct_slots) / len(distinct_slots)
+                return (
+                    f"Distinct time slots per team: min={min_slots}, max={max_slots}, "
+                    f"avg={avg_slots:.1f}, var={variance:.2f}"
+                )
             return "No games scheduled"
             
         return DebugReporter(generate_time_variety_summary, "TimeVarietyOptimization")
@@ -227,6 +232,66 @@ class TimeVarietyOptimization(SchedulerComponent):
                 overall_std = all_values.std()
                 lines.append(f"Overall standard deviation: {overall_std:.2f}")
                 lines.append(f"Variance score (lower is better): {overall_std:.2f}")
+            
+            # ── Per-division analysis ─────────────────────────────────
+            lines.append("")
+            lines.append("DIVISION ANALYSIS")
+            lines.append("-" * 40)
+            
+            # Group teams by division
+            divisions = {}
+            for team in teams:
+                div_idx = schedule.team_div[team]
+                if div_idx not in divisions:
+                    divisions[div_idx] = []
+                divisions[div_idx].append(team)
+            
+            # Get time labels from schedule for readable output
+            time_labels = {}
+            for m in schedule.matches:
+                if m.time_idx not in time_labels:
+                    time_labels[m.time_idx] = m.time
+            
+            for div_idx in sorted(divisions.keys()):
+                div_teams = divisions[div_idx]
+                lines.append(f"\n  Division {div_idx} ({len(div_teams)} teams)")
+                lines.append(f"  {'─' * 36}")
+                
+                # Average distinct time slots per team in this division
+                div_distinct = []
+                # Weighted average time index per team
+                div_avg_times = []
+                
+                for team in div_teams:
+                    team_games = game_report[
+                        (game_report['team1'] == team) | (game_report['team2'] == team)
+                    ]
+                    div_distinct.append(team_games['time_idx'].nunique())
+                    
+                    if len(team_games) > 0:
+                        avg_time = team_games['time_idx'].mean()
+                        div_avg_times.append(avg_time)
+                
+                avg_distinct = sum(div_distinct) / len(div_distinct) if div_distinct else 0
+                lines.append(f"  Avg distinct time slots: {avg_distinct:.1f}")
+                
+                if div_avg_times:
+                    div_mean_time = sum(div_avg_times) / len(div_avg_times)
+                    time_label = time_labels.get(round(div_mean_time), f"idx {div_mean_time:.1f}")
+                    lines.append(f"  Avg time of play: slot {div_mean_time:.2f} (~{time_label})")
+                    
+                    # Show time slot breakdown for this division
+                    div_games = game_report[
+                        (game_report['team1'].isin(div_teams)) | (game_report['team2'].isin(div_teams))
+                    ]
+                    slot_counts = div_games['time_idx'].value_counts().sort_index()
+                    total_div_appearances = slot_counts.sum()
+                    slot_parts = []
+                    for tidx in time_idxs:
+                        count = slot_counts.get(tidx, 0)
+                        pct = count / total_div_appearances * 100 if total_div_appearances > 0 else 0
+                        slot_parts.append(f"slot {tidx}: {count} ({pct:.0f}%)")
+                    lines.append(f"  Distribution: {', '.join(slot_parts)}")
             
             lines.append("")
             
