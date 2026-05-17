@@ -3,7 +3,7 @@ from ..components.vs_play_balance import VsPlayBalanceConstraint
 from ..components.balance_reffing import BalanceReffingConstraint
 from ..components.play_near_ref import PlayNearRefConstraint
 from ..components.ref_same_division import RefSameDivisionConstraint
-from ..components.ref_comp_division import CompRefCompConstraint
+from ..components.comp_ref_comp import CompRefCompConstraint
 from ..components.same_div_ref_optimization import SameDivisionRefOptimization
 from ..components.one_thing_at_a_time import OneThingAtATimeConstraint
 from ..components.rec_in_low_courts import RecInLowCourtsProcessor
