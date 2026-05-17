@@ -156,10 +156,18 @@ def generate_schedules(
             # Validate team counts match before uploading
             sheet_team_counts = get_team_counts_from_sheets()
             if list(facilities.team_counts) != list(sheet_team_counts):
+                print()
+                print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
+                print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
+                print()
                 print(
-                    f"⚠️  Team count mismatch! YAML has {facilities.team_counts} "
+                    f"  TEAM COUNT MISMATCH! YAML has {facilities.team_counts} "
                     f"but Sheet has {sheet_team_counts}. Skipping upload."
                 )
+                print()
+                print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
+                print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
+                print()
             elif test_sheets_connection():
                 csv_path, debug_path = get_best_cached_schedule(facilities)
                 if csv_path:
