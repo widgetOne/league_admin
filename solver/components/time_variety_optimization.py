@@ -40,9 +40,23 @@ class TimeVarietyOptimization(SchedulerComponent):
                 max_slots = max(distinct_slots)
                 avg_slots = sum(distinct_slots) / len(distinct_slots)
                 variance = sum((s - avg_slots) ** 2 for s in distinct_slots) / len(distinct_slots)
+                
+                # Calculate the objective penalty (which is scaled by 100 in the model)
+                total_dev = 0
+                total_teams = len(teams)
+                for time_idx in time_idxs:
+                    games_at_this_time = sum(1 for m in schedule.matches if m.time_idx == time_idx)
+                    target = (games_at_this_time * 2) / total_teams
+                    for team in teams:
+                        team_games = game_report[(game_report['team1'] == team) | (game_report['team2'] == team)]
+                        actual = len(team_games[team_games['time_idx'] == time_idx])
+                        total_dev += abs(actual - target)
+                
+                penalty = total_dev * self.weight * 100
+                
                 return (
                     f"Distinct time slots per team: min={min_slots}, max={max_slots}, "
-                    f"avg={avg_slots:.1f}, var={variance:.2f}"
+                    f"avg={avg_slots:.1f}, var={variance:.2f} | penalty: {penalty:.0f}"
                 )
             return "No games scheduled"
             
