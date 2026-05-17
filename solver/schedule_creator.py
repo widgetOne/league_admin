@@ -151,7 +151,8 @@ class ScheduleCreator:
         summary_sections = []
         if debug_summaries:
             summary_sections.append("EXECUTIVE SUMMARY")
-            summary_sections.append(f"Schedule generated at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            score = schedule.solver.ObjectiveValue() if schedule.has_solution else "N/A"
+            summary_sections.append(f"Schedule with score of {score:,.0f} generated at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             summary_sections.append("=" * 60)
             for debug_summary in debug_summaries:
                 summary_text = debug_summary(schedule)
