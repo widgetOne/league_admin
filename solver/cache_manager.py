@@ -18,10 +18,7 @@ def save_schedule_to_cache(schedule, start_time: datetime, score: float, creator
     facilities = schedule.facilities
     schedule_name = facilities.get_schedule_name()
     
-    # Format team counts readable: "14_10_10"
-    team_counts_str = "_".join(str(c) for c in facilities.team_counts)
-    
-    cache_dir = Path("local_cache") / schedule_name / team_counts_str
+    cache_dir = Path("local_cache") / schedule_name
     
     # Ensure directory exists
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -33,8 +30,8 @@ def save_schedule_to_cache(schedule, start_time: datetime, score: float, creator
             f.write(str(facilities))
             
     # 3. Save the schedule itself in CSV format
-    start_time_str = start_time.strftime("%Y%m%d_%H%M%S")
-    base_filename = f"{score}_{start_time_str}"
+    start_time_str = start_time.strftime("%Y_%m_%d__%H_%M_%S")
+    base_filename = f"{score}__{start_time_str}"
     csv_filename = f"{base_filename}.csv"
     csv_path = cache_dir / csv_filename
     
@@ -66,9 +63,8 @@ def get_best_cached_schedule(facilities):
         tuple: (csv_path, debug_path) of the best cached schedule, or (None, None) if no cache found.
     """
     schedule_name = facilities.get_schedule_name()
-    team_counts_str = "_".join(str(c) for c in facilities.team_counts)
     
-    cache_dir = Path("local_cache") / schedule_name / team_counts_str
+    cache_dir = Path("local_cache") / schedule_name
     
     if not cache_dir.exists():
         return None, None
@@ -79,8 +75,8 @@ def get_best_cached_schedule(facilities):
     for csv_path in cache_dir.glob("*.csv"):
         filename = csv_path.name
         try:
-            # Filename format: {score}_{datetime}.csv
-            score_str = filename.split('_')[0]
+            # Filename format: {score}__{datetime}.csv
+            score_str = filename.split('__')[0]
             score = float(score_str)
             if score < best_score:
                 best_score = score
